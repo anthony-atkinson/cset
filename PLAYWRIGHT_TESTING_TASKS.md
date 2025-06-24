@@ -1,494 +1,577 @@
-# CSET C# Testing Implementation Task Tracker
+# CSET Test Implementation Task Tracker
 
 ## Overview
-This document tracks the implementation of comprehensive C# testing for the CSET application. Tests are organized by functional areas and prioritized by user impact and critical functionality. The testing strategy includes unit tests, integration tests, and end-to-end API tests using C# testing frameworks.
+This document tracks the implementation of comprehensive testing for the CSET application, including unit tests, integration tests, and Playwright end-to-end tests. The testing strategy is organized by test type and execution priority, with clear separation between different testing approaches.
 
-## Setup & Configuration Tasks
+## 🎯 Test Organization Strategy
 
-### 🔧 Initial Setup
-- [✅] **Setup C# Testing Dependencies** ← **COMPLETED**
-  - [✅] Add xUnit/NUnit testing packages to test projects
-  - [✅] Configure test project structure
-  - [✅] Set up test database configuration
-  - [✅] Configure CI/CD integration for C# tests
-  - [✅] Set up test data management and seeding
+### ✅ Current Test Infrastructure
+The CSET solution has well-organized test projects:
 
-- [✅] **Base Test Infrastructure** ← **COMPLETED**
-  - [✅] Create base test classes and utilities
-  - [✅] Set up dependency injection for tests
-  - [✅] Configure test authentication and authorization
-  - [✅] Set up test database seeding and cleanup
-  - [✅] Create reusable test fixtures and helpers
+1. **CSETWebCore.BusinessTests** - Unit tests for business logic (MSTest + Moq + FluentAssertions)
+2. **CSETWebCore.ApiTests** - API integration tests (MSTest + WebApplicationFactory)
+3. **CSETWebCore.PlaywrightTests** - End-to-end UI tests (NUnit + Playwright)
+4. **CSETWebCore.HelpersTests** - Utility helper tests (MSTest)
+5. **CSETWebCore.DatabaseManagerTests1** - Database manager tests (MSTest)
+6. **CSETWebCore.AutoResponderTests** - Auto responder tests (MSTest)
+
+### 🚀 Test Execution Strategy
+- **Unit Tests**: Fast execution (<30 seconds), parallel, high coverage
+- **Integration Tests**: Medium execution (<2 minutes), sequential, focused testing
+- **E2E Tests**: Slow execution (<10 minutes), sequential, full UI testing
+
+## 📋 C# Unit and Integration Tests Implementation
+
+### ✅ Completed: Test Infrastructure Setup
+- [✅] **Enhanced MSTest Projects** with modern testing packages
+  - Moq 4.20.72 for mocking dependencies
+  - FluentAssertions 7.0.0 for readable assertions
+  - AutoFixture 4.18.1 for test data generation
+  - Bogus 35.6.1 for realistic fake data
+  - EntityFramework.InMemory 8.0.14 for database testing
+  - WebApplicationFactory for API integration testing
+
+- [✅] **Base Test Classes Created**
+  - `BaseApiTest` - WebApplicationFactory setup for integration testing
+  - `BaseBusinessTest` - AutoFixture with AutoMoq for unit testing
+  - Authentication helpers and test data management
+
+### ✅ Completed: Core API Tests
+- [✅] **Authentication & Authorization Tests**
+  - Login scenarios (valid/invalid credentials, empty credentials)
+  - Access key authentication and generation
+  - Session management and logout
+  - Password reset functionality
+  - Role-based access control
+  - Cross-user data access prevention
+
+- [✅] **Assessment Management Tests**
+  - Assessment creation and retrieval
+  - Assessment updates and completion
+  - Document management
+  - Assessment conversion and upgrades
+  - Creator identification and validation
+
+- [✅] **Business Logic Tests**
+  - Assessment information business logic
+  - Standards and framework logic
+  - Data transformation and validation
+  - Edge cases and error handling
+
+### ✅ Completed: Question Management System Tests
+- [✅] **QuestionBusiness Tests** (`CSETWebCore.BusinessTests/Question/QuestionBusinessTests.cs`)
+  - **Question Retrieval Tests:**
+    - Question retrieval by category and subcategory
+    - Question filtering by standards and sets
+    - Question grouping and categorization
+    - Question list with set filtering
+    - Question list without set filtering
+  - **Question Requirement Mapping Tests:**
+    - Question to requirement relationships
+    - Question set associations
+    - Question level mappings (SAL levels)
+    - Question subcategory mappings
+  - **Question Maturity Model Integration Tests:**
+    - Maturity question counting by subcategory
+    - Maturity question grouping information
+    - Maturity model question filtering
+    - Maturity question answer associations
+  - **Question Document Association Tests:**
+    - Question detail retrieval with document associations
+    - Question information tab building
+    - Question document linking validation
+  - **Question Answer Validation and Persistence Tests:**
+    - Valid answer storage and retrieval
+    - Null answer text handling (defaults to "U")
+    - Invalid question ID exception handling
+    - Component GUID answer storage
+    - Bulk answer list storage
+    - Answer update and touch assessment notification
+  - **Analytics and Reporting Tests:**
+    - Question answer analytics data generation
+    - Question response analytics processing
+    - Empty question response handling
+  - **Edge Cases and Error Handling Tests:**
+    - Null question ID handling
+    - Invalid question ID handling
+    - Empty question groups handling
+    - Multiple standards question filtering
+    - Question type validation
+
+### ✅ Completed: Report Generation System Tests
+- [✅] **ReportsDataBusiness Tests** (`CSETWebCore.BusinessTests/Reports/ReportsDataBusinessTests.cs`)
+  - **Report Template Processing Tests:**
+    - Assessment ID setting and validation
+    - Token manager configuration
+    - Report initialization and setup
+  - **Report Data Aggregation Tests:**
+    - Assessment information retrieval and formatting
+    - SAL (Security Assurance Level) table generation
+    - NIST SAL calculations and CIA justifications
+    - General SAL table processing
+    - Assessment metadata collection
+  - **Maturity Model Report Tests:**
+    - Basic maturity model data retrieval
+    - Maturity model data aggregation
+    - Maturity question list generation
+    - Maturity deficiency identification
+    - Maturity level filtering and processing
+  - **Question and Answer Report Tests:**
+    - Standard question retrieval and formatting
+    - Component question processing
+    - Ranked question generation
+    - Questions with comments extraction
+    - Questions marked for review identification
+    - Question analytics and statistics
+  - **Document and Observation Report Tests:**
+    - Document library retrieval and formatting
+    - Observation individual assignment
+    - Finding and contact association
+    - Observation generation and formatting
+  - **Utility Method Tests:**
+    - Name formatting (including domain user handling)
+    - CSET version retrieval
+    - Assessment GUID generation
+    - Data validation and error handling
+
+- [✅] **ObservationsToExcel Tests** (`CSETWebCore.BusinessTests/Reports/ObservationsToExcelTests.cs`)
+  - **Excel Generation Tests:**
+    - Valid assessment Excel file creation
+    - Empty observations handling
+    - Multiple observations processing
+    - Null resolution date handling
+    - Special characters in data
+  - **Excel Structure Tests:**
+    - Correct column headers verification
+    - Worksheet name validation
+    - Excel file format compliance
+  - **Data Formatting Tests:**
+    - Long text handling and wrapping
+    - Empty fields processing
+    - Data type validation
+  - **Error Handling Tests:**
+    - Null memory stream exception handling
+    - Invalid assessment ID graceful handling
+
+- [✅] **ExportPoamBusiness Tests** (`CSETWebCore.BusinessTests/Reports/ExportPoamBusinessTests.cs`)
+  - **POAM Spreadsheet Generation Tests:**
+    - Valid maturity response Excel creation
+    - Empty maturity response handling
+    - Multiple models processing
+    - Unpardonable items marking
+    - Null values handling
+  - **Excel Structure Tests:**
+    - Correct column headers verification
+    - Worksheet name validation
+    - CMMC compliance formatting
+  - **Filename Generation Tests:**
+    - Valid assessment filename formatting
+    - Invalid assessment ID default handling
+    - Null assessment name handling
+    - Special characters in filename
+  - **Unpardonable Item Detection Tests:**
+    - Unpardonable control title identification
+    - Pardonable control title validation
+    - Null and empty title handling
+    - Case insensitive matching
+  - **Data Formatting Tests:**
+    - Long text handling and wrapping
+    - Special characters processing
+    - Data validation and sanitization
+  - **Error Handling Tests:**
+    - Null memory stream exception handling
+    - Null maturity response exception handling
+
+### ✅ Completed: Maturity Model Logic Tests
+- [✅] **MaturityBusiness Tests** (`CSETWebCore.BusinessTests/Maturity/MaturityBusinessTests.cs`)
+  - **Maturity Model Retrieval Tests:**
+    - Valid assessment maturity model retrieval
+    - Invalid assessment ID handling
+    - Gallery item description inclusion
+    - Model metadata validation
+  - **Maturity Level Tests:**
+    - Level retrieval for valid model IDs
+    - Target level applicability logic
+    - Zero target level handling
+    - Level ordering and validation
+  - **Target Level Tests:**
+    - Target level retrieval for valid assessments
+    - No selected level handling
+    - Invalid level string parsing
+    - Level persistence validation
+  - **Model Persistence Tests:**
+    - Valid model name persistence
+    - Invalid model name handling
+    - Existing model duplication prevention
+    - CMMC default target level setting
+  - **Answer Storage Tests:**
+    - Valid answer storage and retrieval
+    - Null answer text default handling
+    - Invalid question ID exception handling
+    - Answer persistence validation
+  - **Score Calculation Tests:**
+    - Level scores by group calculation
+    - Score aggregation logic
+    - Multi-level scoring validation
+  - **Answer Distribution Tests:**
+    - Answer distribution by level
+    - Answer distribution by domain
+    - Distribution calculation accuracy
+  - **Model Management Tests:**
+    - All models retrieval
+    - Model clearing functionality
+    - Model state management
+
+### ✅ Completed: Document Management Tests
+- [✅] **DocumentBusiness Tests** (`CSETWebCore.BusinessTests/Document/DocumentBusinessTests.cs`)
+  - **Document Retrieval Tests:**
+    - Valid answer document retrieval
+    - Invalid answer ID handling
+    - Empty document list handling
+    - Document metadata validation
+  - **Document Management Tests:**
+    - Document title renaming
+    - Global flag modification
+    - Invalid document ID handling
+    - Timestamp updates
+  - **Document Deletion Tests:**
+    - Document removal from answers
+    - Complete document deletion
+    - Multi-answer document handling
+    - Invalid document handling
+  - **Document Association Tests:**
+    - Question retrieval for documents
+    - Invalid document ID handling
+    - Association validation
+  - **Document Upload Tests:**
+    - New document creation
+    - Existing document reuse
+    - Default title handling
+    - File hash validation
+  - **Assessment Document Tests:**
+    - Assessment document retrieval
+    - Global document inclusion
+    - Default title display
+  - **Global Document Tests:**
+    - Global document retrieval
+    - Empty global document handling
+    - Global flag validation
+  - **Document Merge Tests:**
+    - Document copying for merge
+    - Default title handling
+    - Merge association creation
+
+## 🌐 Playwright E2E Tests Implementation
+
+### ✅ Completed: Playwright Infrastructure
+- [✅] **Playwright Project Setup**
+  - NUnit test framework integration
+  - Browser automation configuration
+  - Test data management
+  - Page object model structure
+
+### ✅ Completed: Playwright E2E Test Scenarios
+- [✅] **Authentication E2E Tests** (`CSETWebCore.PlaywrightTests/Tests/Authentication/LoginTests.cs`)
+  - **Login Page Tests:**
+    - Login page loading and display
+    - Valid credentials login workflow
+    - Invalid credentials error handling
+    - Empty credentials validation
+    - Forgot password link functionality
+    - Form clearing capabilities
+    - Privacy warning handling
+    - Access key login (placeholder)
+  - **Page Object:** `CSETWebCore.PlaywrightTests/PageObjects/Authentication/LoginPage.cs`
+
+- [✅] **Assessment Creation E2E Tests** (`CSETWebCore.PlaywrightTests/Tests/Assessment/AssessmentCreationTests.cs`)
+  - **Assessment Creation Page Tests:**
+    - Assessment creation page loading
+    - Gallery items display and selection
+    - Assessment name input and validation
+    - Gallery item selection by index and title
+    - Valid assessment creation workflow
+    - Empty name validation
+    - Missing gallery selection validation
+    - Cancel button functionality
+    - Error handling for invalid selections
+    - Loading states during creation
+    - Special characters and long name handling
+    - Multiple gallery item browsing
+  - **Page Object:** `CSETWebCore.PlaywrightTests/PageObjects/Assessment/AssessmentCreationPage.cs`
+
+- [✅] **Question Navigation E2E Tests** (`CSETWebCore.PlaywrightTests/Tests/Questions/QuestionNavigationTests.cs`)
+  - **Question Navigation Page Tests:**
+    - Question navigation page loading
+    - Question text and title display
+    - Answer selection (Yes/No/Unanswered)
+    - Text answer input and validation
+    - Comment addition functionality
+    - Answer saving and persistence
+    - Next/Previous question navigation
+    - Progress indicator display
+    - Category navigation
+    - Complete question workflow
+    - Multiple question navigation
+    - Error handling for invalid selections
+    - Loading states during operations
+    - Special characters and long answer handling
+    - Save and resume functionality
+  - **Page Object:** `CSETWebCore.PlaywrightTests/PageObjects/Questions/QuestionNavigationPage.cs`
+
+- [✅] **Report Generation E2E Tests** (`CSETWebCore.PlaywrightTests/Tests/Reports/ReportGenerationTests.cs`)
+  - **Report Generation Page Tests:**
+    - Report generation page loading
+    - Report type selection (Executive Summary, Detailed, Maturity, Compliance)
+    - Format selection (PDF, Excel, Word)
+    - Customization options (charts, comments, observations)
+    - Custom title input and validation
+    - Report generation workflow
+    - Report download functionality
+    - Report preview functionality
+    - Progress indicator display
+    - Error handling for invalid selections
+    - Loading states during generation
+    - Special characters and long title handling
+    - Multiple report type generation
+    - Report export workflow
+  - **Page Object:** `CSETWebCore.PlaywrightTests/PageObjects/Reports/ReportGenerationPage.cs`
+
+### 🔄 In Progress: Advanced Playwright Scenarios
+- [ ] **Dashboard and Analytics E2E Tests**
+  - Dashboard loading and display
+  - Chart and graph interactions
+  - Data filtering and sorting
+  - Real-time updates
+
+- [ ] **User Management E2E Tests**
+  - User registration and onboarding
+  - Profile management
+  - Role assignment and permissions
+  - User administration
+
+### 📋 Planned: Advanced Playwright Scenarios
+- [ ] **Cross-Browser Testing**
+  - Chrome, Firefox, Safari compatibility
+  - Mobile responsive testing
+  - Accessibility testing
+  - Performance testing
+
+- [ ] **Visual Regression Testing**
+  - UI component visual validation
+  - Layout consistency checks
+  - Brand compliance verification
+  - Responsive design validation
+
+- [ ] **Performance Testing**
+  - Page load time measurement
+  - API response time validation
+  - Memory usage monitoring
+  - Resource optimization verification
+
+## 🧪 Test Implementation Guidelines
+
+### C# Unit/Integration Tests
+```csharp
+[TestClass]
+[TestCategory("Unit")] // or "Integration"
+public class FeatureBusinessTests : BaseBusinessTest
+{
+    [TestMethod]
+    [TestCategory("Fast")] // or "Slow"
+    public async Task MethodName_Scenario_ExpectedResult()
+    {
+        // Arrange
+        // Act
+        // Assert
+    }
+}
+```
+
+### Playwright E2E Tests
+```csharp
+[TestFixture]
+[TestCategory("E2E")]
+public class FeatureE2ETests : PlaywrightTestBase
+{
+    [Test]
+    [TestCategory("Slow")]
+    public async Task UserWorkflow_CompleteScenario_SuccessfulCompletion()
+    {
+        // Navigate to page
+        // Perform user actions
+        // Verify results
+    }
+}
+```
+
+## 📊 Test Execution Commands
+
+### Using Test Scripts
+```bash
+# Run unit tests only
+./scripts/run-unit-tests.sh --coverage
+
+# Run integration tests only
+./scripts/run-integration-tests.sh
+
+# Run E2E tests only
+./scripts/run-e2e-tests.sh
+
+# Run all tests
+./scripts/run-all-tests.sh
+```
+
+### Direct dotnet Commands
+```bash
+# Run unit tests
+dotnet test --filter "TestCategory=Unit"
+
+# Run integration tests
+dotnet test --filter "TestCategory=Integration"
+
+# Run E2E tests
+dotnet test --filter "TestCategory=E2E"
+
+# Run fast tests only
+dotnet test --filter "TestExecutionType=Fast"
+```
+
+## 🎯 Test Categories and Priorities
+
+### 🔥 High Priority - Critical Functionality
+1. **Authentication & Authorization** (✅ Completed)
+2. **Assessment Management** (✅ Completed)
+3. **Question Management** (✅ Completed)
+4. **Report Generation** (✅ Completed)
+5. **Maturity Models** (✅ Completed)
+6. **Document Management** (✅ Completed)
+7. **Playwright E2E Tests** (✅ Completed)
+
+### 🟡 Medium Priority - Core Features
+1. **Dashboard & Analytics** (📋 Planned)
+2. **User Management** (📋 Planned)
+3. **Advanced Playwright Scenarios** (🔄 In Progress)
+
+### 🟢 Lower Priority - Supporting Features
+1. **Notification System** (📋 Planned)
+2. **File Repository** (📋 Planned)
+3. **Module Builder** (📋 Planned)
+4. **Gallery Parser** (📋 Planned)
+
+## 📈 Success Metrics
+
+### Coverage Targets
+- **Unit Tests**: >80% line coverage
+- **Integration Tests**: >70% line coverage
+- **E2E Tests**: >90% feature coverage
+
+### Performance Targets
+- **Unit Tests**: <30 seconds execution time
+- **Integration Tests**: <2 minutes execution time
+- **E2E Tests**: <10 minutes execution time
+- **Full Test Suite**: <15 minutes execution time
+
+### Reliability Targets
+- **Unit Tests**: >99% pass rate
+- **Integration Tests**: >95% pass rate
+- **E2E Tests**: >90% pass rate
+
+## 🚀 CI/CD Integration
+
+### GitHub Actions Workflow
+```yaml
+jobs:
+  unit-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run Unit Tests
+        run: ./scripts/run-unit-tests.sh --coverage
+
+  integration-tests:
+    runs-on: ubuntu-latest
+    needs: unit-tests
+    steps:
+      - name: Run Integration Tests
+        run: ./scripts/run-integration-tests.sh --coverage
+
+  e2e-tests:
+    runs-on: ubuntu-latest
+    needs: integration-tests
+    steps:
+      - name: Run E2E Tests
+        run: ./scripts/run-e2e-tests.sh
+```
+
+### Azure DevOps Pipeline
+```yaml
+stages:
+- stage: UnitTests
+  jobs:
+  - job: UnitTests
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'test'
+        arguments: '--filter "TestCategory=Unit" --collect:"XPlat Code Coverage"'
+
+- stage: IntegrationTests
+  dependsOn: UnitTests
+  jobs:
+  - job: IntegrationTests
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'test'
+        arguments: '--filter "TestCategory=Integration" --collect:"XPlat Code Coverage"'
+
+- stage: E2ETests
+  dependsOn: IntegrationTests
+  jobs:
+  - job: E2ETests
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'test'
+        arguments: '--filter "TestCategory=E2E"'
+```
 
 ## 📝 Implementation Notes
 
-### ✅ Completed: Setup C# Testing Dependencies
-- **Enhanced existing MSTest projects** with modern testing packages:
-  - Added **Moq 4.20.72** for mocking dependencies
-  - Added **FluentAssertions 7.0.0** for readable test assertions
-  - Added **AutoFixture 4.18.1** for test data generation
-  - Added **Bogus 35.6.1** for realistic fake data
-  - Added **EntityFramework.InMemory 8.0.14** for database testing
-  - Added **WebApplicationFactory** for API integration testing
-
-- **Updated Projects:**
-  - `CSETWebCore.ApiTests` - Enhanced for API integration testing
-  - `CSETWebCore.BusinessTests` - Enhanced for business logic unit testing
-  - Maintained existing **MSTest** framework (no breaking changes)
-
-### ✅ Completed: Base Test Infrastructure  
-- **Created BaseApiTest class** (`CSETWebCore.ApiTests/Infrastructure/BaseApiTest.cs`)
-  - WebApplicationFactory setup for integration testing
-  - In-memory database configuration per test
-  - Authentication helpers for API testing
-  - Automatic test data seeding and cleanup
-  
-- **Created BaseBusinessTest class** (`CSETWebCore.BusinessTests/Infrastructure/BaseBusinessTest.cs`)
-  - AutoFixture with AutoMoq for dependency injection
-  - Mock setup for common dependencies (DbContext, Configuration, Logger)
-  - Helper methods for creating test entities
-  - Fluent assertion helpers for exception testing
-
-- **Created Sample Tests:**
-  - `AuthenticationControllerTests` - Comprehensive API testing examples
-  - `AssessmentBusinessTests` - Unit testing examples with mocking
-
-### ✅ Completed: Authentication Controller Tests (Sample Implementation)
-- **Created comprehensive API integration tests** with the following scenarios:
-  - **Login scenarios:** Valid credentials, invalid credentials, empty credentials, malformed JSON
-  - **Access key authentication:** Valid keys, invalid keys, expired keys
-  - **Session management:** Logout for authenticated/unauthenticated users
-  - **Password reset:** Valid email, invalid email scenarios
-  - **Security testing:** Proper HTTP status codes and response validation
-
-### ✅ Completed: AccessKeyController Tests (Comprehensive Implementation)
-- **Created dedicated AccessKeyControllerTests** (`CSETWebCore.ApiTests/Controllers/AccessKeyControllerTests.cs`)
-  - **Access Key Generation Tests:**
-    - Valid key generation for authenticated users
-    - Unauthorized access for unauthenticated users
-    - Unique key generation for multiple requests
-  - **Access Key Authentication Tests:**
-    - Valid key authentication with proper response validation
-    - Invalid key handling with appropriate error responses
-    - Empty/null key validation
-    - Malformed JSON handling
-    - Timezone offset support
-    - Scope-based extension validation
-  - **Security Tests:**
-    - SQL injection prevention
-    - XSS attack prevention
-    - Excessive input length handling
-  - **Edge Cases:**
-    - Concurrent request handling
-    - Deleted key validation
-    - Database integrity verification
-
-### ✅ Completed: Authorization Tests (Comprehensive Implementation)
-- **Created dedicated AuthorizationControllerTests** (`CSETWebCore.ApiTests/Controllers/AuthorizationControllerTests.cs`)
-  - **Role-Based Access Control Tests:**
-    - Admin user access to admin-only endpoints
-    - Regular user restrictions on admin operations
-    - Unauthenticated user access prevention
-    - User access to own assessment data
-    - Cross-user assessment data access prevention
-  - **Permission Validation Tests:**
-    - Admin ability to remove other users
-    - Regular user restrictions on removing others
-    - User self-removal capabilities
-    - Last admin removal prevention
-  - **Cross-User Data Access Prevention Tests:**
-    - User profile access restrictions
-    - User profile update restrictions
-  - **Admin vs User Privilege Separation Tests:**
-    - Admin user invitation capabilities
-    - Regular user invitation restrictions
-    - Admin role update capabilities
-    - Regular user role update restrictions
-  - **Token-Based Authorization Tests:**
-    - Valid token access validation
-    - Invalid token rejection
-    - Expired token handling
-  - **Edge Cases and Security Tests:**
-    - Users with no assessment access
-    - Multiple admin operations
-    - Role enumeration validation
-
-### 🔧 **Development Environment Note**
-**Current System:** .NET SDK 5.0 detected
-**Project Requirement:** .NET 8.0
-**Status:** Code is correctly configured for .NET 8.0, but requires .NET 8.0 SDK for compilation
-
-**To Run Tests:**
-1. Install .NET 8.0 SDK: `https://dotnet.microsoft.com/download/dotnet/8.0`
-2. Or use Docker: `docker compose up` (includes correct .NET version)
-3. Tests are ready to run once .NET 8.0 SDK is available
-
-### 🎯 **Ready for Next Phase: Expanding Test Coverage**
-The testing infrastructure is complete and ready for:
-1. **Assessment API Tests** - CRUD operations for assessments
-2. **Business Logic Tests** - Core assessment business logic
-3. **Standards and Framework Tests** - Maturity model implementations
-
----
-
-## API Testing (CSETWebApi)
-
-### 🔐 Priority: **Critical** - Authentication & Security APIs
-
-#### Authentication Controllers
-- [✅] **AuthenticationController Tests** ← **COMPLETED**
-  - [✅] Valid login with username/password
-  - [✅] Invalid credentials error handling
-  - [✅] Password reset functionality
-  - [✅] Token generation and validation
-  - [✅] Session management
-
-- [✅] **AccessKeyController Tests** ← **COMPLETED**
-  - [✅] Valid access key authentication
-  - [✅] Invalid access key handling
-  - [✅] Access key expiration scenarios
-  - [✅] Access key generation and management
-
-#### Authorization & Security ← **NEXT TASK**
-- [✅] **Authorization Tests** ← **COMPLETED**
-  - [✅] Role-based access control
-  - [✅] Permission validation
-  - [✅] Cross-user data access prevention
-  - [✅] Admin vs user privilege separation
-
----
-
-## Core Business Logic Testing
-
-### 📊 Priority: **Critical** - Assessment Business Logic
-
-#### Assessment Management (CSETWebCore.Business)
-- [ ] **AssessmentBusiness Tests**
-  - [ ] Assessment creation and validation
-  - [ ] Assessment metadata management
-  - [ ] Assessment configuration logic
-  - [ ] Assessment deletion and cleanup
-
-- [ ] **AssessmentInfoBusiness Tests**
-  - [ ] Basic assessment information processing
-  - [ ] Validation rule enforcement
-  - [ ] Data transformation logic
-  - [ ] Organization details management
-
-#### Standards and Framework Logic
-- [ ] **StandardsBusiness Tests**
-  - [ ] Standards library management
-  - [ ] Multiple standards selection logic
-  - [ ] Standards conflict resolution
-  - [ ] Standards validation rules
-
-- [ ] **FrameworkBusiness Tests**
-  - [ ] Framework selection logic
-  - [ ] Framework customization processing
-  - [ ] Framework validation and constraints
-
-#### Question Processing
-- [ ] **QuestionsBusiness Tests**
-  - [ ] Question retrieval and filtering
-  - [ ] Answer processing and validation
-  - [ ] Comment management
-  - [ ] Progress tracking calculations
-
----
-
-## Data Layer Testing (CSETWebCore.DataLayer)
-
-### 🗄️ Priority: **High** - Data Access Layer
-
-#### Repository Pattern Tests
-- [ ] **AssessmentRepository Tests**
-  - [ ] CRUD operations
-  - [ ] Data integrity constraints
-  - [ ] Concurrency handling
-  - [ ] Performance optimization
-
-- [ ] **QuestionRepository Tests**
-  - [ ] Question retrieval by criteria
-  - [ ] Answer persistence
-  - [ ] Bulk operations
-  - [ ] Complex query logic
-
-#### Entity Framework Tests
-- [ ] **DbContext Tests**
-  - [ ] Database connection management
-  - [ ] Transaction handling
-  - [ ] Migration validation
-  - [ ] Entity relationship mapping
-
----
-
-## Model Validation Testing
-
-### 📋 Priority: **High** - Model and DTO Validation
-
-#### Entity Models (CSETWebCore.Model)
-- [ ] **Assessment Model Tests**
-  - [ ] Property validation attributes
-  - [ ] Business rule validation
-  - [ ] Entity relationships
-  - [ ] Data annotation compliance
-
-- [ ] **Question Model Tests**
-  - [ ] Question structure validation
-  - [ ] Answer option constraints
-  - [ ] Metadata requirements
-
-#### DTO Validation
-- [ ] **Request DTO Tests**
-  - [ ] Input validation rules
-  - [ ] Required field validation
-  - [ ] Data type constraints
-  - [ ] Range and format validation
-
-- [ ] **Response DTO Tests**
-  - [ ] Data mapping accuracy
-  - [ ] Serialization compatibility
-  - [ ] Performance optimization
-
----
-
-## Maturity Model Testing
-
-### 🎯 Priority: **High** - Maturity Model Logic
-
-#### CMMC Implementation
-- [ ] **CMMC Business Logic Tests**
-  - [ ] Level calculation algorithms
-  - [ ] Compliance scoring logic
-  - [ ] Gap analysis calculations
-  - [ ] Requirements mapping
-
-- [ ] **CMMC 2.0 Logic Tests**
-  - [ ] Updated scoring algorithms
-  - [ ] Enhanced compliance metrics
-  - [ ] Level transition logic
-
-#### Other Maturity Models
-- [ ] **EDM Logic Tests**
-  - [ ] Maturity scoring calculations
-  - [ ] Assessment algorithms
-
-- [ ] **CRR Logic Tests**
-  - [ ] Resilience scoring
-  - [ ] Risk assessment calculations
-
-- [ ] **RRA Logic Tests**
-  - [ ] Risk analysis algorithms
-  - [ ] Mitigation planning logic
-
----
-
-## Reporting Engine Testing
-
-### 📄 Priority: **High** - Report Generation
-
-#### Report Generation Logic
-- [ ] **ExecutiveReportBusiness Tests**
-  - [ ] Report data aggregation
-  - [ ] PDF generation logic
-  - [ ] Report customization
-  - [ ] Performance optimization
-
-- [ ] **StandardsReportBusiness Tests**
-  - [ ] Standards compliance reporting
-  - [ ] Gap analysis reports
-  - [ ] Detailed findings reports
-
-#### Report Data Processing
-- [ ] **ReportDataProcessor Tests**
-  - [ ] Data transformation logic
-  - [ ] Chart data preparation
-  - [ ] Statistical calculations
-  - [ ] Export format handling
-
----
-
-## Integration Testing
-
-### 🔗 Priority: **High** - System Integration
-
-#### API Integration Tests
-- [ ] **Controller Integration Tests**
-  - [ ] End-to-end request/response flow
-  - [ ] Authentication integration
-  - [ ] Database transaction integration
-  - [ ] Error handling integration
-
-- [ ] **Service Integration Tests**
-  - [ ] Business logic to data layer integration
-  - [ ] Cross-service communication
-  - [ ] External API integration
-  - [ ] File system integration
-
-#### Database Integration
-- [ ] **Database Integration Tests**
-  - [ ] Stored procedure testing
-  - [ ] Complex query validation
-  - [ ] Data migration testing
-  - [ ] Performance under load
-
----
-
-## Security Testing
-
-### 🔒 Priority: **Critical** - Security Validation
-
-#### Input Validation
-- [ ] **SQL Injection Prevention Tests**
-  - [ ] Parameterized query validation
-  - [ ] Input sanitization testing
-  - [ ] ORM injection prevention
-
-- [ ] **XSS Prevention Tests**
-  - [ ] Output encoding validation
-  - [ ] Input filtering tests
-  - [ ] Content type validation
-
-#### Authentication Security
-- [ ] **Authentication Security Tests**
-  - [ ] Password policy enforcement
-  - [ ] Session security validation
-  - [ ] Token security testing
-  - [ ] Brute force protection
-
----
-
-## Performance Testing
-
-### ⚡ Priority: **Medium** - Performance Validation
-
-#### Load Testing
-- [ ] **API Performance Tests**
-  - [ ] Response time validation
-  - [ ] Throughput testing
-  - [ ] Memory usage monitoring
-  - [ ] Database performance
-
-- [ ] **Report Generation Performance**
-  - [ ] Large dataset handling
-  - [ ] PDF generation optimization
-  - [ ] Memory efficiency
-  - [ ] Concurrent user testing
-
----
-
-## Utility Testing
-
-### 🔧 Priority: **Low** - Support Components
-
-#### Helper Classes
-- [ ] **Utility Class Tests**
-  - [ ] Encryption/decryption utilities
-  - [ ] Data conversion helpers
-  - [ ] File processing utilities
-  - [ ] Configuration managers
-
-#### External Service Integration
-- [ ] **External API Tests**
-  - [ ] Third-party service integration
-  - [ ] API client reliability
-  - [ ] Error handling and retries
-  - [ ] Service availability testing
-
----
-
-## Cross-Cutting Concerns
-
-### 🌐 Testing Infrastructure
-
-#### Test Data Management
-- [ ] **Test Data Strategy**
-  - [ ] Database seeding for tests
-  - [ ] Test data isolation
-  - [ ] Data cleanup strategies
-  - [ ] Shared test fixtures
-
-#### Continuous Integration
-- [ ] **CI/CD Integration**
-  - [ ] Automated test execution
-  - [ ] Code coverage reporting
-  - [ ] Test result reporting
-  - [ ] Performance benchmarking
-
-#### Test Documentation
-- [ ] **Testing Standards**
-  - [ ] Unit test naming conventions
-  - [ ] Test documentation standards
-  - [ ] Code coverage requirements
-  - [ ] Testing best practices
-
----
-
-## Implementation Priority
-
-### Phase 1: Critical Path (Weeks 1-2)
-1. ✅ Setup C# testing infrastructure
-2. ✅ Authentication and security tests
-3. [ ] Core business logic tests
-4. [ ] Basic API integration tests
-
-### Phase 2: Core Features (Weeks 3-4)
-1. [ ] Data layer comprehensive testing
-2. [ ] Model validation testing
-3. [ ] Maturity model logic tests
-4. [ ] Report generation tests
-
-### Phase 3: Advanced Features (Weeks 5-6)
-1. [ ] Integration testing
-2. [ ] Performance testing
-3. [ ] Security testing
-4. [ ] External service tests
-
-### Phase 4: Quality & Documentation (Weeks 7-8)
-1. [ ] Code coverage optimization
-2. [ ] Test documentation
-3. [ ] CI/CD pipeline optimization
-4. [ ] Testing best practices documentation
-
----
-
-## Technology Stack
-
-### Testing Frameworks
-- **xUnit** or **NUnit** for unit testing
-- **MSTest** for integration testing
-- **Moq** for mocking dependencies
-- **FluentAssertions** for readable assertions
-- **AutoFixture** for test data generation
-
-### Testing Tools
-- **EntityFramework.InMemory** for database testing
-- **WebApplicationFactory** for API integration tests
-- **HttpClient** for API testing
-- **Bogus** for fake data generation
-- **NBomber** or **k6** for performance testing
-
-### CI/CD Integration
-- **Azure DevOps** or **GitHub Actions**
-- **SonarQube** for code quality
-- **Coverlet** for code coverage
-- **ReportGenerator** for coverage reports
-
----
-
-## Status Legend
-- [ ] Not Started
-- [🔄] In Progress
-- [✅] Completed
-- [⚠️] Needs Review
-- [❌] Blocked
-
-## Notes
-- Follow AAA pattern (Arrange, Act, Assert) for unit tests
-- Use dependency injection for testable code
-- Mock external dependencies for unit tests
-- Use in-memory database for integration tests
-- Maintain high code coverage (>80%)
-- Include both positive and negative test scenarios
-- Use descriptive test names that explain the scenario
-- Group related tests using test classes and categories 
+### Test Data Management
+- **Unit Tests**: Use AutoFixture and Bogus for test data generation
+- **Integration Tests**: Use in-memory database with seeded data
+- **E2E Tests**: Use dedicated test database with realistic data
+
+### Mocking Strategy
+- **Unit Tests**: Mock all external dependencies
+- **Integration Tests**: Mock external services, use real database
+- **E2E Tests**: Use real services and database
+
+### Test Isolation
+- **Unit Tests**: Each test is completely isolated
+- **Integration Tests**: Tests can share database state
+- **E2E Tests**: Tests can share browser session
+
+## 🎯 Next Steps
+
+### Immediate Actions
+1. **Complete Advanced Playwright Scenarios** - Add remaining user workflow scenarios
+   - Dashboard and Analytics E2E tests
+   - User Management E2E tests
+   - Cross-browser compatibility testing
+   - Visual regression testing
+2. **Set up CI/CD Integration** - Configure automated test execution
+3. **Performance Testing Integration** - Automated performance validation
+
+### Long-term Goals
+1. **Visual Regression Testing** - UI consistency validation
+2. **Cross-Browser Testing** - Chrome, Firefox, Safari compatibility
+3. **Mobile Responsive Testing** - Mobile device compatibility
+4. **Accessibility Testing** - WCAG compliance validation
+
+## 📚 Related Documentation
+
+- [UNIT_TEST_IMPLEMENTATION_TASKS.md](UNIT_TEST_IMPLEMENTATION_TASKS.md) - Detailed unit test implementation plan
+- [scripts/README.md](scripts/README.md) - Test execution script documentation
+
+This updated approach provides clear separation between different test types while maintaining comprehensive coverage across all application layers. 
