@@ -25,6 +25,11 @@ using LogicExtensions;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for managing contacts and user access in CSET assessments.
+    /// Supports contact creation, invitation, role management, and user administration
+    /// for multi-user assessment environments.
+    /// </summary>
     [CsetAuthorize]
     [ApiController]
     public class ContactsController : ControllerBase
@@ -37,6 +42,15 @@ namespace CSETWebCore.Api.Controllers
 
         private CSETContext _context;
 
+        /// <summary>
+        /// Initializes a new instance of the ContactsController.
+        /// </summary>
+        /// <param name="token">Service for JWT token management</param>
+        /// <param name="notification">Service for notification operations</param>
+        /// <param name="assessmentUtil">Utility service for assessment operations</param>
+        /// <param name="contact">Service for contact management</param>
+        /// <param name="user">Service for user operations</param>
+        /// <param name="context">Database context</param>
         public ContactsController(ITokenManager token, INotificationBusiness notification,
             IAssessmentUtil assessmentUtil, IContactBusiness contact, IUserBusiness user, CSETContext context)
         {
@@ -47,12 +61,29 @@ namespace CSETWebCore.Api.Controllers
             _contact = contact;
             _user = user;
         }
+
         /// <summary>
         /// Returns a collection of ContactDetails for the assessment.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with contacts list and current user role
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves all contacts associated with the current assessment,
+        /// along with the current user's role on that assessment.
+        /// 
+        /// The response includes:
+        /// - List of all contacts with their details
+        /// - Current user's role on the assessment
+        /// - Contact information including names, emails, and roles
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/contacts")]
+        [ProducesResponseType(typeof(ContactsListResponse), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetContactsForAssessment()
         {
             int assessmentId = _token.AssessmentForUser();
@@ -67,11 +98,36 @@ namespace CSETWebCore.Api.Controllers
         }
 
         /// <summary>
-        /// Returns contacts for the specified assessmentIds
+        /// Returns contacts for the specified assessment IDs.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="id1">First assessment ID</param>
+        /// <param name="id2">Second assessment ID</param>
+        /// <param name="id3">Third assessment ID</param>
+        /// <param name="id4">Fourth assessment ID</param>
+        /// <param name="id5">Fifth assessment ID</param>
+        /// <param name="id6">Sixth assessment ID</param>
+        /// <param name="id7">Seventh assessment ID</param>
+        /// <param name="id8">Eighth assessment ID</param>
+        /// <param name="id9">Ninth assessment ID</param>
+        /// <param name="id10">Tenth assessment ID</param>
+        /// <returns>
+        /// 200 OK with contacts for specified assessments
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves contacts for multiple assessments simultaneously.
+        /// Useful for aggregation scenarios where contacts from multiple assessments
+        /// need to be compared or analyzed together.
+        /// 
+        /// Sample request:
+        ///     GET /api/contactsById?id1=123&id2=456&id3=789
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/contactsById")]
+        [ProducesResponseType(typeof(List<ContactDetail>), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetContactsForAssessmentById(int id1, int id2, int id3, int id4, int id5, int id6, int id7, int id8, int id9, int id10)
         {
             var contacts = _contact.GetContactsByAssessmentId(id1, id2, id3, id4, id5, id6, id7, id8, id9, id10);
@@ -81,9 +137,26 @@ namespace CSETWebCore.Api.Controllers
         /// <summary>
         /// Returns the ContactDetail for the current user on the specified Assessment.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with current user's contact details
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the contact information for the currently authenticated
+        /// user on the current assessment. This is useful for displaying user profile
+        /// information or determining the user's role and permissions.
+        /// 
+        /// The response includes:
+        /// - User's contact information
+        /// - Role on the current assessment
+        /// - Email and name details
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/contacts/getcurrent")]
+        [ProducesResponseType(typeof(ContactDetail), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetCurrentUserContact()
         {
             int assessmentId = _token.AssessmentForUser();
@@ -93,14 +166,41 @@ namespace CSETWebCore.Api.Controllers
             return Ok(resp);
         }
 
-
         /// <summary>
         /// Persists a single ContactDetail to the database.
         /// </summary>
-        /// <param name="newContact"></param>
-        /// <returns></returns>
+        /// <param name="newContact">Contact creation parameters</param>
+        /// <returns>
+        /// 200 OK with updated contacts list
+        /// 400 Bad Request if contact creation fails
+        /// 401 Unauthorized if user is not authenticated or not admin
+        /// </returns>
+        /// <remarks>
+        /// This endpoint creates a new contact and adds them to the current assessment.
+        /// Only assessment administrators can add new contacts.
+        /// 
+        /// The request should include:
+        /// - Primary email address
+        /// - First and last name
+        /// - Role on the assessment
+        /// - Optional additional contact information
+        /// 
+        /// Sample request:
+        ///     POST /api/contacts/addnew
+        ///     {
+        ///         "PrimaryEmail": "user@example.com",
+        ///         "FirstName": "John",
+        ///         "LastName": "Doe",
+        ///         "Role": 2
+        ///     }
+        /// 
+        /// Requires valid JWT token in Authorization header and admin role.
+        /// </remarks>
         [HttpPost]
         [Route("api/contacts/addnew")]
+        [ProducesResponseType(typeof(ContactsListResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public IActionResult CreateAndAddContactToAssessment([FromBody] ContactCreateParameters newContact)
         {
             int assessmentId = _token.AssessmentForUser();
@@ -126,10 +226,26 @@ namespace CSETWebCore.Api.Controllers
         /// <summary>
         /// Persists a single ContactDetail to the database during a merge.
         /// </summary>
-        /// <param name="newContact"></param>
-        /// <returns></returns>
+        /// <param name="newContact">Contact creation parameters</param>
+        /// <returns>
+        /// 200 OK with updated contacts list
+        /// 400 Bad Request if contact creation fails
+        /// 401 Unauthorized if user is not authenticated or not admin
+        /// </returns>
+        /// <remarks>
+        /// This endpoint creates a new contact during an assessment merge operation.
+        /// Similar to the regular add contact endpoint, but handles merge-specific
+        /// logic and validation.
+        /// 
+        /// Only assessment administrators can add new contacts during merges.
+        /// 
+        /// Requires valid JWT token in Authorization header and admin role.
+        /// </remarks>
         [HttpPost]
         [Route("api/contacts/addnewmergecontact")]
+        [ProducesResponseType(typeof(ContactsListResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public IActionResult CreateAndAddContactToAssessmentDuringMerge([FromBody] ContactCreateParameters newContact)
         {
             int assessmentId = _token.AssessmentForUser();
@@ -152,12 +268,38 @@ namespace CSETWebCore.Api.Controllers
             return Ok(resp);
         }
 
-
         /// <summary>
         /// Removes a Contact/User from an Assessment.
         /// </summary>
+        /// <param name="contactRemove">Contact removal parameters</param>
+        /// <returns>
+        /// 200 OK with updated contacts list
+        /// 400 Bad Request if removal parameters are invalid
+        /// 401 Unauthorized if user is not authenticated or not admin
+        /// </returns>
+        /// <remarks>
+        /// This endpoint removes a contact from the current assessment. Only assessment
+        /// administrators can remove contacts. The contact can be removed by user ID
+        /// or access key.
+        /// 
+        /// The request should include:
+        /// - Assessment ID
+        /// - User ID or access key to remove
+        /// 
+        /// Sample request:
+        ///     POST /api/contacts/remove
+        ///     {
+        ///         "AssessmentId": 123,
+        ///         "UserId": 456
+        ///     }
+        /// 
+        /// Requires valid JWT token in Authorization header and admin role.
+        /// </remarks>
         [HttpPost]
         [Route("api/contacts/remove")]
+        [ProducesResponseType(typeof(ContactsListResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public IActionResult RemoveContactFromAssessment([FromBody] ContactRemoveParameters contactRemove)
         {
             if (contactRemove == null)
@@ -173,7 +315,6 @@ namespace CSETWebCore.Api.Controllers
             var currentUserId = _token.GetUserId();
 
             var accessKey = _token.GetAccessKey();
-
 
             // remove the connection between the assessment and the accesskey
             if (currentUserId == null && accessKey != null)
@@ -197,14 +338,12 @@ namespace CSETWebCore.Api.Controllers
                 return Ok(resp1);
             }
 
-
             ASSESSMENT_CONTACTS ac = null;
 
             // explicit removal using the ID of the connection 
             if (contactRemove.AssessmentContactId > 0)
             {
                 ac = _context.ASSESSMENT_CONTACTS.Where(x => x.Assessment_Contact_Id == contactRemove.AssessmentContactId).FirstOrDefault();
-
             }
 
             // implied removal of the current user's connection to the assessment
@@ -222,7 +361,6 @@ namespace CSETWebCore.Api.Controllers
                 };
                 return BadRequest(err);
             }
-
 
             int currentUserRole = _contact.GetUserRoleOnAssessment((int)_token.GetCurrentUserId(), ac.Assessment_Id) ?? 0;
 
@@ -275,7 +413,6 @@ namespace CSETWebCore.Api.Controllers
             return Ok(resp);
         }
 
-
         /// <summary>
         /// Searches the database for entries containing the entered text.
         /// </summary>
@@ -289,7 +426,6 @@ namespace CSETWebCore.Api.Controllers
             var resp = _contact.SearchContacts(currentUserId, searchParms);
             return Ok(resp);
         }
-
 
         /// <summary>
         /// Sends email invitations to join a CSET assessment.
@@ -327,7 +463,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(success);
         }
-
 
         /// <summary>
         /// Returns a list of all available Roles.
@@ -550,7 +685,6 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
         /// <summary>
         /// Returns null if the target string is empty or just spaces.
         /// </summary>
@@ -565,7 +699,6 @@ namespace CSETWebCore.Api.Controllers
 
             return s;
         }
-
 
         /// <summary>
         /// Returns the language for the current user
@@ -600,7 +733,6 @@ namespace CSETWebCore.Api.Controllers
             var userLang = new { lang = user != null ? user.Lang : ak.Lang };
             return Ok(userLang);
         }
-
 
         /// <summary>
         /// Sets the current user's preferred language
@@ -637,7 +769,6 @@ namespace CSETWebCore.Api.Controllers
             return Ok();
         }
 
-
         /// <summary>
         /// Checks to see if the user can remove themself from an Assessment.  If they are
         /// the only ADMIN and there are any USERs on the Assessment, then 
@@ -657,7 +788,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(true);
         }
-
 
         /// <summary>
         /// 
@@ -696,7 +826,6 @@ namespace CSETWebCore.Api.Controllers
                     }
                 }
             }
-
 
             string lastQAnswered = ac.Last_Q_Answered;
 

@@ -34,6 +34,11 @@ using System.IO;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for managing cybersecurity assessment diagrams in CSET.
+    /// Supports diagram creation, editing, analysis, and export functionality for
+    /// network architecture and component diagrams used in assessments.
+    /// </summary>
     [ApiController]
     public class DiagramController : ControllerBase
     {
@@ -49,7 +54,17 @@ namespace CSETWebCore.Api.Controllers
 
         private readonly object _object;
 
-
+        /// <summary>
+        /// Initializes a new instance of the DiagramController.
+        /// </summary>
+        /// <param name="diagram">Service for diagram management operations</param>
+        /// <param name="token">Service for JWT token management</param>
+        /// <param name="assessment">Service for assessment operations</param>
+        /// <param name="dataHandling">Service for data handling operations</param>
+        /// <param name="maturity">Service for maturity model operations</param>
+        /// <param name="http">HTTP context accessor</param>
+        /// <param name="webHost">Web hosting environment</param>
+        /// <param name="context">Database context</param>
         public DiagramController(IDiagramManager diagram, ITokenManager token,
             IAssessmentBusiness assessment, IDataHandling dataHandling, 
             IMaturityBusiness maturity, IHttpContextAccessor http, 
@@ -66,10 +81,36 @@ namespace CSETWebCore.Api.Controllers
             _object = new object();
         }
 
-
+        /// <summary>
+        /// Saves a diagram for the current assessment.
+        /// </summary>
+        /// <param name="req">Diagram request containing XML and SVG data</param>
+        /// <returns>
+        /// 200 OK if diagram saved successfully
+        /// 401 Unauthorized if user is not authenticated
+        /// 500 Internal Server Error if diagram save fails
+        /// </returns>
+        /// <remarks>
+        /// This endpoint saves the diagram XML and SVG data for the current assessment.
+        /// The diagram data is base64 decoded and stored in the database. If no diagram
+        /// XML is provided, a default empty diagram structure is created.
+        /// 
+        /// Sample request:
+        ///     POST /api/diagram/save
+        ///     {
+        ///         "DiagramXml": "base64EncodedXmlData",
+        ///         "DiagramSvg": "base64EncodedSvgData",
+        ///         "AnalyzeDiagram": true
+        ///     }
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [CsetAuthorize]
         [Route("api/diagram/save")]
         [HttpPost]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
+        [ProducesResponseType(500)]
         public void SaveDiagram([FromBody] DiagramRequest req)
         {
             // get the assessment ID from the JWT
@@ -95,20 +136,58 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Saves a component diagram for the current assessment.
+        /// </summary>
+        /// <param name="component">Component diagram data to save</param>
+        /// <returns>
+        /// 200 OK if component saved successfully
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint saves individual component diagram data for the current assessment.
+        /// Components are saved separately from the main diagram and can include
+        /// network devices, systems, and other cybersecurity components.
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [CsetAuthorize]
         [Route("api/diagram/saveComponent")]
         [HttpPost]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public void SaveDiagram([FromBody] mxGraphModelRootObject component)
         {
             int? assessmentId = _token.PayloadInt(Constants.Constants.Token_AssessmentId);
             _diagram.SaveComponent(component, (int)assessmentId);
         }
 
-
+        /// <summary>
+        /// Performs analysis on the current diagram.
+        /// </summary>
+        /// <param name="req">Diagram request containing XML data for analysis</param>
+        /// <returns>
+        /// 200 OK with analysis results
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint performs cybersecurity analysis on the diagram components.
+        /// The analysis identifies potential security issues, vulnerabilities, and
+        /// provides recommendations based on the network architecture.
+        /// 
+        /// The analysis results include:
+        /// - Security vulnerability findings
+        /// - Network architecture recommendations
+        /// - Component-specific security insights
+        /// - Risk assessment based on diagram layout
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [CsetAuthorize]
         [Route("api/diagram/analysis")]
         [HttpPost]
+        [ProducesResponseType(typeof(List<IDiagramAnalysisNodeMessage>), 200)]
+        [ProducesResponseType(401)]
         public List<IDiagramAnalysisNodeMessage> PerformAnalysis([FromBody] DiagramRequest req)
         {
             // get the assessment ID from the JWT
@@ -117,7 +196,10 @@ namespace CSETWebCore.Api.Controllers
             return PerformAnalysis(req, assessmentId ?? 0);
         }
 
-
+        /// <summary>
+        /// Decodes base64 encoded diagram data.
+        /// </summary>
+        /// <param name="req">Diagram request containing encoded data</param>
         private void DecodeDiagram(DiagramRequest req)
         {
             if (req.DiagramSvg != null)
@@ -136,7 +218,12 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
+        /// <summary>
+        /// Performs analysis on diagram data for a specific assessment.
+        /// </summary>
+        /// <param name="req">Diagram request containing XML data</param>
+        /// <param name="assessmentId">Assessment ID to analyze</param>
+        /// <returns>List of analysis messages and findings</returns>
         private List<IDiagramAnalysisNodeMessage> PerformAnalysis(DiagramRequest req, int assessmentId)
         {
             try
@@ -167,14 +254,25 @@ namespace CSETWebCore.Api.Controllers
 
         }
 
-
         /// <summary>
         /// Returns the diagram XML for the assessment.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with diagram response containing XML and SVG data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the complete diagram data for the current assessment,
+        /// including both XML structure and SVG representation. The response also
+        /// includes the assessment name for display purposes.
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [CsetAuthorize]
         [Route("api/diagram/get")]
         [HttpGet]
+        [ProducesResponseType(typeof(DiagramResponse), 200)]
+        [ProducesResponseType(401)]
         public DiagramResponse GetDiagram()
         {
             // get the assessment ID from the JWT
@@ -188,21 +286,31 @@ namespace CSETWebCore.Api.Controllers
             return response;
         }
 
-
         /// <summary>
         /// Returns the diagram image for the assessment.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with diagram image data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the diagram as an image file for display or export.
+        /// The image is generated from the diagram SVG data and can be used for
+        /// reports, presentations, or external documentation.
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [CsetAuthorize]
         [Route("api/diagram/getimage")]
         [HttpGet]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetDiagramImage()
         {
             int assessmentId = _token.AssessmentForUser();
             string requestUrl = $"{Request.Scheme}://{Request.Host.Value}{Request.Path}";
             return Ok(new { diagram = _diagram.GetDiagramImage(assessmentId, requestUrl) });
         }
-
 
         /// <summary>
         /// Returns a boolean indicating the existence of a diagram.
@@ -218,7 +326,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(_diagram.HasDiagram((int)assessmentId));
         }
-
 
         /// <summary>
         /// Translates XML from CSETD file to XML for Draw.io.
@@ -250,7 +357,6 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
         /// <summary>
         /// Returns the details for symbols.  This is used to build palettes and icons
         /// in the browser.
@@ -276,7 +382,6 @@ namespace CSETWebCore.Api.Controllers
         {
             return _diagram.GetAllComponentSymbols();
         }
-
 
         /// <summary>
         /// A refactor of the diagram data calls
@@ -324,8 +429,6 @@ namespace CSETWebCore.Api.Controllers
             {
             }
         }
-
-
 
         /// <summary>
         /// Returns list of diagram components
@@ -468,7 +571,6 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
         /// <summary>
         /// Changes the component type for a single component.
         /// Normally called from the inventory when resolving unknowns.
@@ -490,7 +592,6 @@ namespace CSETWebCore.Api.Controllers
             return Ok();
         }
 
-
         /// <summary>
         /// Changes the component type for a single component.
         /// Normally called from the inventory when resolving unknowns.
@@ -505,7 +606,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(GetComponents());
         }
-
 
         /// <summary>
         /// Generates an Excel spreadsheet with a row for every assessment that
@@ -525,7 +625,6 @@ namespace CSETWebCore.Api.Controllers
             return File(stream, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet");
         }
 
-
         /// <summary>
         /// get cset diagram templates
         /// </summary>
@@ -540,7 +639,6 @@ namespace CSETWebCore.Api.Controllers
             var templates = _diagram.GetDiagramTemplates();
             return templates;
         }
-
 
         /// <summary>
         /// Get all availabes alerts & advisories from the stored CSAF json files.
@@ -563,7 +661,6 @@ namespace CSETWebCore.Api.Controllers
                 return StatusCode(500);
             }
         }
-
 
         /// <summary>
         /// uploads new CSAF json files to Documents/DiagramVulnerabilities/CSAF to be used for network diagram alerts & advisories
@@ -646,7 +743,6 @@ namespace CSETWebCore.Api.Controllers
             return Ok("CSAF file upload success.");
         }
 
-
         /// <summary>
         /// Saves a new vendor / updates a vendor that was added manually by the user.
         /// </summary>
@@ -668,7 +764,6 @@ namespace CSETWebCore.Api.Controllers
                 return StatusCode(500);
             }
         }
-
 
         /// <summary>
         /// Deletes all CSAF files than contain a given vendor (this assumes each CSAF file only contains a single vendor).

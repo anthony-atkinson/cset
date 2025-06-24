@@ -31,6 +31,11 @@ using NLog;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for managing questions and requirements in CSET assessments.
+    /// Supports question retrieval, answering, observations, and component-specific
+    /// question management for cybersecurity evaluations.
+    /// </summary>
     [CsetAuthorize]
     [ApiController]
     public class QuestionsController : ControllerBase
@@ -46,11 +51,19 @@ namespace CSETWebCore.Api.Controllers
         private readonly IAdminTabBusiness _adminTabBusiness;
         private readonly CSETContext _context;
 
-
-
         /// <summary>
-        /// 
+        /// Initializes a new instance of the QuestionsController.
         /// </summary>
+        /// <param name="token">Service for JWT token management</param>
+        /// <param name="notification">Service for notification operations</param>
+        /// <param name="assessmentUtil">Utility service for assessment operations</param>
+        /// <param name="contact">Service for contact management</param>
+        /// <param name="document">Service for document management</param>
+        /// <param name="htmlConverter">Service for HTML conversion</param>
+        /// <param name="questionRequirement">Service for question requirement management</param>
+        /// <param name="adminTabBusiness">Service for admin operations</param>
+        /// <param name="user">Service for user operations</param>
+        /// <param name="context">Database context</param>
         public QuestionsController(ITokenManager token, INotificationBusiness notification,
             IAssessmentUtil assessmentUtil, IContactBusiness contact, IDocumentBusiness document, IHtmlFromXamlConverter htmlConverter, IQuestionRequirementManager questionRequirement,
             IAdminTabBusiness adminTabBusiness, IUserBusiness user, CSETContext context)
@@ -67,15 +80,37 @@ namespace CSETWebCore.Api.Controllers
             _adminTabBusiness = adminTabBusiness;
         }
 
-
         /// <summary>
         /// Returns a list of all applicable Questions or Requirements for the assessment.
-        /// 
-        /// A shorter list can be retrieved for a single Question_Group_Heading 
-        /// by sending in the 'group' argument.  I'm not sure we need this yet. 
+        /// A shorter list can be retrieved for a single Question_Group_Heading by sending in the 'group' argument.
         /// </summary>
+        /// <param name="group">Optional group heading to filter questions</param>
+        /// <returns>
+        /// 200 OK with question response data
+        /// 400 Bad Request if an error occurs
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves questions or requirements based on the assessment's application mode.
+        /// If the mode is "Questions Based", it returns standard questions. If "Requirements Based",
+        /// it returns requirements instead.
+        /// 
+        /// The response includes:
+        /// - Questions or requirements with their text and metadata
+        /// - Grouping information for organization
+        /// - Answer status and values
+        /// - Supporting documentation references
+        /// 
+        /// Sample request:
+        ///     GET /api/QuestionList?group=Access Control
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/QuestionList")]
+        [ProducesResponseType(typeof(QuestionResponse), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public IActionResult GetList([FromQuery] string group)
         {
             try
@@ -109,12 +144,34 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
         /// <summary>
         /// Returns a list of all Component questions, both default and overrides.
         /// </summary>
+        /// <param name="skin">Optional skin parameter for UI customization</param>
+        /// <param name="group">Optional group parameter for filtering</param>
+        /// <returns>
+        /// 200 OK with component question response data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves component-specific questions for the assessment.
+        /// Component questions are related to specific hardware, software, or network
+        /// components identified in the assessment.
+        /// 
+        /// If skin is set to "RENEW", it triggers verification and validation processes.
+        /// 
+        /// The response includes:
+        /// - Component questions with their text and metadata
+        /// - Default and override question values
+        /// - Component-specific answer options
+        /// - Supporting documentation and references
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/ComponentQuestionList")]
+        [ProducesResponseType(typeof(QuestionResponse), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetComponentQuestionsList([FromQuery] string skin, string group)
         {
             if (skin == "RENEW")
@@ -127,13 +184,29 @@ namespace CSETWebCore.Api.Controllers
             return Ok(resp);
         }
 
-
         /// <summary>
-        /// 
+        /// Returns only component override questions for the assessment.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with component override questions
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves only the component questions that have been overridden
+        /// from their default values. These represent customizations specific to the
+        /// current assessment's components.
+        /// 
+        /// The response includes:
+        /// - Override questions with their custom values
+        /// - Component-specific customizations
+        /// - Override metadata and justification
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/QuestionListComponentOverridesOnly")]
+        [ProducesResponseType(typeof(QuestionResponse), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetComponentOverridesList()
         {
             var manager = new ComponentQuestionBusiness(_context, _assessmentUtil, _token, _questionRequirement);
@@ -142,26 +215,60 @@ namespace CSETWebCore.Api.Controllers
 
         }
 
-
         /// <summary>
-        ///
+        /// Returns child answers for a parent question.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="parentId">ID of the parent question</param>
+        /// <returns>
+        /// 200 OK with list of child answers
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves all child question answers for a given parent question.
+        /// Child questions are follow-up questions that appear based on the parent's answer.
+        /// 
+        /// The response includes:
+        /// - Child question details
+        /// - Answer values for each child
+        /// - Parent-child relationship information
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/GetChildAnswers")]
+        [ProducesResponseType(typeof(IList<GetChildrenAnswersResult>), 200)]
+        [ProducesResponseType(401)]
         public IList<GetChildrenAnswersResult> GetChildAnswers([FromQuery] int parentId)
         {
             int assessmentId = _token.AssessmentForUser();
             return _context.Get_Children_Answers(parentId, assessmentId);
         }
 
-
         /// <summary>
-        ///
+        /// Returns action items for a parent question and finding.
         /// </summary>
-        /// <returns></returns>
+        /// <param name="parentId">ID of the parent question</param>
+        /// <param name="finding_id">ID of the finding</param>
+        /// <returns>
+        /// 200 OK with list of action items
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves action items associated with a specific question and finding.
+        /// Action items represent recommended actions or tasks to address findings.
+        /// 
+        /// The response includes:
+        /// - Action item descriptions
+        /// - Priority and status information
+        /// - Associated findings and questions
+        /// - Recommended remediation steps
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/GetActionItems")]
+        [ProducesResponseType(typeof(IList<ActionItems>), 200)]
+        [ProducesResponseType(401)]
         public IList<ActionItems> GetActionItems([FromQuery] int parentId, [FromQuery] int finding_id)
         {
             int assessId = _token.AssessmentForUser();
@@ -169,13 +276,29 @@ namespace CSETWebCore.Api.Controllers
             return fm.GetActionItems(parentId, finding_id);
         }
 
-
         /// <summary>
         /// Sets the application mode to be question or requirements based.
         /// </summary>
-        /// <param name="mode"></param>
+        /// <param name="mode">Application mode to set ("Questions" or "Requirements")</param>
+        /// <returns>
+        /// 200 OK if mode set successfully
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint sets the application mode for the current assessment.
+        /// The mode determines whether the assessment uses questions or requirements
+        /// as the primary evaluation method.
+        /// 
+        /// Valid modes:
+        /// - "Questions": Uses standard cybersecurity questions
+        /// - "Requirements": Uses regulatory or standard requirements
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpPost]
         [Route("api/SetMode")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult SetMode([FromQuery] string mode)
         {
             _questionRequirement.InitializeManager(_token.AssessmentForUser());
@@ -183,12 +306,28 @@ namespace CSETWebCore.Api.Controllers
             return Ok();
         }
 
-
         /// <summary>
         /// Gets the application mode (question or requirements based).
         /// </summary>
+        /// <returns>
+        /// 200 OK with current application mode
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the current application mode for the assessment.
+        /// The mode indicates whether the assessment is using questions or requirements
+        /// as the primary evaluation method.
+        /// 
+        /// Returns:
+        /// - "Q" for Questions mode
+        /// - "R" for Requirements mode
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/GetMode")]
+        [ProducesResponseType(typeof(string), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetMode()
         {
             int assessmentId = _token.AssessmentForUser();
@@ -204,7 +343,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(mode);
         }
-
 
         /// <summary>
         /// Determines if the assessment is question or requirements based.
@@ -224,7 +362,6 @@ namespace CSETWebCore.Api.Controllers
 
             return mode;
         }
-
 
         /// <summary>
         /// Persists an answer.  This includes Y/N/NA/A as well as comments and alt text.

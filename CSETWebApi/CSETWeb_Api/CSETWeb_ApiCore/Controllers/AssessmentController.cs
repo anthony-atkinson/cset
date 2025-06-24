@@ -31,6 +31,10 @@ using DocumentFormat.OpenXml.Spreadsheet;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for managing cybersecurity assessments in CSET.
+    /// Supports assessment creation, retrieval, modification, and lifecycle management.
+    /// </summary>
     [ApiController]
     [CsetAuthorize]
     public class AssessmentController : ControllerBase
@@ -45,6 +49,18 @@ namespace CSETWebCore.Api.Controllers
         private readonly IGalleryEditor _galleryEditor;
         private readonly IUtilities _utilities;
 
+        /// <summary>
+        /// Initializes a new instance of the AssessmentController.
+        /// </summary>
+        /// <param name="assessmentBusiness">Service for assessment business operations</param>
+        /// <param name="tokenManager">Service for JWT token management</param>
+        /// <param name="documentBusiness">Service for document management</param>
+        /// <param name="context">Database context</param>
+        /// <param name="standards">Service for standards management</param>
+        /// <param name="assessmentUtil">Utility service for assessment operations</param>
+        /// <param name="adminTabBusiness">Service for admin operations</param>
+        /// <param name="galleryEditor">Service for gallery editing</param>
+        /// <param name="utilities">Utility services</param>
         public AssessmentController(IAssessmentBusiness assessmentBusiness,
             ITokenManager tokenManager, IDocumentBusiness documentBusiness, CSETContext context,
             IStandardsBusiness standards, IAssessmentUtil assessmentUtil,
@@ -62,15 +78,36 @@ namespace CSETWebCore.Api.Controllers
         }
 
         /// <summary>
-        /// Creates a new Assessment and populates it with the options defined
-        /// for the specified gallery ID.
+        /// Creates a new assessment based on a gallery configuration.
         /// </summary>
-        /// <param name="workflow"></param>
-        /// <param name="galleryId"></param>
-        /// <param name="csn">Custom Set Name, an optional parameter indicating the set to use in the new assessment.</param>
-        /// <returns></returns>
+        /// <param name="workflow">The workflow type for the assessment</param>
+        /// <param name="galleryGuid">The unique identifier of the gallery item to use as a template</param>
+        /// <param name="csn">Custom Set Name, an optional parameter indicating the set to use in the new assessment</param>
+        /// <returns>
+        /// 200 OK with the created assessment details
+        /// 400 Bad Request if assessment cannot be created without options
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint creates a new assessment using a predefined gallery configuration as a template.
+        /// The gallery configuration defines which standards, maturity models, and other options
+        /// will be included in the assessment.
+        /// 
+        /// Sample request:
+        ///     GET /api/createassessment/gallery?workflow=Questions&galleryGuid=12345678-1234-1234-1234-123456789012&csn=CustomSet
+        /// 
+        /// The assessment will be created with:
+        /// - Standards and requirements based on the gallery configuration
+        /// - Maturity model if specified in the configuration
+        /// - Diagram capability if enabled
+        /// - Security Assurance Level (SAL) settings
+        /// - Application mode restrictions
+        /// </remarks>
         [HttpGet]
         [Route("api/createassessment/gallery")]
+        [ProducesResponseType(typeof(AssessmentDetail), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public IActionResult CreateAssessment([FromQuery] string workflow, [FromQuery] Guid galleryGuid, [FromQuery] string csn = null)
         {
             var currentUserId = _tokenManager.GetUserId();

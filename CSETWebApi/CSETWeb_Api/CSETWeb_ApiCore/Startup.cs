@@ -73,6 +73,9 @@ using CSETWebCore.Interfaces.Cmu;
 using CSETWebCore.Business.Version;
 using CSETWebCore.Interfaces.Version;
 using CSETWebCore.Business.Demographic.Import;
+using System.Reflection;
+using Microsoft.AspNetCore.Mvc.Controllers;
+using CSETWeb_ApiCore.Swagger;
 
 namespace CSETWeb_ApiCore
 {
@@ -175,7 +178,32 @@ namespace CSETWeb_ApiCore
 
             services.AddSwaggerGen(c =>
             {
-                c.SwaggerDoc("v1", new OpenApiInfo { Title = "CSETWeb_ApiCore", Version = "v1" });
+                c.SwaggerDoc("v1", new OpenApiInfo 
+                { 
+                    Title = "CSET API", 
+                    Version = "v1",
+                    Description = "Cyber Security Evaluation Tool (CSET) API for cybersecurity assessments and compliance evaluation.",
+                    Contact = new OpenApiContact
+                    {
+                        Name = "CISA CSET Team",
+                        Email = "cset_PMO@cisa.dhs.gov",
+                        Url = new Uri("https://www.cisa.gov/resources-tools/services/cset")
+                    },
+                    License = new OpenApiLicense
+                    {
+                        Name = "MIT License",
+                        Url = new Uri("https://github.com/cisagov/cset/blob/main/License.txt")
+                    }
+                });
+                
+                // Include XML comments for documentation
+                var xmlFile = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                if (File.Exists(xmlPath))
+                {
+                    c.IncludeXmlComments(xmlPath);
+                }
+                
                 c.ResolveConflictingActions(apiDescription => apiDescription.First());
 
                 // Include 'SecurityScheme' to use JWT Authentication
@@ -201,6 +229,28 @@ namespace CSETWeb_ApiCore
                 {
                     { jwtSecurityScheme, Array.Empty<string>() }
                 });
+                
+                // Add operation filters for better documentation
+                c.OperationFilter<SwaggerDefaultValues>();
+                
+                // Group operations by controller
+                c.TagActionsBy(api =>
+                {
+                    if (api.GroupName != null)
+                    {
+                        return new[] { api.GroupName };
+                    }
+
+                    var controllerActionDescriptor = api.ActionDescriptor as ControllerActionDescriptor;
+                    if (controllerActionDescriptor != null)
+                    {
+                        return new[] { controllerActionDescriptor.ControllerName };
+                    }
+
+                    throw new InvalidOperationException("Unable to determine tag for endpoint.");
+                });
+                
+                c.DocInclusionPredicate((name, api) => true);
             });
         }
 
@@ -211,12 +261,20 @@ namespace CSETWeb_ApiCore
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
-                app.UseSwagger();
-                app.UseSwaggerUI(c =>
-                {
-                    c.SwaggerEndpoint("/swagger/v1/swagger.json", "CSETWeb_ApiCore v1");
-                });
             }
+
+            // Enable Swagger in all environments for API documentation
+            app.UseSwagger();
+            app.UseSwaggerUI(c =>
+            {
+                c.SwaggerEndpoint("/swagger/v1/swagger.json", "CSET API v1");
+                c.RoutePrefix = "api-docs";
+                c.DocumentTitle = "CSET API Documentation";
+                c.DefaultModelsExpandDepth(2);
+                c.DefaultModelExpandDepth(2);
+                c.DisplayRequestDuration();
+                c.DocExpansion(Swashbuckle.AspNetCore.SwaggerUI.DocExpansion.None);
+            });
 
             System.AppDomain.CurrentDomain.SetData("ContentRootPath", env.ContentRootPath);
             System.AppDomain.CurrentDomain.SetData("WebRootPath", env.WebRootPath);
