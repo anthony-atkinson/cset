@@ -19,6 +19,7 @@ The CSET solution has well-organized test projects:
 - **Unit Tests**: Fast execution (<30 seconds), parallel, high coverage
 - **Integration Tests**: Medium execution (<2 minutes), sequential, focused testing
 - **E2E Tests**: Slow execution (<10 minutes), sequential, full UI testing
+- **Performance Tests**: Extended execution (<15 minutes), sequential, performance monitoring
 
 ## 📋 C# Unit and Integration Tests Implementation
 
@@ -392,6 +393,227 @@ The CSET solution has well-organized test projects:
     - `VisualRegressionLoginTests.cs` - Login page visual consistency
     - `VisualRegressionDashboardTests.cs` - Dashboard visual consistency
 
+### ✅ Completed: Performance Testing
+- [✅] **Performance Testing Infrastructure** (`CSETWebCore.PlaywrightTests/Infrastructure/PerformanceTestFixture.cs`)
+  - Comprehensive performance monitoring framework
+  - Memory usage tracking and analysis
+  - Network request monitoring and timing
+  - Page load time measurements
+  - First paint and first contentful paint tracking
+  - Performance metrics collection and reporting
+  - Performance assertions and validation
+  - Automated performance result generation
+  - Performance stability detection
+  - Action-specific performance measurement
+
+- [✅] **Application Performance Tests** (`CSETWebCore.PlaywrightTests/Tests/Performance/ApplicationPerformanceTests.cs`)
+  - **Login Performance Tests:**
+    - Login page load time validation
+    - Login workflow performance measurement
+    - Memory usage during authentication
+    - Network request efficiency
+  - **Dashboard Performance Tests:**
+    - Dashboard loading and rendering performance
+    - Chart rendering time validation
+    - Memory usage during dashboard operations
+    - Component re-rendering performance
+  - **Assessment Creation Performance Tests:**
+    - Assessment creation workflow timing
+    - Gallery item selection responsiveness
+    - Memory usage during assessment creation
+    - Network request patterns
+  - **Question Navigation Performance Tests:**
+    - Question navigation responsiveness
+    - Answer saving performance
+    - Memory usage during question navigation
+    - UI interaction performance
+  - **Report Generation Performance Tests:**
+    - Report generation timing
+    - Memory usage during report generation
+    - Network request efficiency
+    - Large dataset handling
+  - **Full Workflow Performance Tests:**
+    - End-to-end workflow performance
+    - Memory usage stability over time
+    - Network request optimization
+    - Performance regression detection
+  - **Memory Stability Tests:**
+    - Extended use memory monitoring
+    - Memory leak detection
+    - Memory usage patterns analysis
+    - Performance degradation prevention
+  - **Network Efficiency Tests:**
+    - Request count optimization
+    - Request timing analysis
+    - Large request identification
+    - Network performance validation
+
+- [✅] **UI Component Performance Tests** (`CSETWebCore.PlaywrightTests/Tests/Performance/UIComponentPerformanceTests.cs`)
+  - **Form Input Performance Tests:**
+    - Input field responsiveness
+    - Form validation performance
+    - Input clearing performance
+    - Keyboard navigation responsiveness
+  - **Button Interaction Performance Tests:**
+    - Button click responsiveness
+    - Multiple click handling
+    - Button state changes
+    - Interaction feedback timing
+  - **Dropdown/Select Performance Tests:**
+    - Dropdown opening/closing performance
+    - Selection responsiveness
+    - Large list handling
+    - Search functionality performance
+  - **Chart Rendering Performance Tests:**
+    - Chart initialization time
+    - Data update performance
+    - Memory usage during chart operations
+    - Chart interaction responsiveness
+  - **Table Rendering Performance Tests:**
+    - Table load time validation
+    - Large dataset handling
+    - Sorting and filtering performance
+    - Memory usage during table operations
+  - **Modal Dialog Performance Tests:**
+    - Modal opening/closing performance
+    - Modal content loading
+    - Modal interaction responsiveness
+    - Memory usage during modal operations
+  - **Navigation Performance Tests:**
+    - Menu navigation responsiveness
+    - Page transition performance
+    - Navigation state management
+    - Memory usage during navigation
+  - **Text Rendering Performance Tests:**
+    - Text display performance
+    - Large text handling
+    - Text formatting performance
+    - Memory usage during text operations
+  - **Image Loading Performance Tests:**
+    - Image load time validation
+    - Image optimization verification
+    - Memory usage during image operations
+    - Image caching performance
+  - **Scroll Performance Tests:**
+    - Smooth scrolling validation
+    - Large content scrolling
+    - Scroll event handling
+    - Memory usage during scrolling
+  - **Keyboard Input Performance Tests:**
+    - Keyboard navigation responsiveness
+    - Key event handling
+    - Input field focus management
+    - Keyboard shortcut performance
+  - **Mouse Interaction Performance Tests:**
+    - Mouse hover responsiveness
+    - Click event handling
+    - Drag and drop performance
+    - Mouse event optimization
+  - **Component Re-rendering Performance Tests:**
+    - Re-render timing validation
+    - State change performance
+    - Component update optimization
+    - Memory usage during re-renders
+  - **Animation Performance Tests:**
+    - Animation smoothness validation
+    - Animation timing consistency
+    - Memory usage during animations
+    - Animation optimization
+
+- [✅] **Performance Test Execution Scripts**
+  - **Bash Script** (`scripts/run-performance-tests.sh`) - Cross-platform performance test execution
+  - **PowerShell Script** (`scripts/run-performance-tests.ps1`) - Windows/Azure DevOps performance test execution
+  - Automated test configuration management
+  - Performance result aggregation and reporting
+  - Performance summary generation
+  - Performance data file management
+  - Cross-platform compatibility support
+
+### ✅ Completed: File Repository E2E Tests
+- [✅] **File Repository E2E Tests** (`CSETWebCore.PlaywrightTests/Tests/FileRepository/FileRepositoryTests.cs`)
+  - **File Upload Tests:**
+    - Valid file upload workflow
+    - Multiple file batch upload
+    - Large file upload handling
+    - Invalid file type error handling
+    - Empty file error handling
+    - Upload progress tracking
+    - Upload cancellation
+    - Drag and drop upload
+    - File size limit enforcement
+    - Concurrent upload handling
+    - Network interruption handling
+  - **File Download Tests:**
+    - Valid file download workflow
+    - Non-existent file download error handling
+    - Download progress tracking
+  - **File Management Tests:**
+    - File deletion workflow
+    - File renaming functionality
+    - File details display
+    - File preview functionality
+    - File versioning management
+  - **File Repository Features:**
+    - File search functionality
+    - File filtering by type
+    - File sorting by date
+    - Bulk operations (selection, deletion)
+    - Accessibility support (ARIA labels, keyboard navigation, screen reader)
+  - **Page Object:** `CSETWebCore.PlaywrightTests/PageObjects/FileRepository/FileRepositoryPage.cs`
+  - **Test Runners:**
+    - Bash script (`run-file-repository-tests.sh`) - Cross-platform support
+    - PowerShell script (`run-file-repository-tests.ps1`) - Windows/Azure DevOps integration
+  - **Comprehensive Coverage:**
+    - 25+ test scenarios covering all file repository functionality
+    - Error handling and edge cases
+    - Performance and accessibility testing
+    - Cross-browser compatibility validation
+
+### ✅ Completed: Module Builder E2E Tests
+- [✅] **Module Builder E2E Tests** (`CSETWebCore.PlaywrightTests/Tests/ModuleBuilder/ModuleBuilderTests.cs`)
+  - **Module Management Tests:**
+    - Module list navigation and display
+    - New module creation workflow
+    - Module details editing and validation
+    - Module cloning functionality
+    - Module deletion with confirmation
+  - **Requirements Management Tests:**
+    - Adding new requirements with categories and subcategories
+    - Editing existing requirements
+    - Deleting requirements with confirmation
+    - Requirement search functionality
+    - Requirement filtering by category
+    - Requirement sorting by title
+    - Bulk operations on requirements
+  - **Questions Management Tests:**
+    - Adding new questions with categories and subcategories
+    - Editing existing questions
+    - Deleting questions with confirmation
+    - Question search functionality
+    - Question filtering and sorting
+  - **Module Builder Features:**
+    - Clone from existing modules functionality
+    - Document management integration
+    - Category and subcategory management
+    - Validation and error handling
+    - Search and filtering capabilities
+    - Bulk operations support
+    - Export and import functionality
+    - Accessibility compliance
+    - Performance monitoring
+    - Error handling and recovery
+    - Data integrity validation
+    - Concurrency handling
+  - **Page Object:** `CSETWebCore.PlaywrightTests/PageObjects/ModuleBuilder/ModuleBuilderPage.cs`
+  - **Test Runners:**
+    - Bash script (`run-module-builder-tests.sh`) - Cross-platform support
+    - PowerShell script (`run-module-builder-tests.ps1`) - Windows/Azure DevOps integration
+  - **Comprehensive Coverage:**
+    - 30+ test scenarios covering all module builder functionality
+    - Error handling and validation testing
+    - Performance and accessibility testing
+    - Cross-browser compatibility validation
+
 ## 🧪 Test Implementation Guidelines
 
 ### C# Unit/Integration Tests
@@ -428,6 +650,29 @@ public class FeatureE2ETests : PlaywrightTestBase
 }
 ```
 
+### Performance Tests
+```csharp
+[TestFixture]
+[TestCategory("Performance")]
+[TestCategory("E2E")]
+public class PerformanceTests : PerformanceTestFixture
+{
+    [Test]
+    [TestCategory("Slow")]
+    public async Task Feature_Should_PerformWithinLimits()
+    {
+        // Perform actions
+        // Assert performance metrics
+        AssertPerformanceMetrics(new PerformanceAssertions
+        {
+            MaxDuration = 5.0,
+            MaxPageLoadTime = 3000,
+            MaxMemoryIncreaseMB = 20
+        });
+    }
+}
+```
+
 ## 📊 Test Execution Commands
 
 ### Using Test Scripts
@@ -440,6 +685,9 @@ public class FeatureE2ETests : PlaywrightTestBase
 
 # Run E2E tests only
 ./scripts/run-e2e-tests.sh
+
+# Run performance tests only
+./scripts/run-performance-tests.sh
 
 # Run all tests
 ./scripts/run-all-tests.sh
@@ -455,6 +703,9 @@ dotnet test --filter "TestCategory=Integration"
 
 # Run E2E tests
 dotnet test --filter "TestCategory=E2E"
+
+# Run performance tests
+dotnet test --filter "TestCategory=Performance"
 
 # Run fast tests only
 dotnet test --filter "TestExecutionType=Fast"
@@ -479,10 +730,10 @@ dotnet test --filter "TestExecutionType=Fast"
 ### 🟢 Lower Priority - Supporting Features
 1. **Cross-Browser Testing** (✅ Completed)
 2. **Visual Regression Testing** (✅ Completed)
-3. **Performance Testing** (📋 Planned)
-4. **Notification System** (📋 Planned)
-5. **File Repository** (📋 Planned)
-6. **Module Builder** (📋 Planned)
+3. **Performance Testing** (✅ Completed)
+4. **Notification System Testing** (✅ Completed)
+5. **File Repository Testing** (✅ Completed)
+6. **Module Builder Testing** (✅ Completed)
 7. **Gallery Parser** (📋 Planned)
 
 ## 📈 Success Metrics
@@ -491,17 +742,35 @@ dotnet test --filter "TestExecutionType=Fast"
 - **Unit Tests**: >80% line coverage
 - **Integration Tests**: >70% line coverage
 - **E2E Tests**: >90% feature coverage
+- **Performance Tests**: >95% performance metric coverage
+- **Notification Tests**: >95% notification functionality coverage
 
 ### Performance Targets
 - **Unit Tests**: <30 seconds execution time
 - **Integration Tests**: <2 minutes execution time
 - **E2E Tests**: <10 minutes execution time
-- **Full Test Suite**: <15 minutes execution time
+- **Performance Tests**: <15 minutes execution time
+- **Notification Tests**: <5 minutes execution time
+- **Full Test Suite**: <20 minutes execution time
+
+### Performance Test Targets
+- **Page Load Time**: <5 seconds
+- **First Paint**: <2.5 seconds
+- **First Contentful Paint**: <3 seconds
+- **DOM Content Loaded**: <3 seconds
+- **Memory Increase**: <50MB for full workflow
+- **Network Requests**: <25 for dashboard
+- **Average Request Time**: <1000ms
+- **UI Responsiveness**: <1000ms for interactions
+- **Notification Display Time**: <1000ms
+- **Email Delivery Time**: <30 seconds
 
 ### Reliability Targets
 - **Unit Tests**: >99% pass rate
 - **Integration Tests**: >95% pass rate
 - **E2E Tests**: >90% pass rate
+- **Performance Tests**: >85% pass rate
+- **Notification Tests**: >95% pass rate
 
 ## 🚀 CI/CD Integration
 
@@ -527,6 +796,20 @@ jobs:
     steps:
       - name: Run E2E Tests
         run: ./scripts/run-e2e-tests.sh
+
+  performance-tests:
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    steps:
+      - name: Run Performance Tests
+        run: ./scripts/run-performance-tests.sh
+
+  notification-tests:
+    runs-on: ubuntu-latest
+    needs: e2e-tests
+    steps:
+      - name: Run Notification Tests
+        run: ./scripts/run-notification-tests.sh
 ```
 
 ### Azure DevOps Pipeline
@@ -560,6 +843,26 @@ stages:
       inputs:
         command: 'test'
         arguments: '--filter "TestCategory=E2E"'
+
+- stage: PerformanceTests
+  dependsOn: E2ETests
+  jobs:
+  - job: PerformanceTests
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'test'
+        arguments: '--filter "TestCategory=Performance"'
+
+- stage: NotificationTests
+  dependsOn: E2ETests
+  jobs:
+  - job: NotificationTests
+    steps:
+    - task: DotNetCoreCLI@2
+      inputs:
+        command: 'test'
+        arguments: '--filter "TestCategory=Notifications"'
 ```
 
 ## 📝 Implementation Notes
@@ -568,40 +871,212 @@ stages:
 - **Unit Tests**: Use AutoFixture and Bogus for test data generation
 - **Integration Tests**: Use in-memory database with seeded data
 - **E2E Tests**: Use dedicated test database with realistic data
+- **Performance Tests**: Use optimized test data for consistent measurements
+- **Notification Tests**: Use test email addresses and notification templates
 
 ### Mocking Strategy
 - **Unit Tests**: Mock all external dependencies
 - **Integration Tests**: Mock external services, use real database
 - **E2E Tests**: Use real services and database
+- **Performance Tests**: Use real services with performance monitoring
+- **Notification Tests**: Use test SMTP server for email testing
 
 ### Test Isolation
 - **Unit Tests**: Each test is completely isolated
 - **Integration Tests**: Tests can share database state
 - **E2E Tests**: Tests can share browser session
+- **Performance Tests**: Tests are isolated with performance monitoring
+- **Notification Tests**: Tests are isolated with clean notification state
+
+### Performance Testing Strategy
+- **Baseline Establishment**: Establish performance baselines for all critical workflows
+- **Regression Detection**: Monitor for performance regressions in CI/CD
+- **Resource Monitoring**: Track memory usage, network requests, and CPU utilization
+- **Load Testing**: Simulate realistic user loads and data volumes
+- **Optimization Validation**: Verify performance improvements after optimizations
+
+### Notification Testing Strategy
+- **UI Notification Testing**: Test all notification types (version, upgrade, snackbar, alerts)
+- **Email Notification Testing**: Test email functionality with test SMTP server
+- **Accessibility Testing**: Ensure notifications meet accessibility standards
+- **Performance Testing**: Monitor notification display and email delivery performance
+- **Error Handling**: Test notification error scenarios and edge cases
+- **Security Testing**: Validate email security and rate limiting
 
 ## 🎯 Next Steps
 
 ### Immediate Actions
-1. **✅ Complete Advanced Playwright Scenarios** - Dashboard and User Management E2E tests implemented
-2. **Set up CI/CD Integration** - Configure automated test execution
-3. **Performance Testing Integration** - Automated performance validation
+1. **✅ Complete Performance Testing** - Comprehensive performance testing infrastructure implemented
+2. **✅ Complete Notification System Testing** - Comprehensive notification testing infrastructure implemented
+3. **✅ Complete File Repository Testing** - Comprehensive file repository testing infrastructure implemented
+4. **✅ Complete Module Builder Testing** - Comprehensive module builder testing infrastructure implemented
+5. **Set up CI/CD Integration** - Configure automated test execution
+6. **Performance Baseline Establishment** - Establish performance baselines for all workflows
 
 ### Next Priority Tasks
-1. **Cross-Browser Testing** - Chrome, Firefox, Safari compatibility testing
-2. **Visual Regression Testing** - UI consistency validation
-3. **Performance Testing** - Automated performance validation
-4. **Additional Feature Testing** - Notification System, File Repository, Module Builder, Gallery Parser
+1. **Gallery Parser Testing** - Test gallery parsing and validation
 
 ### Long-term Goals
-1. **Visual Regression Testing** - UI consistency validation
-2. **Cross-Browser Testing** - Chrome, Firefox, Safari compatibility
-3. **Mobile Responsive Testing** - Mobile device compatibility
-4. **Accessibility Testing** - WCAG compliance validation
-5. **Comprehensive Test Coverage** - 90%+ feature coverage across all application areas
+1. **Mobile Responsive Testing** - Mobile device compatibility and performance
+2. **Accessibility Testing** - WCAG compliance validation
+3. **Load Testing** - High-volume user simulation
+4. **Comprehensive Test Coverage** - 95%+ feature coverage across all application areas
+5. **Performance Optimization** - Continuous performance improvement based on test results
 
 ## 📚 Related Documentation
 
 - [UNIT_TEST_IMPLEMENTATION_TASKS.md](UNIT_TEST_IMPLEMENTATION_TASKS.md) - Detailed unit test implementation plan
 - [scripts/README.md](scripts/README.md) - Test execution script documentation
 
-This updated approach provides clear separation between different test types while maintaining comprehensive coverage across all application layers. 
+## 🔔 Notification System Testing Implementation
+
+### Overview
+Comprehensive notification system testing has been implemented for CSET, covering both UI notifications and email notifications with full accessibility and performance testing.
+
+### Test Coverage
+
+#### UI Notification Tests
+- **Version Notifications**: Update availability, version comparison, and interaction
+- **Upgrade Notifications**: Assessment upgrade prompts and workflows
+- **Snackbar Notifications**: Temporary success/error messages with auto-dismiss
+- **Alert Notifications**: Bootstrap-style alerts (success, warning, error, info)
+- **Modal Notifications**: Dialog-based notifications with proper focus management
+- **Toast Notifications**: Overlay notifications with positioning
+
+#### Email Notification Tests
+- **Assessment Invitations**: User invitation to participate in assessments
+- **Password Resets**: Password reset and account recovery emails
+- **Email Configuration**: SMTP settings validation and testing
+- **Email Templates**: Template management and variable substitution
+- **Email Preferences**: User notification preference management
+- **Email Security**: Encryption, authentication, and spam protection
+- **Email Tracking**: Delivery status and email history
+- **Rate Limiting**: Email sending rate limits and error handling
+
+#### Accessibility Testing
+- **ARIA Labels**: Proper ARIA labels and screen reader support
+- **Keyboard Navigation**: Full keyboard accessibility for notifications
+- **Focus Management**: Proper focus handling in modal notifications
+- **Screen Reader Text**: Appropriate screen reader announcements
+- **Color Contrast**: Visual accessibility compliance
+
+#### Performance Testing
+- **Display Timing**: Notification display performance measurement
+- **Memory Usage**: Memory consumption during notifications
+- **Network Efficiency**: Network request optimization
+- **UI Responsiveness**: Interaction responsiveness during notifications
+
+#### Error Handling
+- **Invalid Email Validation**: Email address format validation
+- **SMTP Configuration Errors**: Email server configuration issues
+- **Network Connectivity**: Network failure scenarios
+- **Template Rendering**: Email template error handling
+
+### Test Infrastructure
+
+#### Page Objects
+- **NotificationPage**: Comprehensive page object for notification interactions
+- **Email Notification Methods**: Email-specific testing methods
+- **Accessibility Methods**: Accessibility testing utilities
+- **Performance Methods**: Performance measurement utilities
+
+#### Test Classes
+- **NotificationSystemTests**: Main notification system test suite
+- **EmailNotificationTests**: Email-specific notification tests
+- **Accessibility Tests**: Notification accessibility compliance tests
+- **Performance Tests**: Notification performance validation tests
+
+#### Test Runners
+- **run-notification-tests.sh**: Bash script for Unix/Linux environments
+- **run-notification-tests.ps1**: PowerShell script for Windows environments
+- **Configuration Management**: Dynamic test configuration for different environments
+- **Reporting**: Comprehensive test reporting and result aggregation
+
+### Configuration
+
+#### Test Settings
+```json
+{
+  "Notifications": {
+    "EmailTesting": true,
+    "UITesting": true,
+    "TestEmailAddress": "test@example.com",
+    "SmtpSettings": {
+      "Host": "localhost",
+      "Port": 1025,
+      "UseSsl": false
+    }
+  }
+}
+```
+
+#### Browser Configuration
+- **Default Browser**: Chromium for consistent testing
+- **Headless Mode**: Enabled for CI/CD compatibility
+- **Screenshot Capture**: On failure for debugging
+- **Video Recording**: Disabled for performance
+- **Accessibility Testing**: Enabled for compliance validation
+
+### Execution
+
+#### Command Line
+```bash
+# Run all notification tests
+./scripts/run-notification-tests.sh
+
+# Run with specific configuration
+./scripts/run-notification-tests.sh Release detailed true true
+
+# Run on Windows
+.\scripts\run-notification-tests.ps1 -Configuration Release -Verbosity detailed
+```
+
+#### CI/CD Integration
+```yaml
+notification-tests:
+  runs-on: ubuntu-latest
+  steps:
+    - name: Run Notification Tests
+      run: ./scripts/run-notification-tests.sh
+    - name: Upload Test Results
+      uses: actions/upload-artifact@v2
+      with:
+        name: notification-test-results
+        path: TestResults/Notifications/
+```
+
+### Results and Reporting
+
+#### Test Reports
+- **TRX Files**: Standard .NET test result files
+- **Coverage Reports**: Code coverage for notification functionality
+- **Performance Reports**: Notification performance metrics
+- **Accessibility Reports**: Accessibility compliance validation
+
+#### Summary Reports
+- **Notification Summary**: Comprehensive test summary in Markdown
+- **Aggregated Results**: JSON format for programmatic processing
+- **Performance Metrics**: Notification performance benchmarks
+- **Accessibility Compliance**: WCAG compliance validation results
+
+### Best Practices
+
+#### Test Design
+- **Isolation**: Each test is independent and isolated
+- **Reliability**: Tests are designed for consistent execution
+- **Maintainability**: Page objects for easy maintenance
+- **Readability**: Clear test names and descriptions
+
+#### Error Handling
+- **Graceful Degradation**: Tests handle missing features gracefully
+- **Conditional Testing**: Tests adapt to available functionality
+- **Error Reporting**: Clear error messages and debugging information
+- **Recovery**: Automatic recovery from test failures
+
+#### Performance Considerations
+- **Efficient Selectors**: Optimized element selectors for performance
+- **Minimal Waits**: Strategic use of waits to minimize test time
+- **Resource Management**: Proper cleanup of test resources
+- **Parallel Execution**: Support for parallel test execution
+
+This comprehensive notification testing implementation ensures robust validation of CSET's notification system functionality, performance, and accessibility compliance. 
