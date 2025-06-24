@@ -8,6 +8,16 @@
     "VideoPath": "test-results/videos",
     "ScreenshotPath": "test-results/screenshots"
   },
+  "CrossBrowser": {
+    "Enabled": true,
+    "Browsers": ["chromium", "firefox", "webkit"],
+    "ParallelExecution": false,
+    "ScreenshotOnFailure": true,
+    "VideoRecording": false,
+    "PerformanceMonitoring": true,
+    "MemoryMonitoring": true,
+    "AccessibilityTesting": false
+  },
   "Test": {
     "DefaultTimeout": 30000,
     "NavigationTimeout": 30000,
@@ -26,6 +36,7 @@
   "Features": {
     "EnableSecurityTests": true,
     "EnablePerformanceTests": false,
-    "EnableAccessibilityTests": false
+    "EnableAccessibilityTests": false,
+    "EnableCrossBrowserTests": true
   }
 } 
