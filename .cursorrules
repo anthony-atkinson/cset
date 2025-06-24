@@ -1,0 +1,122 @@
+# CSET (Cyber Security Evaluation Tool) Project Context
+
+## Project Overview
+CSET is a cybersecurity assessment tool developed by CISA and Idaho National Laboratory. It guides users through collecting facility-specific cybersecurity information and provides recommendations based on security standards and best practices.
+
+## Architecture
+- **Frontend**: Angular 19 (CSETWebNg/) - Single Page Application with Electron desktop support
+- **Backend**: .NET 7+ Web API (CSETWebApi/) - RESTful API with multiple layers
+- **Database**: Microsoft SQL Server 2022 (LocalDB for standalone, full SQL Server for enterprise)
+- **Deployment**: Docker containers with Docker Compose orchestration
+
+## Tech Stack
+
+### Frontend (CSETWebNg/)
+- Angular 19.2+ with TypeScript 5.8+
+- Angular Material for UI components
+- Bootstrap 5.3+ for styling
+- Chart.js for data visualization
+- Monaco Editor for code editing
+- Electron for desktop app packaging
+- SCSS for styling
+- ESLint for code quality
+
+### Backend (CSETWebApi/)
+- .NET 7+ with C#
+- ASP.NET Core Web API
+- Entity Framework Core for data access
+- SQL Server database
+- RESTful API architecture
+- Layered architecture pattern:
+  - Controllers (API endpoints)
+  - Business Logic layer
+  - Data Access layer
+  - Models and DTOs
+
+### Database
+- Microsoft SQL Server 2022
+- Database scripts in DatabaseScripts/
+- Entity Framework Code First approach
+
+## Project Structure
+
+### Frontend (CSETWebNg/)
+```
+src/
+├── app/           # Angular application code
+├── assets/        # Static assets
+├── environments/  # Environment configurations
+└── ...
+```
+
+### Backend (CSETWebApi/)
+```
+CSETWeb_Api/
+├── CSETWebCore.ApiCore/        # Main API controllers
+├── CSETWebCore.Business/       # Business logic layer
+├── CSETWebCore.DataLayer/      # Data access layer
+├── CSETWebCore.Model/          # Entity models
+├── CSETWebCore.Interfaces/     # Interface definitions
+└── ...
+```
+
+## Development Guidelines
+
+### Code Style
+- Follow C# naming conventions (PascalCase for public members, camelCase for private)
+- Use Angular style guide for TypeScript/Angular code
+- Use meaningful variable and method names
+- Add XML documentation comments for public C# APIs
+- Use TypeScript strict mode
+
+### Security Considerations
+- This is a cybersecurity tool - security is paramount
+- Follow secure coding practices
+- Validate all inputs
+- Use parameterized queries
+- Implement proper authentication and authorization
+- Be mindful of sensitive data handling
+
+### Testing
+- Write unit tests for business logic
+- Use Angular testing utilities for frontend tests
+- Mock external dependencies in tests
+- Maintain good test coverage
+
+### Database
+- Use Entity Framework Core for data access
+- Database migrations should be in DatabaseScripts/
+- Follow database naming conventions
+- Always use parameterized queries
+
+## Build and Deployment
+
+### Local Development
+- Use Docker Compose for full stack: `docker compose up`
+- Frontend dev server: `cd CSETWebNg && npm start`
+- API can be run from Visual Studio or `dotnet run`
+
+### Environment Files
+- Copy `env.dist` to `.env` for Docker configuration
+- Contains database connection strings and other config
+
+## Key Features to Understand
+- Assessment creation and management
+- Question sets and standards mapping
+- Report generation and export
+- Multi-user support
+- Offline capability (standalone mode)
+- Enterprise deployment options
+
+## Important Notes
+- This is open source government software (MIT/Apache 2.0 license)
+- Maintained by CISA and Idaho National Laboratory
+- Used for critical infrastructure cybersecurity assessments
+- Must maintain high reliability and security standards
+
+## Common Patterns
+- Use dependency injection throughout the .NET stack
+- Angular services for shared functionality
+- RESTful API design principles
+- Separation of concerns in layered architecture
+- Repository pattern for data access 

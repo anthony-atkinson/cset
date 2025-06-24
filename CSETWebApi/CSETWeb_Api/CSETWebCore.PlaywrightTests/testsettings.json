@@ -1,0 +1,31 @@
+{
+  "BaseUrl": "http://localhost:4200",
+  "ApiUrl": "http://localhost:5000",
+  "Browser": {
+    "Default": "chromium",
+    "Headless": false,
+    "SlowMo": 0,
+    "VideoPath": "test-results/videos",
+    "ScreenshotPath": "test-results/screenshots"
+  },
+  "Test": {
+    "DefaultTimeout": 30000,
+    "NavigationTimeout": 30000,
+    "TakeScreenshotOnFailure": true,
+    "RecordVideo": false
+  },
+  "TestCredentials": {
+    "Username": "test@example.com",
+    "Password": "TestPassword123!",
+    "AccessKey": ""
+  },
+  "Database": {
+    "ConnectionString": "",
+    "ResetBeforeTests": false
+  },
+  "Features": {
+    "EnableSecurityTests": true,
+    "EnablePerformanceTests": false,
+    "EnableAccessibilityTests": false
+  }
+} 
