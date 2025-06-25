@@ -119,4 +119,38 @@ CSETWeb_Api/
 - Angular services for shared functionality
 - RESTful API design principles
 - Separation of concerns in layered architecture
-- Repository pattern for data access 
+- Repository pattern for data access
+
+## 🚨 CRITICAL DEVELOPMENT RULE: C# FRAMEWORK PRIORITY
+
+### **PRIORITY: C# FRAMEWORKS ONLY**
+- **AVOID**: JavaScript/TypeScript development, Angular component testing, Node.js dependencies
+- **FOCUS**: C# frameworks, Blazor Server migration, .NET testing frameworks
+- **PREFERRED**: MSTest, NUnit, xUnit for testing
+- **TARGET**: Complete migration from Angular to Blazor Server
+
+### **Testing Framework Preferences**
+1. **MSTest** - Primary choice for CSET project
+2. **NUnit** - Secondary choice for advanced testing scenarios
+3. **xUnit** - Alternative for specific testing needs
+4. **Moq** - For mocking dependencies
+5. **FluentAssertions** - For readable assertions
+6. **AutoFixture** - For test data generation
+
+### **Frontend Migration Priority**
+- **CURRENT**: Angular 19 (CSETWebNg/) - **DEPRECATING**
+- **TARGET**: Blazor Server (CSETWebBlazor/) - **ACTIVE DEVELOPMENT**
+- **FOCUS**: Complete C# solution, eliminate JavaScript dependencies
+
+### **Development Tasks**
+- **PRIORITY 1**: C# unit tests using MSTest/Moq/FluentAssertions
+- **PRIORITY 2**: Blazor Server component development
+- **PRIORITY 3**: C# integration tests using WebApplicationFactory
+- **PRIORITY 4**: E2E tests using Playwright with C# bindings
+- **AVOID**: Angular/TypeScript development unless absolutely necessary
+
+### **Testing Implementation**
+- Use `CSETWebCore.BusinessTests` for business logic testing
+- Use `CSETWebCore.ApiTests` for API integration testing
+- Use `CSETWebCore.PlaywrightTests` for E2E testing
+- Focus on C# test coverage, not JavaScript/TypeScript tests 
