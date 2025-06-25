@@ -1,70 +1,33 @@
 # Controllers Needing Documentation
 
 ## 🎯 **Overview**
-This document tracks the remaining 23 controllers that need XML documentation in the CSET API. All high-priority, medium-priority, and high-impact lower-priority controllers are now complete! We're making excellent progress and have documented the most critical controllers.
+This document tracks the remaining 13 controllers that need XML documentation in the CSET API. All high-priority, medium-priority, high-impact lower-priority, Phase 1 Framework & Standard, Phase 2 Maturity Model, Phase 3 Analytics & Dashboard, and Phase 4 Assessment Management controllers are now complete! We're making excellent progress and have documented the most critical controllers.
 
 ## 📊 **Quick Stats**
 - **Total Controllers**: 50
-- **Documented**: 27 (54%)
-- **Needs Documentation**: 23 (46%)
+- **Documented**: 37 (74%)
+- **Needs Documentation**: 13 (26%)
 - **High Priority**: ✅ Complete
 - **Medium Priority**: ✅ Complete
 - **High-Impact Lower Priority**: ✅ Complete
+- **Phase 1 Framework & Standard**: ✅ Complete
+- **Phase 2 Maturity Model**: ✅ Complete
+- **Phase 3 Analytics & Dashboard**: ✅ Complete
+- **Phase 4 Assessment Management**: ✅ Complete
 
 ---
 
-## ✅ **Recently Completed High-Impact Controllers**
-
-### **Security & User Management Controllers**
-| Controller | Purpose | Status | Priority |
-|------------|---------|--------|----------|
-| **ResetPasswordController** | Password reset functionality | ✅ Documented | High-Impact |
-
-### **Administrative Controllers**
-| Controller | Purpose | Status | Priority |
-|------------|---------|--------|----------|
-| **AdminTabController** | Admin tab operations | ✅ Documented | High-Impact |
-
-### **Framework & Standard Controllers**
-| Controller | Purpose | Status | Priority |
-|------------|---------|--------|----------|
-| **CmmcController** | CMMC framework operations | ✅ Documented | High-Impact |
-
-### **System Information Controllers**
-| Controller | Purpose | Status | Priority |
-|------------|---------|--------|----------|
-| **VersionController** | Version information | ✅ Documented | High-Impact |
-
----
-
-## ❌ **Remaining Controllers (23 remaining)**
-
-### **Analytics & Dashboard Controllers**
-| Controller | Purpose | Status |
-|------------|---------|--------|
-| AnalyticsDashboardController | Analytics dashboard | ❌ Needs Documentation |
-| DashboardTsaController | TSA dashboard operations | ❌ Needs Documentation |
+## ✅ **Recently Completed Phase 4 Controllers**
 
 ### **Assessment Management Controllers**
-| Controller | Purpose | Status |
-|------------|---------|--------|
-| AggregationAnalysisController | Aggregation analysis | ❌ Needs Documentation |
-| AggregationMaturityController | Maturity aggregation | ❌ Needs Documentation |
+| Controller | Purpose | Status | Priority |
+|------------|---------|--------|----------|
+| **AggregationAnalysisController** | Aggregation analysis | ✅ Documented | Phase 4 |
+| **AggregationMaturityController** | Maturity aggregation | ✅ Documented | Phase 4 |
 
-### **Framework & Standard Controllers**
-| Controller | Purpose | Status |
-|------------|---------|--------|
-| FrameworkController | Framework management | ❌ Needs Documentation |
-| CmuController | CMU-specific functionality | ❌ Needs Documentation |
-| CRRMController | CRRM operations | ❌ Needs Documentation |
-| ReportsCmmcController | CMMC reports | ❌ Needs Documentation |
-| ReportsCmuController | CMU reports | ❌ Needs Documentation |
+---
 
-### **Maturity Model Controllers**
-| Controller | Purpose | Status |
-|------------|---------|--------|
-| MaturityC2M2Controller | C2M2 maturity model | ❌ Needs Documentation |
-| MaturityCpgController | CPG maturity model | ❌ Needs Documentation |
+## ❌ **Remaining Controllers (13 remaining)**
 
 ### **Demographics Controllers**
 | Controller | Purpose | Status |
@@ -103,26 +66,12 @@ This document tracks the remaining 23 controllers that need XML documentation in
 
 ## 🎯 **Recommended Documentation Order**
 
-### **Phase 1: Framework & Standard Controllers (5 controllers)**
-1. **FrameworkController** - Core framework management
-2. **CmuController** - CMU-specific functionality
-3. **CRRMController** - CRRM operations
-4. **ReportsCmmcController** - CMMC reports
-5. **ReportsCmuController** - CMU reports
+### **Phase 5: Demographics Controllers (3 controllers)**
+1. **DemographicsExtController** - Extended demographics
+2. **DemographicsExtendedContoller** - Extended demographics (alternate)
+3. **DemographicsImportController** - Demographics import
 
-### **Phase 2: Maturity Model Controllers (2 controllers)**
-1. **MaturityC2M2Controller** - C2M2 maturity model
-2. **MaturityCpgController** - CPG maturity model
-
-### **Phase 3: Analytics & Dashboard Controllers (2 controllers)**
-1. **AnalyticsDashboardController** - Analytics dashboard
-2. **DashboardTsaController** - TSA dashboard operations
-
-### **Phase 4: Assessment Management Controllers (2 controllers)**
-1. **AggregationAnalysisController** - Aggregation analysis
-2. **AggregationMaturityController** - Maturity aggregation
-
-### **Phase 5: Remaining Controllers (12 controllers)**
+### **Phase 6: Remaining Controllers (10 controllers)**
 Document the remaining controllers in any order, focusing on:
 - Controllers with similar functionality together
 - Controllers used in the same workflows
@@ -209,6 +158,25 @@ Document the remaining controllers in any order, focusing on:
 - CmmcController ✅
 - VersionController ✅
 
+### **Phase 1 Framework & Standard Controllers (5)**
+- FrameworkController ✅
+- CmuController ✅
+- CRRMController ✅
+- ReportsCmmcController ✅
+- ReportsCmuController ✅
+
+### **Phase 2 Maturity Model Controllers (2)**
+- MaturityC2M2Controller ✅
+- MaturityCpgController ✅
+
+### **Phase 3 Analytics & Dashboard Controllers (2)**
+- AnalyticsDashboardController ✅
+- DashboardTsaController ✅
+
+### **Phase 4 Assessment Management Controllers (2)**
+- AggregationAnalysisController ✅
+- AggregationMaturityController ✅
+
 ### **Partially Documented (4)**
 - UserController 🔄
 - MaturityController 🔄
@@ -218,5 +186,5 @@ Document the remaining controllers in any order, focusing on:
 ---
 
 **Last Updated**: January 2025  
-**Status**: 54% Complete - All High-Impact Controllers Complete! 🎉  
-**Next Review**: After completing Framework & Standard Controllers 
+**Status**: 74% Complete - Phase 4 Assessment Management Controllers Complete! 🎉  
+**Next Review**: After completing Phase 5 Demographics Controllers 

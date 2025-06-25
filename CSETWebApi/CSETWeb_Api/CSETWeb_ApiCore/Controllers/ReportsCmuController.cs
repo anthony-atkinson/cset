@@ -27,7 +27,10 @@ using CSETWebCore.Model.Maturity;
 namespace CSETWebCore.Api.Controllers
 {
     /// <summary>
-    /// Common API intended to supply report content for EDM, CRR and IMR.
+    /// Provides endpoints for CMU (Carnegie Mellon University) report generation in CSET.
+    /// This controller supplies comprehensive report content for EDM (External Dependencies Management),
+    /// CRR (Cyber Resilience Review), and IMR (Incident Management Review) assessments.
+    /// Supports maturity model analysis, performance charts, heatmaps, and NIST Cybersecurity Framework mapping.
     /// </summary>
     public class ReportsCmuController : Controller
     {
@@ -40,6 +43,17 @@ namespace CSETWebCore.Api.Controllers
         private readonly IReportsDataBusiness _report;
         private readonly CSETContext _context;
 
+        /// <summary>
+        /// Initializes a new instance of the ReportsCmuController.
+        /// </summary>
+        /// <param name="token">The token manager for user authentication and assessment context</param>
+        /// <param name="assessment">The assessment business service for assessment operations</param>
+        /// <param name="demographic">The demographic business service for demographic data</param>
+        /// <param name="report">The reports data business service for report generation</param>
+        /// <param name="assessmentUtil">The assessment utility service for assessment operations</param>
+        /// <param name="admin">The admin tab business service for administrative operations</param>
+        /// <param name="cmuScoringHelper">The CMU scoring helper for CMU-specific scoring calculations</param>
+        /// <param name="context">The database context for data access</param>
         public ReportsCmuController(ITokenManager token, IAssessmentBusiness assessment,
           IDemographicBusiness demographic, IReportsDataBusiness report,
           IAssessmentUtil assessmentUtil, IAdminTabBusiness admin,
@@ -55,21 +69,46 @@ namespace CSETWebCore.Api.Controllers
             _scoring = cmuScoringHelper;
         }
 
-
         /// <summary>
-        /// 
-        /// -----WARNING ----------------------------------------
-        /// 
-        /// This is too big and complex to be stringified for the HTTP return.
-        /// It never returns.  
-        /// 
-        /// -----WARNING ----------------------------------------
-        /// 
+        /// Retrieves the complete CMU model data for the current assessment.
         /// </summary>
-        /// <param name="includeResultsStylesheet"></param>
-        /// <returns></returns>
+        /// <param name="includeResultsStylesheet">Whether to include results stylesheet in the response</param>
+        /// <returns>
+        /// 200 OK with CmuVM containing complete assessment model data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides comprehensive CMU assessment data including:
+        /// - Assessment details and demographics
+        /// - Maturity model structure and scoring
+        /// - Deficiency analysis and gap identification
+        /// - Comments and review markers
+        /// - Performance charts and visualizations
+        /// 
+        /// The response includes:
+        /// - Assessment information and metadata
+        /// - Maturity model structure with questions and answers
+        /// - Deficiency analysis highlighting compliance gaps
+        /// - Comments and marked items for review
+        /// - Performance charts and scoring data
+        /// - NIST Cybersecurity Framework mappings
+        /// 
+        /// CMU-specific features:
+        /// - Domain-based maturity assessment
+        /// - Goal performance analysis
+        /// - MIL (Maturity Indicator Level) scoring
+        /// - Practice implementation status
+        /// - Compliance scoring and recommendations
+        /// 
+        /// Note: This endpoint returns large amounts of data and should be used
+        /// for comprehensive report generation rather than real-time updates.
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/cmu/model")]
+        [ProducesResponseType(typeof(CmuVM), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetModel(bool includeResultsStylesheet = true)
         {
             var assessmentId = _token.AssessmentForUser();
@@ -104,14 +143,42 @@ namespace CSETWebCore.Api.Controllers
             return Ok(viewModel);
         }
 
-
         /// <summary>
-        /// Returns name-value pairs indicating the domains
-        /// and percentage compliant ('Yes' answers).
+        /// Returns domain compliance data indicating the percentage of 'Yes' answers for each domain.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with CmuReportChart containing domain compliance percentages
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint calculates compliance percentages for each domain in the assessment:
+        /// - Returns name-value pairs for each domain
+        /// - Calculates percentage of 'Yes' answers per domain
+        /// - Provides compliance metrics for reporting and analysis
+        /// 
+        /// The response includes:
+        /// - Domain names as labels
+        /// - Compliance percentages as values
+        /// - Data suitable for chart generation
+        /// 
+        /// Common domains include:
+        /// - Asset Management (AM)
+        /// - Controls Management (CM)
+        /// - Configuration and Change Management (CCM)
+        /// - Vulnerability Management (VM)
+        /// - Incident Management (IM)
+        /// - Service Continuity Management (SCM)
+        /// - Risk Management (RM)
+        /// - External Dependencies Management (EDM)
+        /// - Training and Awareness (TA)
+        /// - Situational Awareness (SA)
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/cmu/domaincompliance")]
+        [ProducesResponseType(typeof(CmuReportChart), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetDomainCompliance()
         {
             var assessmentId = _token.AssessmentForUser();
@@ -122,13 +189,41 @@ namespace CSETWebCore.Api.Controllers
             return Ok(compliance);
         }
 
-
         /// <summary>
-        /// Gets the charts for Goal Performance and returns them in a list of raw HTML strings.
+        /// Gets performance charts for goal performance and returns them as raw HTML strings.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with object containing score bar charts and stacked bar charts
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint generates performance visualization charts for each domain and goal:
+        /// - Creates score bar charts for domain-level performance
+        /// - Generates stacked bar charts for goal-level performance
+        /// - Returns HTML strings ready for display
+        /// 
+        /// The response includes:
+        /// - ScoreBarCharts: Domain-level performance visualizations
+        /// - StackedBarCharts: Goal-level performance with color-coded answers
+        /// 
+        /// Chart features:
+        /// - Color-coded answer distribution (Green/Yellow/Red)
+        /// - Percentage calculations for compliance
+        /// - Responsive sizing for different display contexts
+        /// - Interactive elements for detailed analysis
+        /// 
+        /// The charts are designed for:
+        /// - Executive dashboards and summaries
+        /// - Detailed performance analysis
+        /// - Compliance reporting and presentations
+        /// - Trend analysis and improvement tracking
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/cmu/goalperformance")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetGoalPerformance()
         {
             var assessmentId = _token.AssessmentForUser();
@@ -164,11 +259,34 @@ namespace CSETWebCore.Api.Controllers
         }
 
         /// <summary>
-        /// Gets the charts for Mil1 Performance and returns them in a list of raw HTML strings.
+        /// Gets performance charts for MIL1 (Maturity Indicator Level 1) and returns them as raw HTML strings.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with object containing score bar charts and heatmaps
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint generates MIL1-specific performance visualizations:
+        /// - Creates score bar charts for domain-level MIL1 performance
+        /// - Generates heatmaps for goal-level question distribution
+        /// - Focuses on foundational maturity level assessment
+        /// 
+        /// The response includes:
+        /// - ScoreBarCharts: Domain-level MIL1 performance
+        /// - HeatMaps: Goal-level question answer distribution
+        /// 
+        /// MIL1 features:
+        /// - Focuses on basic implementation of practices
+        /// - Identifies foundational gaps and opportunities
+        /// - Provides baseline maturity assessment
+        /// - Supports improvement planning and prioritization
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/cmu/getMil1PerformanceBodyCharts")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetMil1PerformanceBodyCharts()
         {
             var assessmentId = _token.AssessmentForUser();
@@ -199,7 +317,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(new { ScoreBarCharts = scoreBarCharts, HeatMaps = heatMaps });
         }
-
 
         /// <summary>
         /// Gets the charts for Mil1 Performance Summary and returns them in a list of raw HTML strings.
@@ -240,8 +357,6 @@ namespace CSETWebCore.Api.Controllers
             return Ok(new { ScoreBarCharts = scoreBarCharts, StackedBarCharts = stackedBarCharts });
         }
 
-
-
         /// <summary>
         /// Gets the charts for Performance and returns them in a list of raw HTML strings.
         /// </summary>
@@ -278,7 +393,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(new { ScoreBarCharts = scoreBarCharts, HeatMaps = heatMaps });
         }
-
 
         /// <summary>
         /// 
@@ -319,7 +433,6 @@ namespace CSETWebCore.Api.Controllers
             return Content(heatmap.ToString(), "image/svg+xml");
         }
 
-
         /// <summary>
         /// Returns SVG that renders the red/yellow/green legend 
         /// with square blocks for each answer option.
@@ -331,7 +444,6 @@ namespace CSETWebCore.Api.Controllers
         {
             return Content(new BlockLegend(includeGoal).ToString(), "text/html");
         }
-
 
         /// <summary>
         /// 
@@ -356,7 +468,6 @@ namespace CSETWebCore.Api.Controllers
         {
             return Content(GetMil1TotalBarChart(), "text/html");
         }
-
 
         /// <summary>
         /// 
@@ -416,7 +527,6 @@ namespace CSETWebCore.Api.Controllers
             return Content(new MIL1PerformanceLegend().ToString(), "text/html");
         }
 
-
         /// <summary>
         /// 
         /// </summary>
@@ -471,7 +581,6 @@ namespace CSETWebCore.Api.Controllers
             return Ok(new { funcs, _scoring.CsfFunctionColors });
         }
 
-
         /// <summary>
         /// 
         /// </summary>
@@ -489,7 +598,6 @@ namespace CSETWebCore.Api.Controllers
             bciAll.AnswerCounts = new List<int> { distAll.Green, distAll.Yellow, distAll.Red };
             return Content(new ScoreBarChart(bciAll).ToString(), "text/html");
         }
-
 
         /// <summary>
         /// 
@@ -563,7 +671,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(new { funcs, _scoring.CsfFunctionColors });
         }
-
 
         /// <summary>
         /// 

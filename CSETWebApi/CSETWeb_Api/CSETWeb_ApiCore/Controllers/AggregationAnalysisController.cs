@@ -17,10 +17,15 @@ using Microsoft.EntityFrameworkCore;
 using Snickler.EFCore;
 using CSETWebCore.Business.Authorization;
 
-
-
 namespace CSETWebCore.Api.Controllers
-{   [CsetAuthorize]
+{   
+    /// <summary>
+    /// Provides endpoints for aggregation analysis functionality in CSET.
+    /// This controller handles comprehensive analysis of assessment aggregations, including
+    /// compliance scoring, trend analysis, category comparisons, and performance metrics
+    /// across multiple assessments. Supports both standards-based and maturity-based assessments.
+    /// </summary>
+    [CsetAuthorize]
     [ApiController]
     public class AggregationAnalysisController : ControllerBase
     {
@@ -29,6 +34,12 @@ namespace CSETWebCore.Api.Controllers
         private readonly ITrendDataProcessor _trendData;
         private CSETContext _context;
 
+        /// <summary>
+        /// Initializes a new instance of the AggregationAnalysisController.
+        /// </summary>
+        /// <param name="tokenManager">The token manager for user authentication and assessment context</param>
+        /// <param name="trendData">The trend data processor for analysis operations</param>
+        /// <param name="context">The database context for data access operations</param>
         public AggregationAnalysisController(ITokenManager tokenManager, ITrendDataProcessor trendData,
             CSETContext context)
         {
@@ -37,8 +48,45 @@ namespace CSETWebCore.Api.Controllers
             _context = context;
         }
 
+        /// <summary>
+        /// Retrieves overall compliance scores for assessments in an aggregation.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with LineChart containing overall compliance trend data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides trend analysis of overall compliance scores:
+        /// - Overall compliance score trends over time
+        /// - Component and standards compliance tracking
+        /// - Assessment date-based progression analysis
+        /// - Multi-assessment comparison capabilities
+        /// 
+        /// The response includes:
+        /// - Line chart data with assessment dates as labels
+        /// - Three trend lines: Overall, Components, Standards
+        /// - Compliance percentage values for each assessment
+        /// - Trend visualization data structure
+        /// 
+        /// Analysis features:
+        /// - Time-based compliance tracking
+        /// - Multi-assessment trend comparison
+        /// - Component vs standards analysis
+        /// - Compliance score progression
+        /// 
+        /// The trend analysis supports:
+        /// - Compliance monitoring and tracking
+        /// - Performance improvement analysis
+        /// - Multi-assessment benchmarking
+        /// - Executive reporting and presentations
+        /// - Strategic planning and goal setting
+        /// 
+        /// Requires valid JWT token in Authorization header with aggregation context.
+        /// </remarks>
         [HttpPost]
         [Route("api/aggregation/analysis/overallcompliancescore")]
+        [ProducesResponseType(typeof(LineChart), 200)]
+        [ProducesResponseType(401)]
         public IActionResult OverallComplianceScore()
         {
             var aggregationID = _tokenManager.PayloadInt("aggreg");
@@ -51,7 +99,6 @@ namespace CSETWebCore.Api.Controllers
                 .Include(x => x.Assessment.STANDARD_SELECTION)
                 .OrderBy(x => x.Assessment.Assessment_Date)
                 .ToList();
-
 
             // build the empty response structure for the assessments we have
             var response = new LineChart
@@ -74,7 +121,6 @@ namespace CSETWebCore.Api.Controllers
                     ds.Data.Add(0);
                 }
             }
-
 
             // populate percentages in the structure
             for (int i = 0; i < assessmentList.Count; i++)
