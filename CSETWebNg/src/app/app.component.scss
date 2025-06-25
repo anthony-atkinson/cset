@@ -1,0 +1,15 @@
+.offline-status-wrapper {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 1000;
+  pointer-events: auto;
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .offline-status-wrapper {
+    top: 10px;
+    right: 10px;
+  }
+} 

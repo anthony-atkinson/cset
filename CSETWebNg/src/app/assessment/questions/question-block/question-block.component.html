@@ -28,7 +28,7 @@
         (keydown.Spacebar)="mySubCategory.expanded = !mySubCategory.expanded"
         (keydown.Enter)="mySubCategory.expanded = !mySubCategory.expanded" [attr.aria-expanded]="mySubCategory.expanded"
         tabindex="0">
-        <div class="sub-head-2">
+        <div class="sub-head-2 mobile-text-center">
           <span *ngIf="mySubCategory.subCategoryHeadingText != ''">{{ mySubCategory.subCategoryHeadingText }}</span>
           <span *ngIf="showQuestionIds" class="debug-highlight">{{mySubCategory.subCategoryId}}</span>
         </div>
@@ -37,7 +37,8 @@
             class="d-flex justify-content-center align-items-center flex-00a"
             matTooltip="{{ t('tooltip.category requires review') }}">
             <span class="me-1 cset-icons-flag-dark fs-small"></span>
-            <span class="mb-1 fs-small">{{ t('requires review') }}</span>
+            <span class="mb-1 fs-small desktop-only">{{ t('requires review') }}</span>
+            <span class="mb-1 fs-small mobile-only">Review</span>
           </span>
           <app-progress [value]="percentAnswered" class="me-2 ms-2"></app-progress>
           <i class="cset-icons-chevron-down q-expand" [class.expand-flip]="mySubCategory.expanded"></i>
@@ -59,12 +60,12 @@
                   && mySubCategory.headerQuestionText.length > 0
                   && mySubCategory.questions.length > 1" [class.display-none]="!mySubCategory.expanded">
 
-        <div class="mb-2">
+        <div class="mb-2 mobile-text-center">
           {{ mySubCategory.headerQuestionText }}
         </div>
         <div [class.display-none]="filterSvc.isFilterEngaged()">
           <!-- this is the header answer block -->
-          <div class="btn-group answer-group" role="group">
+          <div class="btn-group answer-group mobile-w-100" role="group">
             <label *ngIf="showThisOption('Y')" class="btn btn-yes form-check-label"
               [class.answer-selected]="mySubCategory.subCategoryAnswer === 'Y'">
               <input name="subcat_{{ mySubCategory.subCategoryId }}" class="btn-check" type="radio" autocomplete="off"
@@ -102,7 +103,7 @@
 
         <!-- Landscape ---------------------------------------------------------------------->
         <div class="w-100 d-flex flex-row" *ngIf="!layoutSvc.hp">
-          <div class="number-and-text">
+          <div class="number-and-text mobile-w-100">
             <div style="font-weight: bold; margin-right: 1em; white-space: nowrap;">{{ q.displayNumber }}</div>
 
             <div class="w-100 d-flex flex-row" *ngIf="!layoutSvc.hp">
@@ -115,8 +116,8 @@
             </div>
           </div>
 
-          <div>
-            <div class="btn-group answer-group" role="group">
+          <div class="mobile-w-100">
+            <div class="btn-group answer-group mobile-w-100" role="group">
               <label *ngFor="let option of answerOptions" class="btn form-check-label"
                 [class]="questionsSvc.answerOptionCss('', option)" [class.answer-selected]="q.answer === option"
                 [matTooltip]="questionsSvc.answerButtonTooltip(maturityModelId, option)">
@@ -134,7 +135,7 @@
               </label>
             </div>
 
-            <div *ngIf="q.showJustificationField">
+            <div *ngIf="q.showJustificationField" class="mobile-w-100">
               <textarea appAutoSize class="form-control" style="width: 100%; min-height: 80px;"
                 [placeholder]="t('answer-options.placeholders.alt justification')" [(ngModel)]="q.altAnswerText"
                 (ngModelChange)="storeAnswer(q, null)" tabindex="0"></textarea>
@@ -152,7 +153,7 @@
 
         <!-- Handheld Portrait -------------------------------------------------->
         <div class="w-100" *ngIf="layoutSvc.hp">
-          <div class="">
+          <div class="mobile-w-100">
             <div style="font-weight: bold; margin-right: 1em; white-space: nowrap;">{{ q.displayNumber }}</div>
             <div class="w-100 mb-3">
               <div [style.word-break]="applyWordBreak(q)" [innerHTML]="questionsSvc.applyTokensToText(q)"
@@ -162,8 +163,8 @@
             </div>
           </div>
 
-          <div>
-            <div class="btn-group btn-group-toggle answer-group ms-0" data-toggle="buttons">
+          <div class="mobile-w-100">
+            <div class="btn-group btn-group-toggle answer-group ms-0 mobile-w-100" data-toggle="buttons">
               <label *ngFor="let option of answerOptions" class="btn form-check-label align-items-center"
                 [class]="questionsSvc.answerOptionCss('', option)" [class.answer-selected]="q.answer === option"
                 [matTooltip]="questionsSvc.answerButtonTooltip(maturityModelId, option)">
@@ -181,7 +182,7 @@
               </label>
             </div>
 
-            <div *ngIf="q.showJustificationField">
+            <div *ngIf="q.showJustificationField" class="mobile-w-100">
               <textarea appAutoSize class="form-control" style="width: 100%; min-height: 80px;"
                 [placeholder]="t('answer-options.placeholders.alt justification')" [(ngModel)]="q.altAnswerText"
                 (ngModelChange)="storeAnswert(q, null)" tabindex="0"></textarea>
@@ -191,7 +192,7 @@
         </div>
 
         <app-question-extras #extrasComponent [myQuestion]="q" (changeExtras)="refreshReviewIndicator()"
-          class="w-100 mb-3" (changeComponents)="refreshComponentOverrides()">
+          class="w-100 mb-3 mobile-w-100" (changeComponents)="refreshComponentOverrides()">
         </app-question-extras>
       </div>
     </div>

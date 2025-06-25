@@ -1,0 +1,158 @@
+.offline-status-container {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  border: 1px solid transparent;
+  
+  .status-indicator {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    
+    .status-icon {
+      font-size: 1rem;
+      width: 16px;
+      text-align: center;
+    }
+    
+    .status-text {
+      white-space: nowrap;
+    }
+  }
+  
+  .sync-button {
+    background: rgba(255, 255, 255, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 12px;
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    color: inherit;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.3);
+      transform: translateY(-1px);
+    }
+    
+    &:active {
+      transform: translateY(0);
+    }
+  }
+  
+  .sync-progress {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.75rem;
+    opacity: 0.8;
+  }
+}
+
+// Status color variants
+.status-online {
+  background: linear-gradient(135deg, #4caf50, #45a049);
+  color: white;
+  
+  .online-icon::before {
+    content: "●";
+    color: #4caf50;
+  }
+}
+
+.status-offline {
+  background: linear-gradient(135deg, #f44336, #d32f2f);
+  color: white;
+  
+  .offline-icon::before {
+    content: "●";
+    color: #f44336;
+  }
+}
+
+.status-pending {
+  background: linear-gradient(135deg, #ff9800, #f57c00);
+  color: white;
+  
+  .pending-sync-icon::before {
+    content: "●";
+    color: #ff9800;
+  }
+}
+
+.status-syncing {
+  background: linear-gradient(135deg, #2196f3, #1976d2);
+  color: white;
+  
+  .syncing-icon::before {
+    content: "●";
+    color: #2196f3;
+  }
+}
+
+// Mobile responsive adjustments
+@media (max-width: 768px) {
+  .offline-status-container {
+    padding: 4px 8px;
+    font-size: 0.75rem;
+    
+    .status-indicator {
+      gap: 4px;
+      
+      .status-icon {
+        font-size: 0.875rem;
+        width: 14px;
+      }
+    }
+    
+    .sync-button {
+      padding: 3px 6px;
+      font-size: 0.6875rem;
+    }
+    
+    .sync-progress {
+      font-size: 0.6875rem;
+    }
+  }
+}
+
+// Animation for status changes
+.offline-status-container {
+  animation: statusFadeIn 0.3s ease-in-out;
+}
+
+@keyframes statusFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Pulse animation for syncing state
+.status-syncing {
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(33, 150, 243, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(33, 150, 243, 0);
+  }
+} 

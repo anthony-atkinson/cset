@@ -44,6 +44,7 @@ import { AggregationService } from './services/aggregation.service';
 import { LocalStoreManager } from './services/storage.service';
 import { NavigationService } from './services/navigation/navigation.service';
 import { FooterService } from './services/footer.service';
+import { MobileService } from './services/mobile.service';
 import { translate } from '@jsverse/transloco';
 
 
@@ -76,6 +77,7 @@ export class AppComponent implements OnInit, AfterViewInit {
     public router: Router,
     private _hotkeysService: HotkeysService,
     private footerSvc: FooterService,
+    private mobileSvc: MobileService,
     storageManager: LocalStoreManager
   ) {
     storageManager.initialiseStorageSyncListener();
@@ -84,6 +86,9 @@ export class AppComponent implements OnInit, AfterViewInit {
 
   ngOnInit() {
     this.docUrl = this.configSvc.docUrl;
+
+    // Initialize mobile service
+    this.mobileSvc.initialize();
 
     if (localStorage.getItem("returnPath")) {
       if (!Number(localStorage.getItem("redirectid"))) {

@@ -23,7 +23,7 @@
 ////////////////////////////////
 import { HTTP_INTERCEPTORS, provideHttpClient, withInterceptorsFromDi } from '@angular/common/http';
 import { DatePipe } from '@angular/common';
-import { CUSTOM_ELEMENTS_SCHEMA, NgModule, inject, provideAppInitializer } from '@angular/core';
+import { CUSTOM_ELEMENTS_SCHEMA, NgModule, inject, provideAppInitializer, isDevMode } from '@angular/core';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 // import { MatAutocompleteModule } from '@angular/material/autocomplete';
@@ -607,6 +607,8 @@ import { AdminSettingsComponent } from './initial/admin-settings/admin-settings.
 import { UserService } from './services/user.service';
 import { CisaVadrReportComponent } from './reports/cisa-vadr/cisa-vadr-report/cisa-vadr-report.component';
 import { VadrGroupingBlockComponent } from './reports/cisa-vadr/vadr-grouping-block/vadr-grouping-block.component';
+import { ServiceWorkerModule } from '@angular/service-worker';
+import { OfflineStatusComponent } from './initial/offline-status/offline-status.component';
 
 registerSwiper();
 
@@ -1070,7 +1072,8 @@ registerSwiper();
         AnalyticsResultsComponent,
         UpgradeComponent,
         ImportComponent,
-        AdminSettingsComponent
+        AdminSettingsComponent,
+        OfflineStatusComponent
     ],
     bootstrap: [AppComponent], imports: [BrowserModule,
         BrowserAnimationsModule,
@@ -1134,7 +1137,13 @@ registerSwiper();
         TooltipModule,
         EllipsisModule,
         CodeEditorModule,
-        HotkeyModule.forRoot()],
+        HotkeyModule.forRoot(),
+        ServiceWorkerModule.register('ngsw-worker.js', {
+          enabled: !isDevMode(),
+          // Register the ServiceWorker as soon as the application is stable
+          // or after 30 seconds (whichever comes first).
+          registrationStrategy: 'registerWhenStable:30000'
+        })],
     schemas: [CUSTOM_ELEMENTS_SCHEMA],
     providers: [
         TranslocoService,

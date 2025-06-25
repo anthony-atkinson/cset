@@ -1,0 +1,727 @@
+/*
+  Mobile Responsiveness Enhancement for CSET
+  Copyright 2025 Battelle Energy Alliance, LLC
+  
+  This file contains mobile-specific styles and responsive design improvements
+  for the CSET application to ensure optimal usability on mobile devices and tablets.
+*/
+
+// Mobile Breakpoints
+$mobile-small: 480px;
+$mobile-medium: 768px;
+$tablet: 1024px;
+$desktop-small: 1200px;
+
+// Mobile-First Responsive Mixins
+@mixin mobile-small {
+  @media (max-width: $mobile-small) {
+    @content;
+  }
+}
+
+@mixin mobile-medium {
+  @media (max-width: $mobile-medium) {
+    @content;
+  }
+}
+
+@mixin tablet {
+  @media (max-width: $tablet) {
+    @content;
+  }
+}
+
+@mixin desktop-small {
+  @media (max-width: $desktop-small) {
+    @content;
+  }
+}
+
+// Touch-friendly sizing
+$touch-target-min: 44px;
+$touch-target-ideal: 48px;
+
+// Mobile Typography
+$mobile-font-size-base: 16px;
+$mobile-font-size-small: 14px;
+$mobile-font-size-large: 18px;
+$mobile-line-height: 1.5;
+
+// Mobile Spacing
+$mobile-padding: 16px;
+$mobile-margin: 16px;
+$mobile-border-radius: 8px;
+
+// ============================================================================
+// GLOBAL MOBILE ENHANCEMENTS
+// ============================================================================
+
+// Base mobile optimizations
+@include mobile-medium {
+  html {
+    font-size: $mobile-font-size-base;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+
+  body {
+    font-size: $mobile-font-size-base;
+    line-height: $mobile-line-height;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  // Prevent horizontal scrolling
+  * {
+    box-sizing: border-box;
+  }
+
+  // Improve touch targets
+  button, 
+  .btn,
+  input[type="button"],
+  input[type="submit"],
+  input[type="reset"],
+  select,
+  a {
+    min-height: $touch-target-min;
+    min-width: $touch-target-min;
+    padding: 12px 16px;
+  }
+
+  // Enhanced form controls for mobile
+  .form-control,
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  textarea,
+  select {
+    font-size: $mobile-font-size-base;
+    padding: 12px 16px;
+    border-radius: $mobile-border-radius;
+    border: 2px solid #e0e0e0;
+    
+    &:focus {
+      border-color: $primary-color;
+      outline: none;
+      box-shadow: 0 0 0 3px rgba($primary-color, 0.1);
+    }
+  }
+
+  // Mobile-optimized buttons
+  .btn {
+    font-size: $mobile-font-size-base;
+    font-weight: 500;
+    border-radius: $mobile-border-radius;
+    padding: 12px 20px;
+    margin: 4px;
+    white-space: nowrap;
+    text-align: center;
+    transition: all 0.2s ease;
+    
+    &:active {
+      transform: scale(0.98);
+    }
+  }
+
+  .btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    
+    .btn {
+      flex: 1;
+      min-width: auto;
+    }
+  }
+}
+
+// ============================================================================
+// LAYOUT MOBILE ENHANCEMENTS
+// ============================================================================
+
+// Main layout container
+@include mobile-medium {
+  .assess-component {
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  // Mobile-optimized navigation
+  .nav-tabs {
+    flex-wrap: wrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    
+    li {
+      flex: 1;
+      min-width: 120px;
+      
+      button {
+        padding: 12px 8px;
+        font-size: $mobile-font-size-small;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+  }
+
+  // Mobile sidebar
+  .side-nav-container {
+    position: relative;
+    
+    mat-sidenav {
+      width: 280px;
+      max-width: 85vw;
+      
+      .btn-home {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: $primary-color;
+        color: white;
+        border: none;
+        padding: 12px;
+        margin: 8px;
+        border-radius: $mobile-border-radius;
+        width: calc(100% - 16px);
+      }
+    }
+    
+    mat-sidenav-content {
+      overflow-x: hidden;
+    }
+  }
+
+  // Mobile tree navigation
+  mat-tree {
+    .mat-tree-node {
+      padding: 8px 12px;
+      
+      button {
+        width: 100%;
+        text-align: left;
+        padding: 8px 12px;
+        border-radius: $mobile-border-radius;
+        
+        &:hover {
+          background-color: rgba($primary-color, 0.1);
+        }
+      }
+    }
+    
+    .mat-nested-tree-node {
+      button {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        
+        mat-icon {
+          font-size: 18px;
+          width: 18px;
+          height: 18px;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// ASSESSMENT COMPONENT MOBILE ENHANCEMENTS
+// ============================================================================
+
+@include mobile-medium {
+  // Questions component mobile optimization
+  .white-panel {
+    padding: $mobile-padding;
+    
+    .sticky-sal {
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+      padding: 12px 0;
+      border-bottom: 1px solid #e0e0e0;
+      flex-direction: column;
+      gap: 12px;
+    }
+    
+    // Mobile-optimized mode toggle
+    .btn-group-toggle {
+      display: flex;
+      width: 100%;
+      
+      label {
+        flex: 1;
+        padding: 12px 8px;
+        font-size: $mobile-font-size-small;
+        text-align: center;
+      }
+    }
+    
+    // Mobile-optimized controls
+    .d-flex.flex-row {
+      flex-direction: column;
+      gap: 12px;
+      align-items: stretch;
+      
+      .answered-count {
+        text-align: center;
+        font-size: $mobile-font-size-large;
+        font-weight: 600;
+        padding: 8px;
+        background: $primary-color;
+        color: white;
+        border-radius: $mobile-border-radius;
+      }
+      
+      .d-flex.flex-column {
+        flex-direction: row;
+        justify-content: center;
+        gap: 8px;
+        
+        .btn {
+          flex: 1;
+          max-width: 60px;
+        }
+      }
+    }
+    
+    // Mobile-optimized headings
+    h2 {
+      font-size: $mobile-font-size-large;
+      margin-bottom: 16px;
+      text-align: center;
+    }
+    
+    // Mobile-optimized instructions
+    p {
+      font-size: $mobile-font-size-base;
+      line-height: $mobile-line-height;
+      margin-bottom: 20px;
+    }
+  }
+}
+
+// ============================================================================
+// QUESTION BLOCK MOBILE ENHANCEMENTS
+// ============================================================================
+
+@include mobile-medium {
+  // Category block mobile optimization
+  .category-block {
+    margin-bottom: 20px;
+    
+    .subcat-header {
+      padding: 16px;
+      margin-bottom: 12px;
+      border-radius: $mobile-border-radius;
+      
+      .sub-head-1 {
+        flex-direction: column;
+        gap: 12px;
+        
+        .sub-head-2 {
+          font-size: $mobile-font-size-large;
+          text-align: center;
+        }
+      }
+    }
+    
+    // Question group mobile optimization
+    .question-group {
+      margin-bottom: 16px;
+      padding: 16px;
+      border-radius: $mobile-border-radius;
+      border: 1px solid #e0e0e0;
+      
+      .header-question {
+        flex-direction: column;
+        gap: 12px;
+        margin-bottom: 16px;
+        
+        .number-and-text {
+          flex-direction: column;
+          gap: 8px;
+          
+          .question-number {
+            font-weight: 600;
+            color: $primary-color;
+          }
+          
+          .question-text {
+            font-size: $mobile-font-size-base;
+            line-height: $mobile-line-height;
+          }
+        }
+      }
+      
+      // Answer group mobile optimization
+      .answer-group {
+        margin-left: 0;
+        margin-top: 12px;
+        
+        .btn-group {
+          flex-direction: column;
+          gap: 8px;
+          
+          .btn {
+            width: 100%;
+            text-align: left;
+            padding: 12px 16px;
+            border-radius: $mobile-border-radius;
+            border: 2px solid #e0e0e0;
+            background: white;
+            
+            &.active {
+              background: $primary-color;
+              color: white;
+              border-color: $primary-color;
+            }
+            
+            &:hover {
+              background: rgba($primary-color, 0.1);
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// FORM AND INPUT MOBILE ENHANCEMENTS
+// ============================================================================
+
+@include mobile-medium {
+  // Mobile-optimized form layouts
+  .form-group {
+    margin-bottom: 20px;
+    
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      font-size: $mobile-font-size-base;
+    }
+  }
+  
+  // Mobile-optimized text areas
+  textarea {
+    min-height: 100px;
+    resize: vertical;
+  }
+  
+  // Mobile-optimized selects
+  select {
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6,9 12,15 18,9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 12px center;
+    background-size: 16px;
+    padding-right: 40px;
+  }
+  
+  // Mobile-optimized checkboxes and radio buttons
+  input[type="checkbox"],
+  input[type="radio"] {
+    width: 20px;
+    height: 20px;
+    margin-right: 12px;
+  }
+  
+  .checkbox-custom-label,
+  .radio-custom-label {
+    display: flex;
+    align-items: center;
+    padding: 8px 0;
+    font-size: $mobile-font-size-base;
+  }
+}
+
+// ============================================================================
+// TABLE MOBILE ENHANCEMENTS
+// ============================================================================
+
+@include mobile-medium {
+  // Mobile-optimized tables
+  .table-responsive {
+    border-radius: $mobile-border-radius;
+    overflow: hidden;
+    
+    table {
+      font-size: $mobile-font-size-small;
+      
+      th,
+      td {
+        padding: 12px 8px;
+        vertical-align: top;
+      }
+      
+      th {
+        background: $primary-color;
+        color: white;
+        font-weight: 600;
+      }
+    }
+  }
+  
+  // Stack table on mobile
+  .table-stack-mobile {
+    @include mobile-medium {
+      thead {
+        display: none;
+      }
+      
+      tbody,
+      tr,
+      td {
+        display: block;
+        width: 100%;
+      }
+      
+      tr {
+        margin-bottom: 16px;
+        padding: 16px;
+        border: 1px solid #e0e0e0;
+        border-radius: $mobile-border-radius;
+        background: white;
+      }
+      
+      td {
+        padding: 8px 0;
+        border: none;
+        
+        &:before {
+          content: attr(data-label) ": ";
+          font-weight: 600;
+          color: $primary-color;
+        }
+      }
+    }
+  }
+}
+
+// ============================================================================
+// DIALOG AND MODAL MOBILE ENHANCEMENTS
+// ============================================================================
+
+@include mobile-medium {
+  // Mobile-optimized dialogs
+  .mat-dialog-container {
+    margin: 16px;
+    border-radius: $mobile-border-radius;
+    max-height: calc(100vh - 32px);
+    overflow-y: auto;
+    
+    .mat-dialog-title {
+      font-size: $mobile-font-size-large;
+      margin-bottom: 16px;
+    }
+    
+    .mat-dialog-content {
+      padding: 16px 0;
+      max-height: calc(100vh - 200px);
+      overflow-y: auto;
+    }
+    
+    .mat-dialog-actions {
+      padding: 16px 0;
+      justify-content: center;
+      gap: 12px;
+      
+      button {
+        flex: 1;
+        max-width: 150px;
+      }
+    }
+  }
+}
+
+// ============================================================================
+// NAVIGATION MOBILE ENHANCEMENTS
+// ============================================================================
+
+@include mobile-medium {
+  // Mobile-optimized navigation buttons
+  .nav-back-next {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: white;
+    border-top: 1px solid #e0e0e0;
+    padding: 16px;
+    z-index: 100;
+    
+    .btn {
+      flex: 1;
+      margin: 0 4px;
+    }
+  }
+  
+  // Add bottom padding to content to account for fixed navigation
+  .white-panel {
+    padding-bottom: 100px;
+  }
+}
+
+// ============================================================================
+// UTILITY CLASSES FOR MOBILE
+// ============================================================================
+
+// Mobile visibility classes
+.mobile-only {
+  display: none;
+  
+  @include mobile-medium {
+    display: block;
+  }
+}
+
+.desktop-only {
+  display: block;
+  
+  @include mobile-medium {
+    display: none;
+  }
+}
+
+// Mobile spacing utilities
+@include mobile-medium {
+  .mobile-p-0 { padding: 0 !important; }
+  .mobile-p-1 { padding: 8px !important; }
+  .mobile-p-2 { padding: 16px !important; }
+  .mobile-p-3 { padding: 24px !important; }
+  
+  .mobile-m-0 { margin: 0 !important; }
+  .mobile-m-1 { margin: 8px !important; }
+  .mobile-m-2 { margin: 16px !important; }
+  .mobile-m-3 { margin: 24px !important; }
+  
+  .mobile-text-center { text-align: center !important; }
+  .mobile-text-left { text-align: left !important; }
+  .mobile-text-right { text-align: right !important; }
+  
+  .mobile-w-100 { width: 100% !important; }
+  .mobile-h-100 { height: 100% !important; }
+}
+
+// ============================================================================
+// TOUCH-SPECIFIC ENHANCEMENTS
+// ============================================================================
+
+// Touch-friendly interactions
+@include mobile-medium {
+  // Improve touch feedback
+  .btn,
+  button,
+  a,
+  .clickable {
+    -webkit-tap-highlight-color: rgba($primary-color, 0.2);
+    touch-action: manipulation;
+    
+    &:active {
+      transform: scale(0.98);
+      transition: transform 0.1s ease;
+    }
+  }
+  
+  // Disable text selection on buttons
+  .btn,
+  button {
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+  }
+  
+  // Improve scrolling
+  .scrollable {
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
+  }
+}
+
+// ============================================================================
+// ACCESSIBILITY ENHANCEMENTS FOR MOBILE
+// ============================================================================
+
+@include mobile-medium {
+  // Improve focus indicators for touch devices
+  .btn:focus,
+  button:focus,
+  input:focus,
+  select:focus,
+  textarea:focus,
+  a:focus {
+    outline: 3px solid rgba($primary-color, 0.5);
+    outline-offset: 2px;
+  }
+  
+  // Ensure sufficient color contrast
+  .text-muted {
+    color: #6c757d !important;
+  }
+  
+  // Improve readability
+  p, li, div {
+    line-height: $mobile-line-height;
+  }
+}
+
+// ============================================================================
+// PERFORMANCE OPTIMIZATIONS FOR MOBILE
+// ============================================================================
+
+@include mobile-medium {
+  // Optimize animations for mobile
+  * {
+    -webkit-transform: translateZ(0);
+    transform: translateZ(0);
+  }
+  
+  // Reduce motion for users who prefer it
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
+  
+  // Optimize images for mobile
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+}
+
+// ============================================================================
+// PRINT STYLES FOR MOBILE
+// ============================================================================
+
+@media print {
+  .mobile-only,
+  .nav-back-next,
+  .btn,
+  button {
+    display: none !important;
+  }
+  
+  .white-panel {
+    padding: 0 !important;
+    padding-bottom: 0 !important;
+  }
+  
+  body {
+    font-size: 12px !important;
+    line-height: 1.4 !important;
+  }
+} 

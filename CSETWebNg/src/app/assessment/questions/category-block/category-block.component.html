@@ -21,12 +21,12 @@
   SOFTWARE. 
 -------------------------->
 <!-- Question Group Heading / Category-->
-<div *ngIf="c.isOverride" class="group-heading" [class.display-none]="!c.visible">
+<div *ngIf="c.isOverride" class="group-heading mobile-text-center" [class.display-none]="!c.visible">
   {{ c.symbol_Name + ' - ' + c.componentName }}
 </div>
 
 <!-- Question Group Heading / Category-->
-<div *ngIf="!c.symbol_Name" class="group-heading" [id]="buildNavTargetID(c)" [ngClass]="addDomainPad(c.domainName)"
+<div *ngIf="!c.symbol_Name" class="group-heading mobile-text-center" [id]="buildNavTargetID(c)" [ngClass]="addDomainPad(c.domainName)"
   [class.display-none]="!c.visible">
   {{ c.groupHeadingText }}
   {{ (!c.domainName && !!c.standardShortName) ? ' - ' + c.standardShortName : '' }}

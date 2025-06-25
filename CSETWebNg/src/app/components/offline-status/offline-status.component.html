@@ -1,0 +1,20 @@
+<div class="offline-status-container" [ngClass]="getStatusColorClass()">
+  <div class="status-indicator">
+    <i class="status-icon" [ngClass]="getStatusIconClass()"></i>
+    <span class="status-text">{{ getStatusText() }}</span>
+  </div>
+  
+  <button 
+    *ngIf="showSyncButton()"
+    class="sync-button"
+    (click)="triggerSync()"
+    title="Sync pending changes">
+    <i class="fas fa-sync-alt"></i>
+    Sync
+  </button>
+  
+  <div *ngIf="offlineStatus.syncInProgress" class="sync-progress">
+    <i class="fas fa-spinner fa-spin"></i>
+    <span>Syncing...</span>
+  </div>
+</div> 
