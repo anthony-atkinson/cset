@@ -109,9 +109,9 @@ namespace CSETWebCore.Business.Aggregation
                 Mode = mode
             };
 
-
-            // TODO:  it might be good to add a column that holds the aggregation originator's userid
-
+            // Track the aggregation originator's user ID for audit and ownership purposes
+            var currentUserId = _tokenManager.GetCurrentUserId();
+            newAgg.OriginatorUserId = currentUserId;
 
             // Commit the new assessment
             int aggregationId = SaveAggregationInformation(0, newAgg);

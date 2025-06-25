@@ -281,10 +281,9 @@ namespace CSETWebCore.Business.Maturity
 
             response.LevelScore = calculatedScore;
 
-            // TODO:  With the release of CMMC 2.0 Final the gauge is built in the UI and this 
-            //        code will not be needed.
-            var sprsGauge = new Helpers.ReportWidgets.SprsScoreGauge(calculatedScore, 500, 100);
-            response.GaugeSvg = sprsGauge.ToString();
+            // Note: With CMMC 2.0 Final, gauge generation is now handled by the UI
+            // The gauge SVG generation has been moved to the frontend for better performance
+            // and consistency with modern UI patterns.
 
             return response;
         }

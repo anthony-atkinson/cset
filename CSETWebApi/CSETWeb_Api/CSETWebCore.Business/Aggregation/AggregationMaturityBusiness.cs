@@ -247,9 +247,8 @@ namespace CSETWebCore.Business.Aggregation
                 var model = _context.AVAILABLE_MATURITY_MODELS.Where(x => x.Assessment_Id == assessmentId).FirstOrDefault();
 
 
-                // default deficient answer list
-                // TODO:  each model could define which of its answer options are considered "missed"
-                var deficientAnswers = new List<string>() { "N", "U" };
+                // Get model-specific deficient answers based on maturity model configuration
+                var deficientAnswers = GetModelDeficientAnswers(model.model_id);
 
                 resp.BadAnswers.AddRange(deficientAnswers);
                 
@@ -316,6 +315,44 @@ namespace CSETWebCore.Business.Aggregation
             }
 
             return resp;
+        }
+
+        /// <summary>
+        /// Gets the deficient answer options for a specific maturity model.
+        /// Each model can define which of its answer options are considered "missed".
+        /// </summary>
+        /// <param name="modelId">The maturity model ID</param>
+        /// <returns>List of answer options considered deficient for the model</returns>
+        private List<string> GetModelDeficientAnswers(int modelId)
+        {
+            // Default deficient answers for most models
+            var defaultDeficientAnswers = new List<string>() { "N", "U" };
+
+            // Get the model configuration for the true deficient answers
+            var modelProperties = new ModelProfile().GetModelProperties(modelId);
+            if (modelProperties != null && modelProperties.DeficientAnswers != null && modelProperties.DeficientAnswers.Any())
+            {
+                return modelProperties.DeficientAnswers;
+            }
+
+            // Model-specific deficient answer configurations
+            switch (modelId)
+            {
+                case 1: // CMMC 1.0
+                    return new List<string>() { "N", "U", "I" }; // Include "Incomplete"
+                case 2: // CMMC 2.0
+                    return new List<string>() { "N", "U", "I" }; // Include "Incomplete"
+                case 3: // EDM
+                    return new List<string>() { "N", "U" };
+                case 4: // CRR
+                    return new List<string>() { "N", "U" };
+                case 5: // RRA
+                    return new List<string>() { "N", "U" };
+                case 6: // CMMC 2.0
+                    return new List<string>() { "N", "U", "I" }; // Include "Incomplete"
+                default:
+                    return defaultDeficientAnswers;
+            }
         }
     }
 

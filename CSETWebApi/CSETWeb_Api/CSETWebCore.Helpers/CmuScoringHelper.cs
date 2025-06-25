@@ -555,42 +555,35 @@ namespace CSETWebCore.Helpers
 
 
         /// <summary>
-        /// Loads assessment answers into an XDocument
-        /// that defines the NIST CSF function/category/subcategory structure.
+        /// Loads NIST CSF mapped answers from the database CSF_MAPPING table.
         /// </summary>
         private void LoadNistCsfMappedAnswers()
         {
-            /// TODO:  Instead of reading an embedded XML file, read the database CSF_MAPPING
-
+            // Load mappings from database CSF_MAPPING table
             var mappings = from mq in _context.MATURITY_QUESTIONS
                            join cm in _context.CSF_MAPPING on mq.Mat_Question_Id equals cm.Question_Id
                            where mq.Maturity_Model_Id == this.ModelId
                            select new { cm = cm, mq = mq };
-            var abc = mappings.ToList();
+            var mappedQuestions = mappings.ToList();
 
+            // Create XML structure from database mappings
+            var csfStructure = new XDocument(
+                new XElement("NIST_CSF_Structure",
+                    mappedQuestions.GroupBy(m => m.cm.CSF_Code)
+                        .Select(group => new XElement("Function",
+                            new XAttribute("title", group.Key),
+                            new XElement("References",
+                                group.Select(m => new XElement("CrrReference",
+                                    new XAttribute("question-title", m.mq.Question_Title)
+                                ))
+                            )
+                        ))
+                )
+            );
 
-            var assembly = Assembly.GetExecutingAssembly();
-            var resourceName = "CSETWebCore.Helpers.NIST_CSF_Structure.xml";
-            using (Stream stream = assembly.GetManifestResourceStream(resourceName))
-            using (StreamReader reader = new StreamReader(stream))
-            {
-                XCsf = XDocument.Parse(reader.ReadToEnd());
-            }
+            XCsf = csfStructure;
 
-            // populate the XML structure with the mapped questions
-            foreach (var ab in abc)
-            {
-                var node = XCsf.Descendants().Where(x => x.Attribute("title")?.Value == ab.cm.CSF_Code).FirstOrDefault();
-                if (node != null)
-                {
-                    var reff = new XElement("CrrReference");
-                    reff.SetAttributeValue("question-title", ab.mq.Question_Title);
-                    node.Element("References").Add(reff);
-                }
-            }
-
-
-
+            // Populate the XML structure with mapped questions and their answers
             var questions = XDoc.Descendants("Question").ToList();
 
             foreach (XElement crrRef in XCsf.Descendants("CrrReference"))

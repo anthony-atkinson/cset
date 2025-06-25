@@ -16,6 +16,7 @@ using Nelibur.ObjectMapper;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using NLog;
 
 namespace CSETWebCore.Business.Question
 {
@@ -597,36 +598,43 @@ namespace CSETWebCore.Business.Question
 
         public int SaveHydroComment(ANSWER answer, int answerId, int progressId, string comment)
         {
+            // Check if the record exists before attempting to update
+            var existingRecord = _context.HYDRO_DATA_ACTIONS
+                .FirstOrDefault(x => x.Answer_Id == answerId && x.Progress_Id == progressId);
 
-            try
+            if (existingRecord != null)
             {
-                _context.HYDRO_DATA_ACTIONS.Update(new HYDRO_DATA_ACTIONS()
-                {
-                    Answer = answer,
-                    Answer_Id = answerId,
-                    Progress_Id = progressId,
-                    Comment = comment
-                });
+                // Update existing record
+                existingRecord.Answer = answer;
+                existingRecord.Comment = comment;
+                _context.HYDRO_DATA_ACTIONS.Update(existingRecord);
             }
-            catch (Exception)
+            else
             {
-                //TODO: It is a big pet peeve of mine to have empty try catches
-                //Please atleast log the error.  
-                //if it is something you expect to see often and you know it is not an error
-                //then exception tossing and catching is really expensive please refactor 
-                //such that it is not necessary such as test for containment before adding.
-
-                HYDRO_DATA_ACTIONS hda = new HYDRO_DATA_ACTIONS()
+                // Add new record
+                var newRecord = new HYDRO_DATA_ACTIONS()
                 {
                     Answer = answer,
                     Answer_Id = answerId,
                     Progress_Id = progressId,
                     Comment = comment
                 };
-                _context.HYDRO_DATA_ACTIONS.Add(hda);
+                _context.HYDRO_DATA_ACTIONS.Add(newRecord);
             }
 
-            _context.SaveChanges();
+            try
+            {
+                _context.SaveChanges();
+            }
+            catch (Exception ex)
+            {
+                // Log the error with context information
+                var logger = NLog.LogManager.GetCurrentClassLogger();
+                logger.Error(ex, $"Failed to save HYDRO_DATA_ACTIONS for AnswerId: {answerId}, ProgressId: {progressId}. Error: {ex.Message}");
+                
+                // Re-throw the exception to maintain the original behavior
+                throw;
+            }
 
             return answerId;
         }

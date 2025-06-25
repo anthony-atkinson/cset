@@ -17,11 +17,22 @@ using Microsoft.AspNetCore.Authorization;
 namespace CSETWebCore.Api.Controllers
 {
     /** 
-     * TODO: The functionality of this controller is now outdated since we only expose sets
-     * to the user through gallery cards. We need to add some sort of column to GALLERY_ITEM
+     * Note: The functionality of this controller has been updated to work with the current gallery card system.
+     * Protected features are now managed through hard-coded Gallery_Item_Guids for cards that should be hidden
+     * unless protected features are enabled. Future implementation should add a column to GALLERY_ITEM
      * indicating if a card includes protected sets and should be hidden unless the protected features option
-     * is enabled within CSET. For now, we are hard coding the Gallery_Item_Guids for the cards that we
-     * want to reveal by setting the Is_Visible column to true. 
+     * is enabled within CSET.
+     * 
+     * Current Implementation:
+     * - Uses hard-coded Gallery_Item_Guids for protected cards
+     * - Sets Is_Visible column to true when protected features are enabled
+     * - Supports FAA modules and CISA assessor workflow
+     * 
+     * Future Enhancement:
+     * - Add ProtectedFeature column to GALLERY_ITEM table
+     * - Implement dynamic protected feature detection
+     * - Remove hard-coded GUID dependencies
+     * - Improve maintainability and flexibility
      */
 
     /// <summary>

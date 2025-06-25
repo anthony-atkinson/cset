@@ -344,8 +344,7 @@ namespace CSETWebCore.Helpers
         /// <summary>
         /// Looks at the most recent 24 historical passwords and tests the 
         /// proposed new password against them to see if it has been used before.
-        /// 
-        /// TODO: clean up any history records outside of the most recent 24.
+        /// Also cleans up any history records outside of the most recent 24.
         /// </summary>
         /// <param name="pw"></param>
         /// <param name="cp"></param>
@@ -354,6 +353,9 @@ namespace CSETWebCore.Helpers
         {
             var user = _context.USERS.Where(x => x.PrimaryEmail == cp.PrimaryEmail).First();
             var pwHash = new PasswordHash();
+
+            // Clean up history records outside of the most recent 24
+            CleanupPasswordHistory(user.UserId);
 
             var listPasswordHistory = _context.PASSWORD_HISTORY.Where(x => x.UserId == user.UserId)
                 .OrderByDescending(y => y.Created)
@@ -370,6 +372,43 @@ namespace CSETWebCore.Helpers
             }
 
             return false;
+        }
+
+        /// <summary>
+        /// Cleans up password history records, keeping only the most recent 24 entries.
+        /// </summary>
+        /// <param name="userId">The user ID to clean up history for</param>
+        private void CleanupPasswordHistory(int userId)
+        {
+            try
+            {
+                // Get the most recent 24 entries
+                var recentEntries = _context.PASSWORD_HISTORY
+                    .Where(x => x.UserId == userId)
+                    .OrderByDescending(x => x.Created)
+                    .Take(NumberOfHistoricalPasswords)
+                    .Select(x => x.Created)
+                    .ToList();
+
+                // Delete entries older than the 24th most recent
+                var entriesToDelete = _context.PASSWORD_HISTORY
+                    .Where(x => x.UserId == userId && !recentEntries.Contains(x.Created))
+                    .ToList();
+
+                if (entriesToDelete.Any())
+                {
+                    _context.PASSWORD_HISTORY.RemoveRange(entriesToDelete);
+                    _context.SaveChanges();
+                    
+                    var logger = NLog.LogManager.GetCurrentClassLogger();
+                    logger.Info($"Cleaned up {entriesToDelete.Count} old password history records for user {userId}");
+                }
+            }
+            catch (Exception ex)
+            {
+                var logger = NLog.LogManager.GetCurrentClassLogger();
+                logger.Error(ex, $"Failed to cleanup password history for user {userId}: {ex.Message}");
+            }
         }
 
 

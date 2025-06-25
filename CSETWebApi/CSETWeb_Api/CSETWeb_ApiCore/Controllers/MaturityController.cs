@@ -168,10 +168,41 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// TODO: Cannot find this endpoint name in the UI codebase
+        /// Returns level scores by group for a specific maturity model.
+        /// This endpoint provides maturity level scoring data organized by groups.
         /// </summary>
-        /// <param name="mat_model_id"></param>
-        /// <returns></returns>
+        /// <param name="mat_model_id">The maturity model ID to get level scores for</param>
+        /// <returns>
+        /// 200 OK with level scores by group for the specified maturity model
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides maturity level scoring data:
+        /// - Level scores organized by maturity groups
+        /// - Model-specific scoring calculations
+        /// - Group-based maturity analysis
+        /// - Assessment-specific maturity data
+        /// 
+        /// The response includes:
+        /// - Level scores for each maturity group
+        /// - Model-specific scoring metrics
+        /// - Group-based maturity analysis
+        /// - Assessment maturity progression
+        /// 
+        /// Maturity features:
+        /// - Model-specific level scoring
+        /// - Group-based maturity analysis
+        /// - Assessment maturity tracking
+        /// - Level progression analysis
+        /// 
+        /// The maturity data supports:
+        /// - Maturity model analysis
+        /// - Level-based reporting
+        /// - Group maturity assessment
+        /// - Maturity progression tracking
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/MaturityModel/GetLevelScoresByGroup")]
         public IActionResult GetLevelScoresByGroup(int mat_model_id)

@@ -313,8 +313,12 @@ namespace CSETWebCore.Business.Demographic
         /// <summary>
         /// Persists a DETAILS_DEMOGRAPHICS record for the assessment.
         /// Replaces an existing record; does not create another one with the same name.
-        /// TODO:  implement a datatype option.
+        /// Supports different data types for flexible data storage.
         /// </summary>
+        /// <param name="assessmentId">The assessment ID</param>
+        /// <param name="key">The data item name/key</param>
+        /// <param name="value">The value to store</param>
+        /// <param name="dataType">The data type (string, int, bool, date, etc.)</param>
         public void SaveDD(int assessmentId, string key, string value, string dataType)
         {
             var dd = _context.DETAILS_DEMOGRAPHICS
@@ -330,7 +334,72 @@ namespace CSETWebCore.Business.Demographic
                 _context.DETAILS_DEMOGRAPHICS.Add(dd);
             }
 
-            dd.StringValue = value;
+            // Store value based on data type
+            if (!string.IsNullOrEmpty(dataType))
+            {
+                switch (dataType.ToLower())
+                {
+                    case "int":
+                    case "integer":
+                        if (int.TryParse(value, out int intValue))
+                        {
+                            dd.IntValue = intValue;
+                            dd.StringValue = null;
+                        }
+                        else
+                        {
+                            dd.StringValue = value; // Fallback to string if parsing fails
+                        }
+                        break;
+                    case "bool":
+                    case "boolean":
+                        if (bool.TryParse(value, out bool boolValue))
+                        {
+                            dd.BoolValue = boolValue;
+                            dd.StringValue = null;
+                        }
+                        else
+                        {
+                            dd.StringValue = value; // Fallback to string if parsing fails
+                        }
+                        break;
+                    case "date":
+                    case "datetime":
+                        if (DateTime.TryParse(value, out DateTime dateValue))
+                        {
+                            dd.DateTimeValue = dateValue;
+                            dd.StringValue = null;
+                        }
+                        else
+                        {
+                            dd.StringValue = value; // Fallback to string if parsing fails
+                        }
+                        break;
+                    case "decimal":
+                    case "double":
+                    case "float":
+                        if (decimal.TryParse(value, out decimal decimalValue))
+                        {
+                            dd.DecimalValue = decimalValue;
+                            dd.StringValue = null;
+                        }
+                        else
+                        {
+                            dd.StringValue = value; // Fallback to string if parsing fails
+                        }
+                        break;
+                    default:
+                        // Default to string storage
+                        dd.StringValue = value;
+                        break;
+                }
+            }
+            else
+            {
+                // Default to string storage if no data type specified
+                dd.StringValue = value;
+            }
+
             _context.SaveChanges();
         }
     }

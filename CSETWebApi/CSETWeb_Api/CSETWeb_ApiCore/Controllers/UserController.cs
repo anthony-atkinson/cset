@@ -163,9 +163,14 @@ namespace CSETWebCore.Api.Controllers
                 resetter.ResetPassword(user.PrimaryEmail, "Temporary Password", "CSET");
             }
 
-
-            // TODO:  What sort of response should we send?
-            return Ok();
+            // Return success response with user activation status
+            return Ok(new { 
+                Success = true, 
+                UserId = user.UserId, 
+                IsActive = user.IsActive, 
+                Message = isActive ? "User activated successfully" : "User deactivated successfully",
+                EmailSent = isActive
+            });
         }
 
 
