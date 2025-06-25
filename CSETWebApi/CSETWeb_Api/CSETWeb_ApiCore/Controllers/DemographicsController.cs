@@ -23,6 +23,11 @@ using CSETWebCore.Helpers;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for managing assessment demographic information in CSET.
+    /// Supports demographic data collection, organization types, sectors, industries,
+    /// asset values, and geographic information for cybersecurity assessments.
+    /// </summary>
     [CsetAuthorize]
     [ApiController]
     public class DemographicsController : ControllerBase
@@ -36,8 +41,12 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// CTOR
+        /// Initializes a new instance of the DemographicsController.
         /// </summary>
+        /// <param name="token">Service for JWT token management</param>
+        /// <param name="assessment">Service for assessment operations</param>
+        /// <param name="demographic">Service for demographic operations</param>
+        /// <param name="context">Database context</param>
         public DemographicsController(ITokenManager token, IAssessmentBusiness assessment,
             IDemographicBusiness demographic, CSETContext context)
         {
@@ -51,10 +60,29 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Retrieves demographic information for the current assessment.
         /// </summary>
+        /// <returns>
+        /// 200 OK with assessment demographics data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the complete demographic information for the current assessment,
+        /// including organization details, sector information, asset values, and geographic data.
+        /// 
+        /// The response includes:
+        /// - Organization name and type
+        /// - Sector and industry classification
+        /// - Asset values and criticality
+        /// - Geographic location information
+        /// - Organization size and characteristics
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics")]
+        [ProducesResponseType(typeof(Demographics), 200)]
+        [ProducesResponseType(401)]
         public IActionResult Get()
         {
             int assessmentId = _token.AssessmentForUser();
@@ -63,10 +91,43 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Saves demographic information for the current assessment.
         /// </summary>
+        /// <param name="demographics">Demographic data to save</param>
+        /// <returns>
+        /// 200 OK with saved demographics data
+        /// 400 Bad Request if demographic data is invalid
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint saves or updates the demographic information for the current assessment.
+        /// The assessment ID is automatically set from the current user's context.
+        /// 
+        /// The request should include:
+        /// - Organization information
+        /// - Sector and industry classification
+        /// - Asset values and criticality
+        /// - Geographic location data
+        /// - Organization size and characteristics
+        /// 
+        /// Sample request:
+        ///     POST /api/demographics
+        ///     {
+        ///         "OrganizationName": "Example Corp",
+        ///         "OrganizationType": "Private",
+        ///         "SectorId": 1,
+        ///         "IndustryId": 5,
+        ///         "AssetValue": "High",
+        ///         "Size": "Large"
+        ///     }
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpPost]
         [Route("api/demographics")]
+        [ProducesResponseType(typeof(Demographics), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public IActionResult Post([FromBody] Demographics demographics)
         {
             demographics.AssessmentId = _token.AssessmentForUser();
@@ -75,10 +136,30 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// Get organization types
+        /// Retrieves a list of available organization types.
         /// </summary>
+        /// <returns>
+        /// 200 OK with list of organization types
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides a list of all available organization types that can be
+        /// assigned to assessments. These types help categorize organizations for
+        /// reporting and analysis purposes.
+        /// 
+        /// Common organization types include:
+        /// - Private Sector
+        /// - Public Sector
+        /// - Government
+        /// - Non-Profit
+        /// - Educational
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/getOrganizationTypes")]
+        [ProducesResponseType(typeof(List<OrganizationType>), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetOrganizationTypes()
         {
             return Ok(_assessment.GetOrganizationTypes());
@@ -86,10 +167,32 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// Get SECTOR list applicable to scope (base or IOD)
+        /// Retrieves sectors applicable to the current scope (base or IOD).
         /// </summary>
+        /// <returns>
+        /// 200 OK with list of applicable sectors
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves sectors based on the current application scope.
+        /// For IOD (Infrastructure and Operational Dependencies) scope, it returns
+        /// NIPP (National Infrastructure Protection Plan) sectors. For base scope,
+        /// it returns classic CISA sectors.
+        /// 
+        /// The response includes:
+        /// - Sector ID and name
+        /// - Scope-appropriate sector list
+        /// - Translated names based on user language preference
+        /// 
+        /// Sectors are used to classify organizations by their critical infrastructure
+        /// sector for cybersecurity assessment and reporting purposes.
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/Demographics/Sectors")]
+        [ProducesResponseType(typeof(List<Sector>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> GetSECTORs()
         {
             string scope = _token.Payload("scope");
@@ -139,10 +242,28 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Retrieves all sector-industry relationships.
         /// </summary>
+        /// <returns>
+        /// 200 OK with all sector-industry mappings
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves all sector-industry relationships in the system.
+        /// This data is used to understand which industries belong to which sectors
+        /// for assessment classification and reporting.
+        /// 
+        /// The response includes:
+        /// - All sector-industry mappings
+        /// - Industry IDs and names
+        /// - Sector associations
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/Demographics/Sectors_Industry")]
+        [ProducesResponseType(typeof(IQueryable<SECTOR_INDUSTRY>), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetSECTOR_INDUSTRY()
         {
             var list = _context.SECTOR_INDUSTRY;
@@ -151,10 +272,32 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Retrieves industries for a specific sector.
         /// </summary>
+        /// <param name="id">Sector ID to get industries for</param>
+        /// <returns>
+        /// 200 OK with list of industries for the specified sector
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves all industries that belong to a specific sector.
+        /// Industries are ordered alphabetically with "Other" options moved to the end.
+        /// 
+        /// The response includes:
+        /// - Industry ID and name
+        /// - Associated sector ID
+        /// - Translated names based on user language preference
+        /// - Ordered list with "Other" options at the end
+        /// 
+        /// Sample request:
+        ///     GET /api/Demographics/Sectors_Industry/1
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/Demographics/Sectors_Industry/{id}")]
+        [ProducesResponseType(typeof(List<Industry>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> GetSECTOR_INDUSTRY(int id)
         {
             var list = await _context.SECTOR_INDUSTRY.Where(x => x.SectorId == id)
@@ -187,10 +330,34 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Retrieves available asset values for demographic classification.
         /// </summary>
+        /// <returns>
+        /// 200 OK with list of asset values
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the available asset values that can be assigned to
+        /// organizations for assessment purposes. Asset values help determine the
+        /// criticality and importance of the organization's assets.
+        /// 
+        /// The response includes:
+        /// - Asset value descriptions
+        /// - Ordered by value priority
+        /// - Used for risk assessment and prioritization
+        /// 
+        /// Common asset values include:
+        /// - High Value
+        /// - Medium Value
+        /// - Low Value
+        /// - Critical
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/Demographics/AssetValues")]
+        [ProducesResponseType(typeof(List<DemographicsAssetValue>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> GetAssetValues()
         {
             List<DEMOGRAPHICS_ASSET_VALUES> assetValues = await _context.DEMOGRAPHICS_ASSET_VALUES
@@ -200,10 +367,34 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Retrieves states and provinces for geographic classification.
         /// </summary>
+        /// <returns>
+        /// 200 OK with list of states and provinces
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves all available states and provinces for geographic
+        /// classification of assessments. The list is ordered alphabetically by
+        /// display name and includes international locations.
+        /// 
+        /// The response includes:
+        /// - State/province ID and display name
+        /// - ISO country codes
+        /// - Translated names based on user language preference
+        /// - Ordered alphabetically
+        /// 
+        /// This data is used for:
+        /// - Geographic risk assessment
+        /// - Regional compliance requirements
+        /// - Location-based reporting
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/Demographics/StatesAndProvinces")]
+        [ProducesResponseType(typeof(List<StateAndProvince>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> GetStatesAndProvinces()
         {
             List<STATES_AND_PROVINCES> statesAndProvinces = await _context.STATES_AND_PROVINCES.ToListAsync();
@@ -233,10 +424,34 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Retrieves organization size classifications.
         /// </summary>
+        /// <returns>
+        /// 200 OK with list of organization size options
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves the available organization size classifications
+        /// that can be assigned to assessments. Size classifications help determine
+        /// appropriate security controls and compliance requirements.
+        /// 
+        /// The response includes:
+        /// - Size ID and description
+        /// - Ordered by value priority
+        /// - Translated descriptions based on user language preference
+        /// 
+        /// Common size classifications include:
+        /// - Small (1-50 employees)
+        /// - Medium (51-250 employees)
+        /// - Large (251+ employees)
+        /// - Enterprise (1000+ employees)
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/Demographics/Size")]
+        [ProducesResponseType(typeof(List<AssessmentSize>), 200)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> GetSize()
         {
             List<DEMOGRAPHICS_SIZE> assetValues = await _context.DEMOGRAPHICS_SIZE.ToListAsync();

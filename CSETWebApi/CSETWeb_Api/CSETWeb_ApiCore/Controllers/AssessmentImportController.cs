@@ -20,6 +20,12 @@ using ICSharpCode.SharpZipLib.Zip;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for assessment import functionality in CSET.
+    /// This controller handles the import of assessments from various sources including
+    /// encrypted files, legacy formats, and specialized spreadsheets like AWWA.
+    /// Requires authentication and authorization via CsetAuthorize attribute.
+    /// </summary>
     [CsetAuthorize]
     public class AssessmentImportController : ControllerBase
     {
@@ -28,11 +34,11 @@ namespace CSETWebCore.Api.Controllers
         private IImportManager _importManager;
 
         /// <summary>
-        /// Constructor.
+        /// Initializes a new instance of the AssessmentImportController.
         /// </summary>
-        /// <param name="token"></param>
-        /// <param name="context"></param>
-        /// <param name="assessmentUtil"></param>
+        /// <param name="token">Token manager for authentication and authorization</param>
+        /// <param name="context">Database context for assessment operations</param>
+        /// <param name="importManager">Import manager for processing assessment imports</param>
         public AssessmentImportController(ITokenManager token, CSETContext context, IImportManager importManager)
         {
             _tokenManager = token;
@@ -40,6 +46,17 @@ namespace CSETWebCore.Api.Controllers
             _importManager = importManager;
         }
 
+        /// <summary>
+        /// Checks if legacy import functionality is installed.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with false (legacy import is not supported in web version)
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// Returns false to indicate that legacy import functionality is not available
+        /// in the web version of CSET. Legacy imports must be performed using the desktop version.
+        /// </remarks>
         [HttpGet]
         [Route("api/assessment/legacy/import/installed")]
         public IActionResult LegacyImportIsInstalled()
@@ -47,7 +64,21 @@ namespace CSETWebCore.Api.Controllers
             return Ok(false);
         }
 
-
+        /// <summary>
+        /// Imports a legacy assessment file.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with true if import successful
+        /// 400 Bad Request if multiple files uploaded
+        /// 401 Unauthorized if user is not authenticated
+        /// 500 Internal Server Error if import processing fails
+        /// </returns>
+        /// <remarks>
+        /// Processes legacy assessment files for import into the system.
+        /// Only allows a single assessment file to be imported at a time.
+        /// The file is processed using the import manager with user authentication.
+        /// This endpoint handles older assessment formats that may not be compatible with current standards.
+        /// </remarks>
         [HttpPost]
         [Route("api/assessment/legacy/import")]
         public async Task<IActionResult> ImportLegacyAssessment()
@@ -75,7 +106,26 @@ namespace CSETWebCore.Api.Controllers
             return Ok(true);
         }
 
-
+        /// <summary>
+        /// Imports a modern assessment file with optional password protection.
+        /// </summary>
+        /// <param name="pwd">Optional password for encrypted assessment files</param>
+        /// <returns>
+        /// 200 OK with success message if import successful
+        /// 401 Unauthorized if user is not authenticated
+        /// 406 Not Acceptable if password is invalid
+        /// 415 Unsupported Media Type if content type is not multipart
+        /// 423 Locked if password is required but not provided
+        /// 404 Not Found if custom module is missing
+        /// 500 Internal Server Error if import processing fails
+        /// </returns>
+        /// <remarks>
+        /// Imports modern assessment files (.csetw format) with support for password protection.
+        /// Validates file format and extracts password hints from encrypted files.
+        /// Supports overwrite functionality via x-cset-overwrite header.
+        /// Handles various error conditions including password validation and missing dependencies.
+        /// Legacy .cset files are rejected and must be imported via desktop version.
+        /// </remarks>
         [HttpPost]
         [Route("api/assessment/import")]
         public async Task<IActionResult> ImportAssessment([FromHeader] string pwd)
@@ -123,10 +173,8 @@ namespace CSETWebCore.Api.Controllers
                         }
                     }
 
-
                     // overwrite the assessment if instructed in the header
                     bool.TryParse(Request.Headers["x-cset-overwrite"], out bool overwrite);
-
 
                     await _importManager.ProcessCSETAssessmentImport(bytes, currentUserId, accessKey, _context, pwd, overwrite);
                 }
@@ -164,7 +212,21 @@ namespace CSETWebCore.Api.Controllers
             return Ok(response);
         }
 
-
+        /// <summary>
+        /// Imports AWWA (American Water Works Association) spreadsheet data.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with success message if import successful
+        /// 401 Unauthorized if user is not authenticated
+        /// 415 Unsupported Media Type if content type is not multipart
+        /// 500 Internal Server Error if import processing fails
+        /// </returns>
+        /// <remarks>
+        /// Imports Excel spreadsheets (.xlsx or .xls) containing AWWA assessment data.
+        /// Validates file format and processes the spreadsheet using specialized AWWA import manager.
+        /// Only Microsoft Excel spreadsheets are supported for this import type.
+        /// The imported data is associated with the current assessment ID from the user's token.
+        /// </remarks>
         [HttpPost]
         [Route("api/import/AWWA")]
         public IActionResult ImportAwwaSpreadsheet()
@@ -176,7 +238,6 @@ namespace CSETWebCore.Api.Controllers
                 // unsupported media type
                 return StatusCode(415);
             }
-
 
             var assessmentId = int.Parse(_tokenManager.Payload(Constants.Constants.Token_AssessmentId));
 
@@ -198,7 +259,6 @@ namespace CSETWebCore.Api.Controllers
                     var target = new MemoryStream();
                     file.CopyTo(target);
                     var bytes = target.ToArray();
-
 
                     var manager = new ImportManagerAwwa(_context);
                     var importState = manager.ProcessSpreadsheetImport(bytes, assessmentId);

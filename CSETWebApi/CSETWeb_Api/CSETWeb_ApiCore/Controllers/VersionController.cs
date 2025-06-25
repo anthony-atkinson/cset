@@ -15,13 +15,23 @@ using NLog;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for version information functionality in CSET.
+    /// This controller handles the retrieval of CSET version information
+    /// for system identification and compatibility checking. Provides
+    /// version numbers and system information for client applications.
+    /// </summary>
     public class VersionController : Controller
     {
         private readonly IVersionBusiness _versionBusiness;
         private readonly CSETContext _context;
         //IVersionBusiness versionBusiness
 
-
+        /// <summary>
+        /// Initializes a new instance of the VersionController.
+        /// </summary>
+        /// <param name="context">Database context for version operations</param>
+        /// <param name="versionBusiness">Version business logic service</param>
         public VersionController(CSETContext context, IVersionBusiness versionBusiness)
         {
             _context = context;
@@ -30,7 +40,20 @@ namespace CSETWebCore.Api.Controllers
 
         }
 
-
+        /// <summary>
+        /// Retrieves the current CSET version number.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with version number if successful
+        /// 200 OK with error message if version retrieval fails
+        /// </returns>
+        /// <remarks>
+        /// Returns the current version number of the CSET application.
+        /// Used by client applications to check version compatibility
+        /// and display version information to users. Logs errors to
+        /// database for debugging purposes. Returns error message as
+        /// string if version retrieval fails.
+        /// </remarks>
         [HttpGet]
         [Route("api/version")]
         public IActionResult GetCsetVersion()

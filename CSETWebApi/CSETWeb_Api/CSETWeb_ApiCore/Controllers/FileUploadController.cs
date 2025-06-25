@@ -21,6 +21,12 @@ using CSETWebCore.Interfaces.Maturity;
 
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for file upload functionality in CSET assessments.
+    /// Supports document uploads for questions, answers, and maturity model responses,
+    /// with automatic answer creation and document management capabilities.
+    /// </summary>
+    [ApiController]
     public class FileUploadController : Controller
     {
         private readonly ITokenManager _tokenManager;
@@ -30,6 +36,15 @@ namespace CSETWebCore.Api.Controllers
         private readonly IQuestionRequirementManager _answerManager;
         private readonly IMaturityBusiness _maturityBusiness;
 
+        /// <summary>
+        /// Initializes a new instance of the FileUploadController.
+        /// </summary>
+        /// <param name="tokenManager">Service for JWT token management</param>
+        /// <param name="context">Database context</param>
+        /// <param name="documentManager">Service for document management operations</param>
+        /// <param name="fileRepo">Service for file repository operations</param>
+        /// <param name="answerManager">Service for answer management operations</param>
+        /// <param name="maturityBusiness">Service for maturity model operations</param>
         public FileUploadController(
             ITokenManager tokenManager,
             CSETContext context,
@@ -49,11 +64,52 @@ namespace CSETWebCore.Api.Controllers
 
 
         /// <summary>
-        /// 
+        /// Uploads a file and associates it with a question or answer in the assessment.
         /// </summary>
-        /// <returns></returns>        
+        /// <returns>
+        /// 200 OK with list of documents for the answer
+        /// 400 Bad Request if upload parameters are invalid or upload fails
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint handles file uploads for assessment documentation. The endpoint
+        /// accepts multipart form data containing the file and metadata about the question
+        /// or answer it should be associated with.
+        /// 
+        /// Required form parameters:
+        /// - questionId: ID of the question the document relates to
+        /// - answerId: ID of the answer (optional, will be created if not provided)
+        /// - title: Document title/name
+        /// - questionType: Type of question ("Question", "Requirement", "Maturity", "Component")
+        /// - file: The actual file to upload
+        /// 
+        /// The endpoint will:
+        /// - Create an answer record if one doesn't exist
+        /// - Store the uploaded file in the file repository
+        /// - Create a document record linking the file to the answer
+        /// - Return all documents associated with the answer
+        /// 
+        /// Supported file types and size limits are determined by the file repository
+        /// configuration. Common supported formats include PDF, DOC, DOCX, XLS, XLSX,
+        /// and image files.
+        /// 
+        /// Sample request:
+        ///     POST /api/files/blob/create/
+        ///     Content-Type: multipart/form-data
+        ///     
+        ///     Form data:
+        ///     - questionId: 123
+        ///     - title: "Security Policy Document"
+        ///     - questionType: "Question"
+        ///     - file: [binary file data]
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpPost]
         [Route("/api/files/blob/create/")]
+        [ProducesResponseType(typeof(List<Document>), 200)]
+        [ProducesResponseType(400)]
+        [ProducesResponseType(401)]
         public async Task<IActionResult> Upload()
         {
             const string key_questionId = "questionId";
