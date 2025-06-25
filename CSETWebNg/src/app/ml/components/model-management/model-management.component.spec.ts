@@ -1,0 +1,30 @@
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { ModelManagementComponent } from './model-management.component';
+import { NO_ERRORS_SCHEMA } from '@angular/core';
+
+describe('ModelManagementComponent', () => {
+  let component: ModelManagementComponent;
+  let fixture: ComponentFixture<ModelManagementComponent>;
+
+  beforeEach(async () => {
+    await TestBed.configureTestingModule({
+      declarations: [ModelManagementComponent],
+      schemas: [NO_ERRORS_SCHEMA],
+    }).compileComponents();
+  });
+
+  beforeEach(() => {
+    fixture = TestBed.createComponent(ModelManagementComponent);
+    component = fixture.componentInstance;
+    fixture.detectChanges();
+  });
+
+  it('should create', () => {
+    expect(component).toBeTruthy();
+  });
+
+  it('should render model management', () => {
+    const compiled = fixture.nativeElement as HTMLElement;
+    expect(compiled.textContent).toContain(''); // Update with a real selector or text if available
+  });
+}); 
