@@ -1,0 +1,285 @@
+@page "/file-management"
+@using CSETWebBlazor.Services
+@using CSETWebBlazor.Shared.Components
+@inject IFileService FileService
+
+<PageTitle>File Management - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>File Management</h2>
+                <Button Variant="Button.ButtonVariant.Primary" OnClick="RefreshFiles">
+                    <i class="fas fa-sync-alt me-2"></i>
+                    Refresh
+                </Button>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-upload me-2"></i>Upload Files</h5>
+                </div>
+                <div class="card-body">
+                    <FileUpload Multiple="true"
+                               AcceptTypes=".json,.xml,.csv,.xlsx,.pdf"
+                               MaxFileSizeMB="10"
+                               OnUploadComplete="OnUploadComplete"
+                               OnFilesSelected="OnFilesSelected" />
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-download me-2"></i>Download Files</h5>
+                </div>
+                <div class="card-body">
+                    <FileDownload Files="AvailableFiles"
+                                 ShowDeleteButton="true"
+                                 OnFileDownloaded="OnFileDownloaded"
+                                 OnFileDeleted="OnFileDeleted" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar me-2"></i>File Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-file"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@TotalFiles</h3>
+                                    <p>Total Files</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-hdd"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@FormatFileSize(TotalSize)</h3>
+                                    <p>Total Size</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-calendar"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@OldestFileDate?.ToString("MMM dd")</h3>
+                                    <p>Oldest File</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@NewestFileDate?.ToString("MMM dd")</h3>
+                                    <p>Newest File</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    @if (UploadHistory.Any())
+    {
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5><i class="fas fa-history me-2"></i>Upload History</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>File Name</th>
+                                        <th>Size</th>
+                                        <th>Status</th>
+                                        <th>Upload Date</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in UploadHistory.Take(10))
+                                    {
+                                        <tr>
+                                            <td>@item.FileName</td>
+                                            <td>@FormatFileSize(item.FileSize)</td>
+                                            <td>
+                                                <span class="badge @(item.Success ? "bg-success" : "bg-danger")">
+                                                    @(item.Success ? "Success" : "Failed")
+                                                </span>
+                                            </td>
+                                            <td>@item.UploadDate.ToString("MMM dd, yyyy HH:mm")</td>
+                                            <td>
+                                                @if (item.Success)
+                                                {
+                                                    <Button Variant="Button.ButtonVariant.Outline" 
+                                                            Size="Button.ButtonSize.Small"
+                                                            OnClick="@(() => DownloadFile(item.FilePath))">
+                                                        <i class="fas fa-download"></i>
+                                                    </Button>
+                                                }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private List<FileInfo> AvailableFiles { get; set; } = new();
+    private List<UploadHistoryItem> UploadHistory { get; set; } = new();
+    private int TotalFiles => AvailableFiles.Count;
+    private long TotalSize => AvailableFiles.Sum(f => f.Size);
+    private DateTime? OldestFileDate => AvailableFiles.Any() ? AvailableFiles.Min(f => f.CreatedDate) : null;
+    private DateTime? NewestFileDate => AvailableFiles.Any() ? AvailableFiles.Max(f => f.CreatedDate) : null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFiles();
+    }
+
+    private async Task LoadFiles()
+    {
+        try
+        {
+            var uploadPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads");
+            if (Directory.Exists(uploadPath))
+            {
+                var files = Directory.GetFiles(uploadPath);
+                AvailableFiles.Clear();
+                
+                foreach (var filePath in files)
+                {
+                    var fileInfo = await FileService.GetFileInfoAsync(filePath);
+                    if (!string.IsNullOrEmpty(fileInfo.Name))
+                    {
+                        AvailableFiles.Add(fileInfo);
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading files: {ex.Message}");
+        }
+    }
+
+    private async Task OnUploadComplete(List<FileUploadResult> results)
+    {
+        foreach (var result in results)
+        {
+            UploadHistory.Insert(0, new UploadHistoryItem
+            {
+                FileName = result.FileName,
+                FileSize = result.FileSize,
+                Success = result.Success,
+                FilePath = result.FilePath,
+                UploadDate = DateTime.Now
+            });
+        }
+        
+        await LoadFiles();
+        StateHasChanged();
+    }
+
+    private async Task OnFilesSelected(List<FileInfo> files)
+    {
+        // Files selected but not yet uploaded
+        Console.WriteLine($"Selected {files.Count} files for upload");
+    }
+
+    private async Task OnFileDownloaded(FileInfo file)
+    {
+        Console.WriteLine($"File downloaded: {file.Name}");
+    }
+
+    private async Task OnFileDeleted(FileInfo file)
+    {
+        AvailableFiles.Remove(file);
+        StateHasChanged();
+    }
+
+    private async Task DownloadFile(string filePath)
+    {
+        try
+        {
+            var result = await FileService.DownloadFileAsync(filePath);
+            if (result.Success)
+            {
+                // Trigger download using JavaScript
+                await JS.InvokeVoidAsync("downloadFile", 
+                    Convert.ToBase64String(result.FileContent), 
+                    result.FileName, 
+                    result.ContentType);
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading file: {ex.Message}");
+        }
+    }
+
+    private async Task RefreshFiles()
+    {
+        await LoadFiles();
+        StateHasChanged();
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    public class UploadHistoryItem
+    {
+        public string FileName { get; set; } = string.Empty;
+        public long FileSize { get; set; }
+        public bool Success { get; set; }
+        public string FilePath { get; set; } = string.Empty;
+        public DateTime UploadDate { get; set; }
+    }
+} 

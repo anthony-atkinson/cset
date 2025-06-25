@@ -1,0 +1,176 @@
+@using CSETWebBlazor.Services
+@inject IFileService FileService
+@inject IJSRuntime JSRuntime
+
+<div class="file-download">
+    @if (Files.Any())
+    {
+        <div class="file-list">
+            @foreach (var file in Files)
+            {
+                <div class="file-item">
+                    <div class="file-info">
+                        <i class="fas fa-file me-2"></i>
+                        <div class="file-details">
+                            <span class="file-name">@file.Name</span>
+                            <small class="text-muted">@FormatFileSize(file.Size) • @file.ModifiedDate.ToString("MMM dd, yyyy")</small>
+                        </div>
+                    </div>
+                    
+                    <div class="file-actions">
+                        <Button Variant="Button.ButtonVariant.Outline" 
+                                Size="Button.ButtonSize.Small"
+                                OnClick="@(() => DownloadFile(file))"
+                                Disabled="@IsDownloading">
+                            <i class="fas fa-download me-1"></i>
+                            Download
+                        </Button>
+                        
+                        @if (ShowDeleteButton)
+                        {
+                            <Button Variant="Button.ButtonVariant.Outline" 
+                                    Size="Button.ButtonSize.Small"
+                                    OnClick="@(() => DeleteFile(file))"
+                                    Disabled="@IsDownloading">
+                                <i class="fas fa-trash me-1"></i>
+                                Delete
+                            </Button>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+    else
+    {
+        <div class="no-files">
+            <i class="fas fa-folder-open fa-2x mb-2"></i>
+            <p>No files available for download</p>
+        </div>
+    }
+
+    @if (IsDownloading)
+    {
+        <div class="download-progress">
+            <div class="spinner-border spinner-border-sm me-2" role="status"></div>
+            <span>Downloading @CurrentFileName...</span>
+        </div>
+    }
+
+    @if (DownloadResults.Any())
+    {
+        <div class="download-results mt-3">
+            @foreach (var result in DownloadResults)
+            {
+                <div class="result-item @(result.Success ? "success" : "error")">
+                    <i class="fas @(result.Success ? "fa-check-circle" : "fa-exclamation-circle") me-2"></i>
+                    <span>@result.FileName</span>
+                    @if (!result.Success)
+                    {
+                        <div class="error-message">@result.ErrorMessage</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public List<FileInfo> Files { get; set; } = new();
+    [Parameter] public bool ShowDeleteButton { get; set; } = true;
+    [Parameter] public EventCallback<FileInfo> OnFileDownloaded { get; set; }
+    [Parameter] public EventCallback<FileInfo> OnFileDeleted { get; set; }
+
+    private bool IsDownloading { get; set; }
+    private string CurrentFileName { get; set; } = string.Empty;
+    private List<FileDownloadResult> DownloadResults { get; set; } = new();
+
+    private async Task DownloadFile(FileInfo file)
+    {
+        if (IsDownloading) return;
+
+        IsDownloading = true;
+        CurrentFileName = file.Name;
+
+        try
+        {
+            var result = await FileService.DownloadFileAsync(file.Path);
+            DownloadResults.Add(result);
+
+            if (result.Success)
+            {
+                // Trigger browser download using JavaScript
+                await JSRuntime.InvokeVoidAsync("downloadFile", 
+                    Convert.ToBase64String(result.FileContent), 
+                    result.FileName, 
+                    result.ContentType);
+                
+                await OnFileDownloaded.InvokeAsync(file);
+            }
+        }
+        catch (Exception ex)
+        {
+            var errorResult = new FileDownloadResult
+            {
+                Success = false,
+                FileName = file.Name,
+                ErrorMessage = ex.Message
+            };
+            DownloadResults.Add(errorResult);
+        }
+        finally
+        {
+            IsDownloading = false;
+            CurrentFileName = string.Empty;
+        }
+    }
+
+    private async Task DeleteFile(FileInfo file)
+    {
+        try
+        {
+            var success = await FileService.DeleteFileAsync(file.Path);
+            if (success)
+            {
+                Files.Remove(file);
+                await OnFileDeleted.InvokeAsync(file);
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle delete error
+            Console.WriteLine($"Error deleting file: {ex.Message}");
+        }
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            // Add JavaScript function for file download
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                window.downloadFile = function(base64Data, fileName, contentType) {
+                    const link = document.createElement('a');
+                    link.href = 'data:' + contentType + ';base64,' + base64Data;
+                    link.download = fileName;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                };
+            ");
+        }
+    }
+} 

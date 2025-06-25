@@ -1,0 +1,83 @@
+@page "/aggregation"
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IApiClientService ApiClient
+
+<PageTitle>Aggregation - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Assessment Aggregation</h2>
+            <p class="text-muted">Compare and aggregate multiple assessments</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-plus display-4 text-primary mb-3"></i>
+                    <h5 class="card-title">New Aggregation</h5>
+                    <p class="card-text">Create a new aggregation</p>
+                    <button class="btn btn-primary">Create</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-graph display-4 text-success mb-3"></i>
+                    <h5 class="card-title">Trend Analysis</h5>
+                    <p class="card-text">Analyze trends over time</p>
+                    <button class="btn btn-success">Analyze</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-target display-4 text-info mb-3"></i>
+                    <h5 class="card-title">Compare</h5>
+                    <p class="card-text">Compare assessments</p>
+                    <button class="btn btn-info">Compare</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-bar-chart display-4 text-warning mb-3"></i>
+                    <h5 class="card-title">Reports</h5>
+                    <p class="card-text">Generate aggregation reports</p>
+                    <button class="btn btn-warning">Reports</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Aggregation Features Coming Soon</h5>
+                </div>
+                <div class="card-body">
+                    <p>This section will allow super users to:</p>
+                    <ul>
+                        <li>Combine multiple assessments into aggregated views</li>
+                        <li>Compare assessment results across different time periods</li>
+                        <li>Analyze trends and patterns</li>
+                        <li>Generate comparative reports</li>
+                        <li>Create organizational dashboards</li>
+                        <li>Export aggregated data</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

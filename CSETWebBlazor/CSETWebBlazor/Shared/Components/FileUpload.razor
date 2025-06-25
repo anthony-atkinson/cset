@@ -1,0 +1,264 @@
+@using CSETWebBlazor.Services
+@inject IFileService FileService
+@inject IJSRuntime JSRuntime
+
+<div class="file-upload">
+    <div class="upload-area @(IsDragOver ? "drag-over" : "")" 
+         @onclick="OpenFileDialog"
+         @ondragover="OnDragOver"
+         @ondragleave="OnDragLeave"
+         @ondrop="OnDrop">
+        
+        @if (IsUploading)
+        {
+            <div class="upload-progress">
+                <div class="progress-circle">
+                    <div class="progress-text">@UploadProgress%</div>
+                </div>
+                <div class="upload-status">Uploading @CurrentFileName...</div>
+            </div>
+        }
+        else if (SelectedFiles.Any())
+        {
+            <div class="selected-files">
+                <h5>Selected Files (@SelectedFiles.Count)</h5>
+                @foreach (var file in SelectedFiles)
+                {
+                    <div class="file-item">
+                        <i class="fas fa-file me-2"></i>
+                        <span>@file.Name</span>
+                        <small class="text-muted">(@FormatFileSize(file.Size))</small>
+                        @if (file.ValidationResult != null && !file.ValidationResult.IsValid)
+                        {
+                            <div class="validation-errors">
+                                @foreach (var error in file.ValidationResult.Errors)
+                                {
+                                    <div class="error-message">@error</div>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="upload-placeholder">
+                <i class="fas fa-cloud-upload-alt fa-3x mb-3"></i>
+                <h5>Drop files here or click to browse</h5>
+                <p class="text-muted">Supported formats: @string.Join(", ", AllowedFileTypes)</p>
+                <p class="text-muted">Maximum file size: @MaxFileSizeMB MB</p>
+            </div>
+        }
+    </div>
+
+    <InputFile @ref="InputFileRef" 
+               OnChange="OnFilesSelected" 
+               multiple="@Multiple"
+               accept="@AcceptTypes"
+               style="display: none;" />
+
+    @if (SelectedFiles.Any() && !IsUploading)
+    {
+        <div class="upload-actions mt-3">
+            <Button Variant="Button.ButtonVariant.Primary" 
+                    OnClick="UploadFiles"
+                    Disabled="@(!CanUpload)">
+                <i class="fas fa-upload me-2"></i>
+                Upload @(SelectedFiles.Count > 1 ? $"{SelectedFiles.Count} Files" : "File")
+            </Button>
+            
+            <Button Variant="Button.ButtonVariant.Secondary" 
+                    OnClick="ClearSelection">
+                Clear Selection
+            </Button>
+        </div>
+    }
+
+    @if (UploadResults.Any())
+    {
+        <div class="upload-results mt-3">
+            <h5>Upload Results</h5>
+            @foreach (var result in UploadResults)
+            {
+                <div class="result-item @(result.Success ? "success" : "error")">
+                    <i class="fas @(result.Success ? "fa-check-circle" : "fa-exclamation-circle") me-2"></i>
+                    <span>@result.FileName</span>
+                    @if (!result.Success)
+                    {
+                        <div class="error-message">@result.ErrorMessage</div>
+                    }
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public bool Multiple { get; set; } = true;
+    [Parameter] public string AcceptTypes { get; set; } = ".json,.xml,.csv,.xlsx,.pdf";
+    [Parameter] public long MaxFileSizeMB { get; set; } = 10;
+    [Parameter] public EventCallback<List<FileUploadResult>> OnUploadComplete { get; set; }
+    [Parameter] public EventCallback<List<FileInfo>> OnFilesSelected { get; set; }
+
+    private InputFile? InputFileRef;
+    private bool IsDragOver { get; set; }
+    private bool IsUploading { get; set; }
+    private int UploadProgress { get; set; }
+    private string CurrentFileName { get; set; } = string.Empty;
+    private List<FileUploadItem> SelectedFiles { get; set; } = new();
+    private List<FileUploadResult> UploadResults { get; set; } = new();
+    private bool CanUpload => SelectedFiles.Any() && SelectedFiles.All(f => f.ValidationResult?.IsValid != false);
+
+    private string[] AllowedFileTypes => AcceptTypes.Split(',').Select(t => t.Trim()).ToArray();
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await JSRuntime.InvokeVoidAsync("eval", @"
+                window.preventDefault = function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                };
+            ");
+        }
+    }
+
+    private async Task OpenFileDialog()
+    {
+        if (InputFileRef != null)
+        {
+            await InputFileRef.Element.Value.FocusAsync();
+        }
+    }
+
+    private async Task OnFilesSelected(InputFileChangeEventArgs e)
+    {
+        var files = new List<FileUploadItem>();
+        
+        foreach (var file in e.GetMultipleFiles())
+        {
+            var fileItem = new FileUploadItem
+            {
+                File = file,
+                Name = file.Name,
+                Size = file.Size,
+                ContentType = file.ContentType
+            };
+
+            // Validate file
+            using var stream = file.OpenReadStream(MaxFileSizeMB * 1024 * 1024);
+            fileItem.ValidationResult = await FileService.ValidateFileAsync(stream, file.Name, file.ContentType);
+            
+            files.Add(fileItem);
+        }
+
+        SelectedFiles.AddRange(files);
+        await OnFilesSelected.InvokeAsync(files.Select(f => new FileInfo
+        {
+            Name = f.Name,
+            Size = f.Size,
+            ContentType = f.ContentType
+        }).ToList());
+    }
+
+    private async Task OnDragOver(DragEventArgs e)
+    {
+        IsDragOver = true;
+        await JSRuntime.InvokeVoidAsync("preventDefault", e);
+    }
+
+    private async Task OnDragLeave(DragEventArgs e)
+    {
+        IsDragOver = false;
+        await JSRuntime.InvokeVoidAsync("preventDefault", e);
+    }
+
+    private async Task OnDrop(DragEventArgs e)
+    {
+        IsDragOver = false;
+        await JSRuntime.InvokeVoidAsync("preventDefault", e);
+        
+        // Note: File drop handling would require additional JavaScript interop
+        // This is a simplified version - in a real implementation, you'd need
+        // to handle the dropped files through JS interop
+    }
+
+    private async Task UploadFiles()
+    {
+        if (!CanUpload || IsUploading) return;
+
+        IsUploading = true;
+        UploadResults.Clear();
+        var results = new List<FileUploadResult>();
+
+        foreach (var fileItem in SelectedFiles.Where(f => f.ValidationResult?.IsValid == true))
+        {
+            CurrentFileName = fileItem.Name;
+            UploadProgress = 0;
+
+            try
+            {
+                using var stream = fileItem.File.OpenReadStream(MaxFileSizeMB * 1024 * 1024);
+                var result = await FileService.UploadFileAsync(stream, fileItem.Name, fileItem.ContentType);
+                results.Add(result);
+                UploadResults.Add(result);
+
+                // Simulate progress (in a real implementation, you'd track actual progress)
+                for (int i = 0; i <= 100; i += 10)
+                {
+                    UploadProgress = i;
+                    StateHasChanged();
+                    await Task.Delay(50);
+                }
+            }
+            catch (Exception ex)
+            {
+                var errorResult = new FileUploadResult
+                {
+                    Success = false,
+                    FileName = fileItem.Name,
+                    ErrorMessage = ex.Message
+                };
+                results.Add(errorResult);
+                UploadResults.Add(errorResult);
+            }
+        }
+
+        IsUploading = false;
+        UploadProgress = 0;
+        CurrentFileName = string.Empty;
+
+        await OnUploadComplete.InvokeAsync(results);
+    }
+
+    private async Task ClearSelection()
+    {
+        SelectedFiles.Clear();
+        UploadResults.Clear();
+        StateHasChanged();
+    }
+
+    private string FormatFileSize(long bytes)
+    {
+        string[] sizes = { "B", "KB", "MB", "GB" };
+        double len = bytes;
+        int order = 0;
+        while (len >= 1024 && order < sizes.Length - 1)
+        {
+            order++;
+            len = len / 1024;
+        }
+        return $"{len:0.##} {sizes[order]}";
+    }
+
+    public class FileUploadItem
+    {
+        public IBrowserFile File { get; set; } = default!;
+        public string Name { get; set; } = string.Empty;
+        public long Size { get; set; }
+        public string ContentType { get; set; } = string.Empty;
+        public FileValidationResult? ValidationResult { get; set; }
+    }
+} 

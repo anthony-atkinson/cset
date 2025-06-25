@@ -1,0 +1,108 @@
+@page "/analytics"
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IApiClientService ApiClient
+
+<PageTitle>Analytics - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Analytics Dashboard</h2>
+            <p class="text-muted">Comprehensive analysis of assessment data and trends</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="oi oi-document display-4 text-primary mb-3"></i>
+                    <h3 class="card-title">@TotalAssessments</h3>
+                    <p class="card-text">Total Assessments</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="oi oi-check display-4 text-success mb-3"></i>
+                    <h3 class="card-title">@CompletedAssessments</h3>
+                    <p class="card-text">Completed</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="oi oi-clock display-4 text-warning mb-3"></i>
+                    <h3 class="card-title">@InProgressAssessments</h3>
+                    <p class="card-text">In Progress</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card">
+                <div class="card-body text-center">
+                    <i class="oi oi-graph display-4 text-info mb-3"></i>
+                    <h3 class="card-title">@AverageScore%</h3>
+                    <p class="card-text">Average Score</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Analytics Features Coming Soon</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="oi oi-bar-chart display-4 text-primary mb-3"></i>
+                                    <h6 class="card-title">Trend Analysis</h6>
+                                    <p class="card-text small">Track performance over time</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="oi oi-pie-chart display-4 text-success mb-3"></i>
+                                    <h6 class="card-title">Framework Comparison</h6>
+                                    <p class="card-text small">Compare different frameworks</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="col-md-4 mb-3">
+                            <div class="card h-100">
+                                <div class="card-body text-center">
+                                    <i class="oi oi-target display-4 text-warning mb-3"></i>
+                                    <h6 class="card-title">Risk Assessment</h6>
+                                    <p class="card-text small">Identify risk patterns</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private int TotalAssessments { get; set; } = 25;
+    private int CompletedAssessments { get; set; } = 18;
+    private int InProgressAssessments { get; set; } = 7;
+    private int AverageScore { get; set; } = 78;
+} 

@@ -1,0 +1,362 @@
+@page "/real-time-collaboration"
+@using CSETWebBlazor.Services
+@using CSETWebBlazor.Shared.Components
+@inject IRealTimeService RealTimeService
+@inject IAuthenticationService AuthService
+
+<PageTitle>Real-Time Collaboration - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h2>Real-Time Collaboration</h2>
+                <div class="connection-status-badge @(IsConnected ? "connected" : "disconnected")">
+                    <i class="fas @(IsConnected ? "fa-circle" : "fa-times-circle")"></i>
+                    <span>@(IsConnected ? "Connected" : "Disconnected")</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- User Presence Panel -->
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-users me-2"></i>User Presence</h5>
+                </div>
+                <div class="card-body">
+                    <UserPresence AssessmentId="DemoAssessmentId" 
+                                 UserDisplayName="@CurrentUserDisplayName" />
+                </div>
+            </div>
+        </div>
+
+        <!-- Collaborative Comments -->
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-comments me-2"></i>Collaborative Comments</h5>
+                </div>
+                <div class="card-body">
+                    <CollaborativeComments AssessmentId="DemoAssessmentId" 
+                                           CurrentUserId="@CurrentUserId" />
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Real-Time Notifications -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-bell me-2"></i>Real-Time Notifications</h5>
+                </div>
+                <div class="card-body">
+                    <div class="notifications-panel">
+                        @if (Notifications.Any())
+                        {
+                            <div class="notifications-list">
+                                @foreach (var notification in Notifications.Take(10))
+                                {
+                                    <div class="notification-item @notification.Type">
+                                        <div class="notification-icon">
+                                            <i class="fas @GetNotificationIcon(notification.Type)"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-message">@notification.Message</div>
+                                            <small class="notification-time">@GetTimeSince(notification.Timestamp)</small>
+                                        </div>
+                                        <button class="notification-close" @onclick="@(() => RemoveNotification(notification))">
+                                            <i class="fas fa-times"></i>
+                                        </button>
+                                    </div>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <div class="no-notifications">
+                                <i class="fas fa-bell-slash"></i>
+                                <p>No notifications yet</p>
+                            </div>
+                        }
+
+                        <div class="notification-actions">
+                            <Button Variant="Button.ButtonVariant.Outline" 
+                                    Size="Button.ButtonSize.Small"
+                                    OnClick="SendTestNotification">
+                                <i class="fas fa-plus me-1"></i>
+                                Send Test Notification
+                            </Button>
+                            <Button Variant="Button.ButtonVariant.Outline" 
+                                    Size="Button.ButtonSize.Small"
+                                    OnClick="ClearNotifications">
+                                <i class="fas fa-trash me-1"></i>
+                                Clear All
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Progress Updates -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-line me-2"></i>Progress Updates</h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress-panel">
+                        <div class="current-progress">
+                            <div class="progress-info">
+                                <span class="progress-label">Current Progress</span>
+                                <span class="progress-percentage">@CurrentProgress%</span>
+                            </div>
+                            <div class="progress-bar-container">
+                                <div class="progress-bar" style="width: @(CurrentProgress)%"></div>
+                            </div>
+                            <div class="progress-message">@CurrentProgressMessage</div>
+                        </div>
+
+                        <div class="progress-controls">
+                            <div class="form-group">
+                                <label>Progress Percentage:</label>
+                                <InputRange @bind-Value="CurrentProgress" Min="0" Max="100" Step="5" class="form-range" />
+                            </div>
+                            <div class="form-group">
+                                <label>Progress Message:</label>
+                                <InputText @bind-Value="CurrentProgressMessage" class="form-control" placeholder="Enter progress message..." />
+                            </div>
+                            <Button Variant="Button.ButtonVariant.Primary" 
+                                    OnClick="UpdateProgress">
+                                <i class="fas fa-upload me-1"></i>
+                                Update Progress
+                            </Button>
+                        </div>
+
+                        @if (ProgressHistory.Any())
+                        {
+                            <div class="progress-history">
+                                <h6>Progress History</h6>
+                                <div class="history-list">
+                                    @foreach (var progress in ProgressHistory.Take(5))
+                                    {
+                                        <div class="history-item">
+                                            <div class="history-progress">
+                                                <span class="history-percentage">@progress.Progress%</span>
+                                                <div class="history-bar" style="width: @(progress.Progress)%"></div>
+                                            </div>
+                                            <div class="history-message">@progress.Message</div>
+                                            <small class="history-time">@GetTimeSince(progress.Timestamp)</small>
+                                        </div>
+                                    }
+                                </div>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mt-4">
+        <!-- Collaboration Statistics -->
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5><i class="fas fa-chart-bar me-2"></i>Collaboration Statistics</h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-users"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@TotalUsers</h3>
+                                    <p>Active Users</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-comments"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@TotalComments</h3>
+                                    <p>Comments</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-clock"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@SessionDuration</h3>
+                                    <p>Session Duration</p>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="stat-card">
+                                <div class="stat-icon">
+                                    <i class="fas fa-sync"></i>
+                                </div>
+                                <div class="stat-content">
+                                    <h3>@UpdateCount</h3>
+                                    <p>Real-Time Updates</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    private const int DemoAssessmentId = 12345;
+    private bool IsConnected { get; set; }
+    private string CurrentUserId { get; set; } = string.Empty;
+    private string CurrentUserDisplayName { get; set; } = string.Empty;
+    private List<NotificationMessage> Notifications { get; set; } = new();
+    private int CurrentProgress { get; set; } = 25;
+    private string CurrentProgressMessage { get; set; } = "Assessment in progress...";
+    private List<ProgressUpdate> ProgressHistory { get; set; } = new();
+    private DateTime SessionStart { get; set; } = DateTime.UtcNow;
+    private int UpdateCount { get; set; } = 0;
+
+    private int TotalUsers => 3; // Mock data
+    private int TotalComments => 12; // Mock data
+    private string SessionDuration => GetSessionDuration();
+
+    protected override async Task OnInitializedAsync()
+    {
+        CurrentUserId = AuthService.GetCurrentUser()?.Id ?? "demo-user";
+        CurrentUserDisplayName = AuthService.GetCurrentUser()?.DisplayName ?? "Demo User";
+
+        // Subscribe to real-time events
+        RealTimeService.ConnectionStateChanged += OnConnectionStateChanged;
+        RealTimeService.NotificationReceived += OnNotificationReceived;
+        RealTimeService.ProgressUpdated += OnProgressUpdated;
+
+        // Initialize connection
+        await RealTimeService.InitializeAsync();
+        
+        // Join demo assessment
+        await RealTimeService.JoinAssessmentAsync(DemoAssessmentId, CurrentUserDisplayName);
+    }
+
+    private void OnConnectionStateChanged(bool connected)
+    {
+        IsConnected = connected;
+        UpdateCount++;
+        StateHasChanged();
+    }
+
+    private void OnNotificationReceived(NotificationMessage notification)
+    {
+        Notifications.Insert(0, notification);
+        UpdateCount++;
+        StateHasChanged();
+    }
+
+    private void OnProgressUpdated(ProgressUpdate progress)
+    {
+        if (progress.AssessmentId == DemoAssessmentId)
+        {
+            CurrentProgress = progress.Progress;
+            CurrentProgressMessage = progress.Message;
+            ProgressHistory.Insert(0, progress);
+            UpdateCount++;
+            StateHasChanged();
+        }
+    }
+
+    private async Task SendTestNotification()
+    {
+        try
+        {
+            await RealTimeService.SendNotificationAsync(CurrentUserId, "This is a test notification from the collaboration demo!", "info");
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error sending notification: {ex.Message}");
+        }
+    }
+
+    private async Task UpdateProgress()
+    {
+        try
+        {
+            await RealTimeService.SendProgressUpdateAsync(DemoAssessmentId, CurrentProgress, CurrentProgressMessage);
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error updating progress: {ex.Message}");
+        }
+    }
+
+    private void RemoveNotification(NotificationMessage notification)
+    {
+        Notifications.Remove(notification);
+        StateHasChanged();
+    }
+
+    private void ClearNotifications()
+    {
+        Notifications.Clear();
+        StateHasChanged();
+    }
+
+    private string GetTimeSince(DateTime timestamp)
+    {
+        var timeSince = DateTime.UtcNow - timestamp;
+        if (timeSince.TotalMinutes < 1)
+            return "Just now";
+        else if (timeSince.TotalMinutes < 60)
+            return $"{(int)timeSince.TotalMinutes}m ago";
+        else if (timeSince.TotalHours < 24)
+            return $"{(int)timeSince.TotalHours}h ago";
+        else
+            return $"{(int)timeSince.TotalDays}d ago";
+    }
+
+    private string GetNotificationIcon(string type)
+    {
+        return type switch
+        {
+            "success" => "fa-check-circle",
+            "warning" => "fa-exclamation-triangle",
+            "error" => "fa-times-circle",
+            _ => "fa-info-circle"
+        };
+    }
+
+    private string GetSessionDuration()
+    {
+        var duration = DateTime.UtcNow - SessionStart;
+        if (duration.TotalMinutes < 60)
+            return $"{(int)duration.TotalMinutes}m";
+        else if (duration.TotalHours < 24)
+            return $"{(int)duration.TotalHours}h {(int)(duration.TotalMinutes % 60)}m";
+        else
+            return $"{(int)duration.TotalDays}d {(int)(duration.TotalHours % 24)}h";
+    }
+
+    public void Dispose()
+    {
+        RealTimeService.ConnectionStateChanged -= OnConnectionStateChanged;
+        RealTimeService.NotificationReceived -= OnNotificationReceived;
+        RealTimeService.ProgressUpdated -= OnProgressUpdated;
+    }
+} 

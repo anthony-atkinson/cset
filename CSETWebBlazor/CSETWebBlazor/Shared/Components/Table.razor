@@ -1,0 +1,261 @@
+@using System.Linq.Expressions
+
+<div class="table-container">
+    @if (ShowSearch && !string.IsNullOrEmpty(SearchPlaceholder))
+    {
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" 
+                           class="form-control" 
+                           placeholder="@SearchPlaceholder"
+                           @bind="SearchTerm"
+                           @oninput="@OnSearchChanged" />
+                </div>
+            </div>
+        </div>
+    }
+    
+    <div class="table-responsive">
+        <table class="table @GetTableClasses()">
+            @if (ShowHeader)
+            {
+                <thead class="@GetHeaderClasses()">
+                    <tr>
+                        @foreach (var column in Columns)
+                        {
+                            <th scope="col" 
+                                class="@GetColumnClasses(column)"
+                                @onclick="@(() => OnSortColumn(column))"
+                                style="@(column.Sortable ? "cursor: pointer;" : "")">
+                                
+                                @if (column.Sortable)
+                                {
+                                    <div class="d-flex align-items-center">
+                                        <span>@column.Title</span>
+                                        @if (SortColumn == column.PropertyName)
+                                        {
+                                            <i class="fas @(SortDirection == SortDirection.Ascending ? "fa-sort-up" : "fa-sort-down") ms-1"></i>
+                                        }
+                                        else
+                                        {
+                                            <i class="fas fa-sort ms-1 text-muted"></i>
+                                        }
+                                    </div>
+                                }
+                                else
+                                {
+                                    @column.Title
+                                }
+                            </th>
+                        }
+                    </tr>
+                </thead>
+            }
+            
+            <tbody>
+                @foreach (var item in GetFilteredAndSortedData())
+                {
+                    <tr>
+                        @foreach (var column in Columns)
+                        {
+                            <td class="@GetCellClasses(column)">
+                                @if (column.Template != null)
+                                {
+                                    @column.Template(item)
+                                }
+                                else
+                                {
+                                    @GetPropertyValue(item, column.PropertyName)
+                                }
+                            </td>
+                        }
+                    </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    
+    @if (ShowPagination && TotalPages > 1)
+    {
+        <nav aria-label="Table pagination">
+            <ul class="pagination justify-content-center">
+                <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                    <button class="page-link" @onclick="@(() => OnPageChanged(CurrentPage - 1))" disabled="@(CurrentPage == 1)">
+                        Previous
+                    </button>
+                </li>
+                
+                @for (int i = StartPage; i <= EndPage; i++)
+                {
+                    var pageNumber = i;
+                    <li class="page-item @(pageNumber == CurrentPage ? "active" : "")">
+                        <button class="page-link" @onclick="@(() => OnPageChanged(pageNumber))">
+                            @pageNumber
+                        </button>
+                    </li>
+                }
+                
+                <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                    <button class="page-link" @onclick="@(() => OnPageChanged(CurrentPage + 1))" disabled="@(CurrentPage == TotalPages)">
+                        Next
+                    </button>
+                </li>
+            </ul>
+        </nav>
+    }
+</div>
+
+@code {
+    [Parameter] public List<T> Data { get; set; } = new();
+    [Parameter] public List<TableColumn<T>> Columns { get; set; } = new();
+    [Parameter] public bool ShowHeader { get; set; } = true;
+    [Parameter] public bool ShowSearch { get; set; } = true;
+    [Parameter] public bool ShowPagination { get; set; } = true;
+    [Parameter] public string? SearchPlaceholder { get; set; } = "Search...";
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public TableVariant Variant { get; set; } = TableVariant.Default;
+    [Parameter] public bool Striped { get; set; } = true;
+    [Parameter] public bool Hover { get; set; } = true;
+    [Parameter] public bool Bordered { get; set; } = false;
+    [Parameter] public bool Small { get; set; } = false;
+    [Parameter] public EventCallback<string> OnSearch { get; set; }
+    [Parameter] public EventCallback<int> OnPageChanged { get; set; }
+    [Parameter] public EventCallback<string> OnSort { get; set; }
+
+    private string SearchTerm { get; set; } = string.Empty;
+    private int CurrentPage { get; set; } = 1;
+    private string? SortColumn { get; set; }
+    private SortDirection SortDirection { get; set; } = SortDirection.Ascending;
+
+    private int TotalPages => (int)Math.Ceiling((double)GetFilteredData().Count() / PageSize);
+    private int StartPage => Math.Max(1, CurrentPage - 2);
+    private int EndPage => Math.Min(TotalPages, CurrentPage + 2);
+
+    private IEnumerable<T> GetFilteredData()
+    {
+        var filtered = Data.AsEnumerable();
+        
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filtered = filtered.Where(item => 
+                Columns.Any(col => 
+                    GetPropertyValue(item, col.PropertyName)?.ToString()?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) == true));
+        }
+        
+        return filtered;
+    }
+
+    private IEnumerable<T> GetFilteredAndSortedData()
+    {
+        var data = GetFilteredData();
+        
+        if (!string.IsNullOrEmpty(SortColumn))
+        {
+            data = SortDirection == SortDirection.Ascending 
+                ? data.OrderBy(item => GetPropertyValue(item, SortColumn))
+                : data.OrderByDescending(item => GetPropertyValue(item, SortColumn));
+        }
+        
+        if (ShowPagination)
+        {
+            data = data.Skip((CurrentPage - 1) * PageSize).Take(PageSize);
+        }
+        
+        return data;
+    }
+
+    private object? GetPropertyValue(T item, string propertyName)
+    {
+        var property = typeof(T).GetProperty(propertyName);
+        return property?.GetValue(item);
+    }
+
+    private async Task OnSearchChanged(ChangeEventArgs e)
+    {
+        SearchTerm = e.Value?.ToString() ?? string.Empty;
+        CurrentPage = 1;
+        await OnSearch.InvokeAsync(SearchTerm);
+    }
+
+    private async Task OnSortColumn(TableColumn<T> column)
+    {
+        if (!column.Sortable) return;
+        
+        if (SortColumn == column.PropertyName)
+        {
+            SortDirection = SortDirection == SortDirection.Ascending 
+                ? SortDirection.Descending 
+                : SortDirection.Ascending;
+        }
+        else
+        {
+            SortColumn = column.PropertyName;
+            SortDirection = SortDirection.Ascending;
+        }
+        
+        await OnSort.InvokeAsync(column.PropertyName);
+    }
+
+    private string GetTableClasses()
+    {
+        var classes = new List<string>();
+        
+        if (Striped) classes.Add("table-striped");
+        if (Hover) classes.Add("table-hover");
+        if (Bordered) classes.Add("table-bordered");
+        if (Small) classes.Add("table-sm");
+        
+        return string.Join(" ", classes);
+    }
+
+    private string GetHeaderClasses()
+    {
+        return Variant switch
+        {
+            TableVariant.Dark => "table-dark",
+            TableVariant.Light => "table-light",
+            _ => ""
+        };
+    }
+
+    private string GetColumnClasses(TableColumn<T> column)
+    {
+        var classes = new List<string>();
+        
+        if (column.Sortable) classes.Add("sortable");
+        if (!string.IsNullOrEmpty(column.CssClass)) classes.Add(column.CssClass);
+        
+        return string.Join(" ", classes);
+    }
+
+    private string GetCellClasses(TableColumn<T> column)
+    {
+        return column.CssClass ?? "";
+    }
+
+    public class TableColumn<T>
+    {
+        public string Title { get; set; } = string.Empty;
+        public string PropertyName { get; set; } = string.Empty;
+        public bool Sortable { get; set; } = true;
+        public string? CssClass { get; set; }
+        public RenderFragment<T>? Template { get; set; }
+    }
+
+    public enum TableVariant
+    {
+        Default,
+        Dark,
+        Light
+    }
+
+    public enum SortDirection
+    {
+        Ascending,
+        Descending
+    }
+} 

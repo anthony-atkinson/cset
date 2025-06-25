@@ -1,0 +1,383 @@
+@using CSETWebBlazor.Models
+@using CSETWebBlazor.Services
+@inject IAnalyticsService AnalyticsService
+
+<div class="analytics-dashboard">
+    <div class="row">
+        <!-- Key Metrics Cards -->
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-primary shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                                Total Assessments
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@TotalAssessments</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-clipboard-list fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-success shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-success text-uppercase mb-1">
+                                Completed Assessments
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@CompletedAssessments</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-check-circle fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-info shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-info text-uppercase mb-1">
+                                Average Score
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@AverageScore%</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-percentage fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-xl-3 col-md-6 mb-4">
+            <div class="card border-left-warning shadow h-100 py-2">
+                <div class="card-body">
+                    <div class="row no-gutters align-items-center">
+                        <div class="col mr-2">
+                            <div class="text-xs font-weight-bold text-warning text-uppercase mb-1">
+                                Active Users
+                            </div>
+                            <div class="h5 mb-0 font-weight-bold text-gray-800">@ActiveUsers</div>
+                        </div>
+                        <div class="col-auto">
+                            <i class="fas fa-users fa-2x text-gray-300"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Assessment Trends Chart -->
+        <div class="col-xl-8 col-lg-7">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Assessment Trends</h6>
+                    <div class="dropdown no-arrow">
+                        <Button Variant="Button.ButtonVariant.Outline" 
+                                Size="Button.ButtonSize.Small"
+                                Icon="fas fa-ellipsis-v"
+                                AdditionalAttributes="@(new Dictionary<string, object> { { "data-bs-toggle", "dropdown" } })" />
+                        <div class="dropdown-menu dropdown-menu-right shadow animated--fade-in">
+                            <div class="dropdown-header">Chart Options:</div>
+                            <Button Variant="Button.ButtonVariant.Outline" 
+                                    Size="Button.ButtonSize.Small"
+                                    OnClick="@(() => OnExportChart("trends"))">
+                                Export Data
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    @if (IsLoadingTrends)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="chart-area">
+                            <!-- Placeholder for chart - would integrate with charting library -->
+                            <div class="chart-placeholder">
+                                <p class="text-muted text-center">Assessment trends chart would be displayed here</p>
+                                <div class="chart-data-summary">
+                                    <div class="row text-center">
+                                        <div class="col">
+                                            <strong>@TrendData?.Count</strong>
+                                            <br><small>Data Points</small>
+                                        </div>
+                                        <div class="col">
+                                            <strong>@TrendData?.FirstOrDefault()?.Month</strong>
+                                            <br><small>Latest Month</small>
+                                        </div>
+                                        <div class="col">
+                                            <strong>@TrendData?.LastOrDefault()?.Month</strong>
+                                            <br><small>Earliest Month</small>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Sector Distribution -->
+        <div class="col-xl-4 col-lg-5">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3 d-flex flex-row align-items-center justify-content-between">
+                    <h6 class="m-0 font-weight-bold text-primary">Sector Distribution</h6>
+                    <Button Variant="Button.ButtonVariant.Outline" 
+                            Size="Button.ButtonSize.Small"
+                            Icon="fas fa-download"
+                            OnClick="@(() => OnExportChart("sectors"))" />
+                </div>
+                <div class="card-body">
+                    @if (IsLoadingSectors)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="chart-pie">
+                            <!-- Placeholder for pie chart -->
+                            <div class="chart-placeholder">
+                                <p class="text-muted text-center">Sector distribution chart would be displayed here</p>
+                                <div class="sector-list">
+                                    @if (SectorData != null)
+                                    {
+                                        @foreach (var sector in SectorData.Take(5))
+                                        {
+                                            <div class="d-flex justify-content-between align-items-center mb-2">
+                                                <span>@sector.SectorName</span>
+                                                <span class="badge bg-primary">@sector.Count</span>
+                                            </div>
+                                        }
+                                    }
+                                </div>
+                            </div>
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Maturity Model Analytics -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Maturity Model Performance</h6>
+                </div>
+                <div class="card-body">
+                    @if (IsLoadingMaturity)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="maturity-metrics">
+                            @if (MaturityData != null)
+                            {
+                                @foreach (var metric in MaturityData)
+                                {
+                                    <div class="mb-3">
+                                        <div class="d-flex justify-content-between">
+                                            <span>@metric.DomainName</span>
+                                            <span>@metric.AverageScore%</span>
+                                        </div>
+                                        <div class="progress">
+                                            <div class="progress-bar" 
+                                                 role="progressbar" 
+                                                 style="width: @(metric.AverageScore)%"
+                                                 aria-valuenow="@metric.AverageScore" 
+                                                 aria-valuemin="0" 
+                                                 aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Activity -->
+        <div class="col-lg-6 mb-4">
+            <div class="card shadow mb-4">
+                <div class="card-header py-3">
+                    <h6 class="m-0 font-weight-bold text-primary">Recent Activity</h6>
+                </div>
+                <div class="card-body">
+                    @if (IsLoadingActivity)
+                    {
+                        <div class="text-center py-4">
+                            <div class="spinner-border" role="status">
+                                <span class="visually-hidden">Loading...</span>
+                            </div>
+                        </div>
+                    }
+                    else
+                    {
+                        <div class="activity-feed">
+                            @if (ActivityData != null)
+                            {
+                                @foreach (var activity in ActivityData.Take(10))
+                                {
+                                    <div class="activity-item d-flex align-items-center mb-3">
+                                        <div class="activity-icon me-3">
+                                            <i class="fas @GetActivityIcon(activity.Type) text-primary"></i>
+                                        </div>
+                                        <div class="activity-content flex-grow-1">
+                                            <div class="activity-text">@activity.Description</div>
+                                            <small class="text-muted">@activity.Timestamp?.ToString("MMM dd, yyyy HH:mm")</small>
+                                        </div>
+                                    </div>
+                                }
+                            }
+                        </div>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<string> OnExportRequested { get; set; }
+
+    private int TotalAssessments { get; set; }
+    private int CompletedAssessments { get; set; }
+    private double AverageScore { get; set; }
+    private int ActiveUsers { get; set; }
+
+    private bool IsLoadingTrends { get; set; } = true;
+    private bool IsLoadingSectors { get; set; } = true;
+    private bool IsLoadingMaturity { get; set; } = true;
+    private bool IsLoadingActivity { get; set; } = true;
+
+    private List<TrendData>? TrendData { get; set; }
+    private List<SectorData>? SectorData { get; set; }
+    private List<MaturityData>? MaturityData { get; set; }
+    private List<ActivityData>? ActivityData { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            // Load analytics data
+            var analytics = await AnalyticsService.GetAnalyticsAsync();
+            if (analytics != null)
+            {
+                TotalAssessments = analytics.TotalAssessments;
+                CompletedAssessments = analytics.CompletedAssessments;
+                AverageScore = analytics.AverageScore;
+                ActiveUsers = analytics.ActiveUsers;
+            }
+
+            // Load trend data
+            var trends = await AnalyticsService.GetTrendAnalyticsAsync();
+            TrendData = trends?.MonthlyTrends ?? new List<TrendData>();
+            IsLoadingTrends = false;
+
+            // Load sector data
+            var sectors = await AnalyticsService.GetSectorAnalyticsAsync();
+            SectorData = sectors?.SectorBreakdown ?? new List<SectorData>();
+            IsLoadingSectors = false;
+
+            // Load maturity data
+            var maturity = await AnalyticsService.GetMaturityAnalyticsAsync();
+            MaturityData = maturity?.DomainScores ?? new List<MaturityData>();
+            IsLoadingMaturity = false;
+
+            // Load activity data (placeholder - would need to be implemented)
+            ActivityData = new List<ActivityData>
+            {
+                new() { Type = "assessment_created", Description = "New assessment created: Facility Security Review", Timestamp = DateTime.Now.AddHours(-1) },
+                new() { Type = "assessment_completed", Description = "Assessment completed: Network Security Audit", Timestamp = DateTime.Now.AddHours(-2) },
+                new() { Type = "report_generated", Description = "Report generated: Executive Summary", Timestamp = DateTime.Now.AddHours(-3) }
+            };
+            IsLoadingActivity = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading dashboard data: {ex.Message}");
+        }
+    }
+
+    private async Task OnExportChart(string chartType)
+    {
+        await OnExportRequested.InvokeAsync(chartType);
+    }
+
+    private string GetActivityIcon(string activityType)
+    {
+        return activityType switch
+        {
+            "assessment_created" => "fa-plus-circle",
+            "assessment_completed" => "fa-check-circle",
+            "report_generated" => "fa-file-alt",
+            "user_login" => "fa-sign-in-alt",
+            _ => "fa-info-circle"
+        };
+    }
+
+    public class TrendData
+    {
+        public string Month { get; set; } = string.Empty;
+        public int Assessments { get; set; }
+        public double AverageScore { get; set; }
+    }
+
+    public class SectorData
+    {
+        public string SectorName { get; set; } = string.Empty;
+        public int Count { get; set; }
+        public double Percentage { get; set; }
+    }
+
+    public class MaturityData
+    {
+        public string DomainName { get; set; } = string.Empty;
+        public double AverageScore { get; set; }
+        public int TotalQuestions { get; set; }
+    }
+
+    public class ActivityData
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public DateTime? Timestamp { get; set; }
+    }
+} 

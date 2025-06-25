@@ -1,0 +1,330 @@
+@using CSETWebBlazor.Services
+@inject IRealTimeService RealTimeService
+@implements IDisposable
+
+<div class="user-presence-container">
+    <!-- Connection Status -->
+    <div class="connection-status @(IsConnected ? "connected" : "disconnected")">
+        <i class="fas @(IsConnected ? "fa-circle" : "fa-times-circle")"></i>
+        <span>@(IsConnected ? "Connected" : "Disconnected")</span>
+    </div>
+
+    <!-- Active Users -->
+    <div class="active-users">
+        <h6 class="users-header">
+            <i class="fas fa-users"></i>
+            Active Users (@ActiveUsers.Count)
+        </h6>
+        
+        @if (ActiveUsers.Any())
+        {
+            <div class="users-list">
+                @foreach (var user in ActiveUsers)
+                {
+                    <div class="user-item">
+                        <div class="user-avatar">
+                            <i class="fas fa-user"></i>
+                        </div>
+                        
+                        <div class="user-info">
+                            <div class="user-name">@user.DisplayName</div>
+                            <div class="user-status">
+                                <span class="status-indicator" style="background-color: @GetUserStatusColor(user)"></span>
+                                <span class="status-text">@GetUserStatusText(user)</span>
+                            </div>
+                            <div class="user-details">
+                                <small>Connected: @GetTimeSinceConnected(user)</small>
+                                @if (user.IsOnline)
+                                {
+                                    <small>Last activity: @GetTimeSinceActivity(user)</small>
+                                }
+                            </div>
+                        </div>
+                    </div>
+                }
+            </div>
+        }
+        else
+        {
+            <div class="no-users">
+                <i class="fas fa-user-slash"></i>
+                <p>No active users</p>
+            </div>
+        }
+    </div>
+
+    <!-- Collaboration Features -->
+    @if (IsConnected)
+    {
+        <div class="collaboration-features">
+            <h6 class="features-header">
+                <i class="fas fa-tools"></i>
+                Collaboration Tools
+            </h6>
+            
+            <div class="features-list">
+                <Button Variant="Button.ButtonVariant.Outline" 
+                        Size="Button.ButtonSize.Small"
+                        OnClick="ShowHistory">
+                    <i class="fas fa-history me-1"></i>
+                    History
+                </Button>
+                
+                <Button Variant="Button.ButtonVariant.Outline" 
+                        Size="Button.ButtonSize.Small"
+                        OnClick="ShowStatistics">
+                    <i class="fas fa-chart-bar me-1"></i>
+                    Statistics
+                </Button>
+                
+                <Button Variant="Button.ButtonVariant.Outline" 
+                        Size="Button.ButtonSize.Small"
+                        OnClick="ShowSettings">
+                    <i class="fas fa-cog me-1"></i>
+                    Settings
+                </Button>
+            </div>
+        </div>
+    }
+
+    <!-- Recent Activity -->
+    @if (RecentActivity.Any())
+    {
+        <div class="recent-activity">
+            <h6 class="activity-header">
+                <i class="fas fa-clock"></i>
+                Recent Activity
+            </h6>
+            
+            <div class="activity-list">
+                @foreach (var activity in RecentActivity.Take(5))
+                {
+                    <div class="activity-item">
+                        <div class="activity-icon">
+                            <i class="fas @GetActivityIcon(activity.Type)"></i>
+                        </div>
+                        <div class="activity-content">
+                            <div class="activity-text">@activity.Message</div>
+                            <small class="activity-time">@GetTimeSince(activity.Timestamp)</small>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int AssessmentId { get; set; }
+    [Parameter] public string UserDisplayName { get; set; } = string.Empty;
+
+    private bool IsConnected { get; set; }
+    private List<UserPresence> ActiveUsers { get; set; } = new();
+    private List<ActivityItem> RecentActivity { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to real-time events
+        RealTimeService.ConnectionStateChanged += OnConnectionStateChanged;
+        RealTimeService.UserJoined += OnUserJoined;
+        RealTimeService.UserLeft += OnUserLeft;
+        RealTimeService.UserDisconnected += OnUserDisconnected;
+        RealTimeService.ActiveUsersChanged += OnActiveUsersChanged;
+        RealTimeService.AssessmentUpdated += OnAssessmentUpdated;
+        RealTimeService.CommentAdded += OnCommentAdded;
+
+        // Initialize connection
+        await RealTimeService.InitializeAsync();
+        
+        // Join assessment if provided
+        if (AssessmentId > 0 && !string.IsNullOrEmpty(UserDisplayName))
+        {
+            await RealTimeService.JoinAssessmentAsync(AssessmentId, UserDisplayName);
+        }
+    }
+
+    private void OnConnectionStateChanged(bool connected)
+    {
+        IsConnected = connected;
+        StateHasChanged();
+    }
+
+    private void OnUserJoined(UserPresence user)
+    {
+        if (!ActiveUsers.Any(u => u.UserId == user.UserId))
+        {
+            ActiveUsers.Add(user);
+            AddActivity("UserJoined", $"{user.DisplayName} joined the assessment");
+            StateHasChanged();
+        }
+    }
+
+    private void OnUserLeft(UserPresence user)
+    {
+        var existingUser = ActiveUsers.FirstOrDefault(u => u.UserId == user.UserId);
+        if (existingUser != null)
+        {
+            ActiveUsers.Remove(existingUser);
+            AddActivity("UserLeft", $"{user.DisplayName} left the assessment");
+            StateHasChanged();
+        }
+    }
+
+    private void OnUserDisconnected(UserPresence user)
+    {
+        var existingUser = ActiveUsers.FirstOrDefault(u => u.UserId == user.UserId);
+        if (existingUser != null)
+        {
+            existingUser.IsOnline = false;
+            AddActivity("UserDisconnected", $"{user.DisplayName} disconnected");
+            StateHasChanged();
+        }
+    }
+
+    private void OnActiveUsersChanged(List<UserPresence> users)
+    {
+        ActiveUsers = users;
+        StateHasChanged();
+    }
+
+    private void OnAssessmentUpdated(AssessmentUpdate update)
+    {
+        AddActivity("AssessmentUpdated", $"Assessment updated by {update.UserId}");
+        StateHasChanged();
+    }
+
+    private void OnCommentAdded(CollaborativeComment comment)
+    {
+        AddActivity("CommentAdded", $"{comment.UserName} added a comment");
+        StateHasChanged();
+    }
+
+    private void AddActivity(string type, string message)
+    {
+        RecentActivity.Insert(0, new ActivityItem
+        {
+            Type = type,
+            Message = message,
+            Timestamp = DateTime.UtcNow
+        });
+
+        // Keep only last 10 activities
+        if (RecentActivity.Count > 10)
+        {
+            RecentActivity.RemoveAt(RecentActivity.Count - 1);
+        }
+    }
+
+    private string GetUserStatusColor(UserPresence user)
+    {
+        if (!user.IsOnline)
+            return "#dc3545"; // Red for offline
+        
+        var timeSinceActivity = DateTime.UtcNow - user.LastActivity;
+        if (timeSinceActivity.TotalMinutes > 5)
+            return "#ffc107"; // Yellow for inactive
+        else
+            return "#28a745"; // Green for active
+    }
+
+    private string GetUserStatusText(UserPresence user)
+    {
+        if (!user.IsOnline)
+            return "Offline";
+        
+        var timeSinceActivity = DateTime.UtcNow - user.LastActivity;
+        if (timeSinceActivity.TotalMinutes > 5)
+            return "Inactive";
+        else
+            return "Active";
+    }
+
+    private string GetTimeSinceConnected(UserPresence user)
+    {
+        var timeSince = DateTime.UtcNow - user.ConnectedAt;
+        if (timeSince.TotalMinutes < 1)
+            return "Just now";
+        else if (timeSince.TotalMinutes < 60)
+            return $"{(int)timeSince.TotalMinutes}m ago";
+        else if (timeSince.TotalHours < 24)
+            return $"{(int)timeSince.TotalHours}h ago";
+        else
+            return $"{(int)timeSince.TotalDays}d ago";
+    }
+
+    private string GetTimeSinceActivity(UserPresence user)
+    {
+        var timeSince = DateTime.UtcNow - user.LastActivity;
+        if (timeSince.TotalMinutes < 1)
+            return "Just now";
+        else if (timeSince.TotalMinutes < 60)
+            return $"{(int)timeSince.TotalMinutes}m ago";
+        else if (timeSince.TotalHours < 24)
+            return $"{(int)timeSince.TotalHours}h ago";
+        else
+            return $"{(int)timeSince.TotalDays}d ago";
+    }
+
+    private string GetTimeSince(DateTime timestamp)
+    {
+        var timeSince = DateTime.UtcNow - timestamp;
+        if (timeSince.TotalMinutes < 1)
+            return "Just now";
+        else if (timeSince.TotalMinutes < 60)
+            return $"{(int)timeSince.TotalMinutes}m ago";
+        else if (timeSince.TotalHours < 24)
+            return $"{(int)timeSince.TotalHours}h ago";
+        else
+            return $"{(int)timeSince.TotalDays}d ago";
+    }
+
+    private string GetActivityIcon(string activityType)
+    {
+        return activityType switch
+        {
+            "UserJoined" => "fa-user-plus",
+            "UserLeft" => "fa-user-minus",
+            "UserDisconnected" => "fa-user-times",
+            "AssessmentUpdated" => "fa-edit",
+            "CommentAdded" => "fa-comment",
+            _ => "fa-info-circle"
+        };
+    }
+
+    private async Task ShowHistory()
+    {
+        // TODO: Implement collaboration history view
+        Console.WriteLine("Show collaboration history");
+    }
+
+    private async Task ShowStatistics()
+    {
+        // TODO: Implement collaboration statistics view
+        Console.WriteLine("Show collaboration statistics");
+    }
+
+    private async Task ShowSettings()
+    {
+        // TODO: Implement collaboration settings view
+        Console.WriteLine("Show collaboration settings");
+    }
+
+    public void Dispose()
+    {
+        // Unsubscribe from events
+        RealTimeService.ConnectionStateChanged -= OnConnectionStateChanged;
+        RealTimeService.UserJoined -= OnUserJoined;
+        RealTimeService.UserLeft -= OnUserLeft;
+        RealTimeService.UserDisconnected -= OnUserDisconnected;
+        RealTimeService.ActiveUsersChanged -= OnActiveUsersChanged;
+        RealTimeService.AssessmentUpdated -= OnAssessmentUpdated;
+        RealTimeService.CommentAdded -= OnCommentAdded;
+    }
+
+    public class ActivityItem
+    {
+        public string Type { get; set; } = string.Empty;
+        public string Message { get; set; } = string.Empty;
+        public DateTime Timestamp { get; set; }
+    }
+} 

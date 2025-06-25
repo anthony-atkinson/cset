@@ -1,0 +1,416 @@
+@using CSETWebBlazor.Models
+@using CSETWebBlazor.Services
+@inject IReportService ReportService
+@inject IAssessmentService AssessmentService
+
+<div class="report-generator">
+    <div class="card">
+        <div class="card-header">
+            <h4>Generate Report</h4>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@ReportModel" OnValidSubmit="@OnGenerateReport">
+                <DataAnnotationsValidator />
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <Select Label="Assessment"
+                                @bind-Value="ReportModel.AssessmentId"
+                                Options="@AssessmentOptions"
+                                Required="true"
+                                OnChange="@OnAssessmentChanged"
+                                ValidationMessages="@GetValidationMessages("AssessmentId")" />
+                    </div>
+                    <div class="col-md-6">
+                        <Select Label="Report Type"
+                                @bind-Value="ReportModel.ReportType"
+                                Options="@ReportTypeOptions"
+                                Required="true"
+                                OnChange="@OnReportTypeChanged"
+                                ValidationMessages="@GetValidationMessages("ReportType")" />
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <Select Label="Format"
+                                @bind-Value="ReportModel.Format"
+                                Options="@FormatOptions"
+                                Required="true"
+                                ValidationMessages="@GetValidationMessages("Format")" />
+                    </div>
+                    <div class="col-md-6">
+                        <Input Label="Report Name"
+                               @bind-Value="ReportModel.ReportName"
+                               Placeholder="Enter report name..."
+                               ValidationMessages="@GetValidationMessages("ReportName")" />
+                    </div>
+                </div>
+                
+                @if (ShowReportOptions)
+                {
+                    <div class="report-options mt-4">
+                        <h5>Report Options</h5>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <Checkbox Label="Include Executive Summary"
+                                         @bind-IsChecked="ReportModel.IncludeExecutiveSummary"
+                                         HelpText="Add an executive summary to the report" />
+                            </div>
+                            <div class="col-md-6">
+                                <Checkbox Label="Include Detailed Findings"
+                                         @bind-IsChecked="ReportModel.IncludeDetailedFindings"
+                                         HelpText="Include detailed findings and recommendations" />
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <Checkbox Label="Include Charts and Graphs"
+                                         @bind-IsChecked="ReportModel.IncludeCharts"
+                                         HelpText="Include visual charts and graphs" />
+                            </div>
+                            <div class="col-md-6">
+                                <Checkbox Label="Include Appendices"
+                                         @bind-IsChecked="ReportModel.IncludeAppendices"
+                                         HelpText="Include supporting documentation" />
+                            </div>
+                        </div>
+                        
+                        <div class="row">
+                            <div class="col-md-6">
+                                <Checkbox Label="Include Recommendations"
+                                         @bind-IsChecked="ReportModel.IncludeRecommendations"
+                                         HelpText="Include actionable recommendations" />
+                            </div>
+                            <div class="col-md-6">
+                                <Checkbox Label="Include Risk Assessment"
+                                         @bind-IsChecked="ReportModel.IncludeRiskAssessment"
+                                         HelpText="Include risk assessment analysis" />
+                            </div>
+                        </div>
+                    </div>
+                }
+                
+                @if (ShowSpecializedOptions)
+                {
+                    <div class="specialized-options mt-4">
+                        <h5>Specialized Options</h5>
+                        
+                        @if (ReportModel.ReportType == "C2M2")
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <Select Label="C2M2 Model"
+                                            @bind-Value="ReportModel.C2M2Model"
+                                            Options="@C2M2ModelOptions" />
+                                </div>
+                                <div class="col-md-6">
+                                    <Checkbox Label="Include Maturity Levels"
+                                             @bind-IsChecked="ReportModel.IncludeMaturityLevels" />
+                                </div>
+                            </div>
+                        }
+                        
+                        @if (ReportModel.ReportType == "Hydro")
+                        {
+                            <div class="row">
+                                <div class="col-md-6">
+                                    <Select Label="Hydro Sector"
+                                            @bind-Value="ReportModel.HydroSector"
+                                            Options="@HydroSectorOptions" />
+                                </div>
+                                <div class="col-md-6">
+                                    <Checkbox Label="Include Water Security"
+                                             @bind-IsChecked="ReportModel.IncludeWaterSecurity" />
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+                
+                <div class="form-actions mt-4">
+                    <Button Variant="Button.ButtonVariant.Primary" 
+                            Type="submit"
+                            Icon="fas fa-file-alt"
+                            Disabled="@IsGenerating">
+                        @if (IsGenerating)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Generate Report
+                    </Button>
+                    
+                    <Button Variant="Button.ButtonVariant.Secondary" 
+                            OnClick="@OnPreview"
+                            Disabled="@IsGenerating || !CanPreview">
+                        <i class="fas fa-eye me-2"></i>
+                        Preview
+                    </Button>
+                    
+                    <Button Variant="Button.ButtonVariant.Outline" 
+                            OnClick="@OnReset"
+                            Disabled="@IsGenerating">
+                        Reset
+                    </Button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+    
+    @if (GeneratedReport != null)
+    {
+        <div class="card mt-4">
+            <div class="card-header">
+                <h5>Generated Report</h5>
+            </div>
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <strong>@GeneratedReport.ReportName</strong>
+                        <br>
+                        <small class="text-muted">Generated on @GeneratedReport.GeneratedDate?.ToString("MMM dd, yyyy HH:mm")</small>
+                    </div>
+                    <div class="btn-group">
+                        <Button Variant="Button.ButtonVariant.Primary" 
+                                Icon="fas fa-download"
+                                OnClick="@(() => OnDownload(GeneratedReport))">
+                            Download
+                        </Button>
+                        <Button Variant="Button.ButtonVariant.Outline" 
+                                Icon="fas fa-share"
+                                OnClick="@(() => OnShare(GeneratedReport))">
+                            Share
+                        </Button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public EventCallback<ReportInfo> OnReportGenerated { get; set; }
+    [Parameter] public EventCallback<ReportInfo> OnReportDownloaded { get; set; }
+
+    private ReportGenerateModel ReportModel { get; set; } = new();
+    private bool IsGenerating { get; set; }
+    private bool ShowReportOptions { get; set; } = true;
+    private bool ShowSpecializedOptions { get; set; } = false;
+    private bool CanPreview { get; set; } = false;
+    private ReportInfo? GeneratedReport { get; set; }
+    private List<string> ValidationMessages { get; set; } = new();
+
+    private List<Select.SelectOption> AssessmentOptions { get; set; } = new();
+    private List<Select.SelectOption> ReportTypeOptions { get; set; } = new()
+    {
+        new() { Value = "Executive", Text = "Executive Summary" },
+        new() { Value = "Detailed", Text = "Detailed Report" },
+        new() { Value = "Compliance", Text = "Compliance Report" },
+        new() { Value = "C2M2", Text = "C2M2 Report" },
+        new() { Value = "Hydro", Text = "Hydro Sector Report" },
+        new() { Value = "Custom", Text = "Custom Report" }
+    };
+
+    private List<Select.SelectOption> FormatOptions { get; set; } = new()
+    {
+        new() { Value = "PDF", Text = "PDF Document" },
+        new() { Value = "Excel", Text = "Excel Spreadsheet" },
+        new() { Value = "Word", Text = "Word Document" },
+        new() { Value = "HTML", Text = "Web Page" }
+    };
+
+    private List<Select.SelectOption> C2M2ModelOptions { get; set; } = new()
+    {
+        new() { Value = "Electricity", Text = "Electricity Subsector" },
+        new() { Value = "Oil", Text = "Oil and Natural Gas Subsector" },
+        new() { Value = "Water", Text = "Water and Wastewater Systems" }
+    };
+
+    private List<Select.SelectOption> HydroSectorOptions { get; set; } = new()
+    {
+        new() { Value = "Dams", Text = "Dams" },
+        new() { Value = "Nuclear", Text = "Nuclear Power Plants" },
+        new() { Value = "Water", Text = "Water Treatment" }
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssessments();
+    }
+
+    private async Task LoadAssessments()
+    {
+        try
+        {
+            var assessments = await AssessmentService.GetAssessmentsAsync();
+            AssessmentOptions = assessments?.Select(a => new Select.SelectOption
+            {
+                Value = a.AssessmentId.ToString(),
+                Text = $"{a.AssessmentName} - {a.FacilityName}"
+            }).ToList() ?? new List<Select.SelectOption>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading assessments: {ex.Message}");
+        }
+    }
+
+    private async Task OnAssessmentChanged(ChangeEventArgs e)
+    {
+        var assessmentId = e.Value?.ToString();
+        if (!string.IsNullOrEmpty(assessmentId) && int.TryParse(assessmentId, out var id))
+        {
+            CanPreview = true;
+            // Could load assessment details here for more options
+        }
+        else
+        {
+            CanPreview = false;
+        }
+    }
+
+    private async Task OnReportTypeChanged(ChangeEventArgs e)
+    {
+        var reportType = e.Value?.ToString();
+        ShowSpecializedOptions = reportType switch
+        {
+            "C2M2" or "Hydro" => true,
+            _ => false
+        };
+    }
+
+    private async Task OnGenerateReport()
+    {
+        if (IsGenerating) return;
+        
+        IsGenerating = true;
+        ValidationMessages.Clear();
+        
+        try
+        {
+            if (!ValidateModel())
+            {
+                IsGenerating = false;
+                return;
+            }
+            
+            var reportRequest = new ReportRequest
+            {
+                AssessmentId = int.Parse(ReportModel.AssessmentId),
+                ReportType = ReportModel.ReportType,
+                Format = ReportModel.Format,
+                ReportName = ReportModel.ReportName,
+                IncludeExecutiveSummary = ReportModel.IncludeExecutiveSummary,
+                IncludeDetailedFindings = ReportModel.IncludeDetailedFindings,
+                IncludeCharts = ReportModel.IncludeCharts,
+                IncludeAppendices = ReportModel.IncludeAppendices,
+                IncludeRecommendations = ReportModel.IncludeRecommendations,
+                IncludeRiskAssessment = ReportModel.IncludeRiskAssessment,
+                C2M2Model = ReportModel.C2M2Model,
+                IncludeMaturityLevels = ReportModel.IncludeMaturityLevels,
+                HydroSector = ReportModel.HydroSector,
+                IncludeWaterSecurity = ReportModel.IncludeWaterSecurity
+            };
+            
+            GeneratedReport = await ReportService.GenerateReportAsync(reportRequest);
+            
+            if (GeneratedReport != null)
+            {
+                await OnReportGenerated.InvokeAsync(GeneratedReport);
+            }
+            else
+            {
+                ValidationMessages.Add("Failed to generate report. Please try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ValidationMessages.Add($"Error generating report: {ex.Message}");
+        }
+        finally
+        {
+            IsGenerating = false;
+        }
+    }
+
+    private async Task OnPreview()
+    {
+        // Implement preview functionality
+        await Task.CompletedTask;
+    }
+
+    private async Task OnReset()
+    {
+        ReportModel = new ReportGenerateModel();
+        GeneratedReport = null;
+        ShowSpecializedOptions = false;
+        CanPreview = false;
+    }
+
+    private async Task OnDownload(ReportInfo report)
+    {
+        try
+        {
+            var reportData = await ReportService.DownloadReportAsync(report.ReportId);
+            await OnReportDownloaded.InvokeAsync(report);
+            // Handle file download
+        }
+        catch (Exception ex)
+        {
+            ValidationMessages.Add($"Error downloading report: {ex.Message}");
+        }
+    }
+
+    private async Task OnShare(ReportInfo report)
+    {
+        // Implement share functionality
+        await Task.CompletedTask;
+    }
+
+    private bool ValidateModel()
+    {
+        ValidationMessages.Clear();
+        
+        if (string.IsNullOrWhiteSpace(ReportModel.AssessmentId))
+        {
+            ValidationMessages.Add("Assessment is required.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(ReportModel.ReportType))
+        {
+            ValidationMessages.Add("Report type is required.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(ReportModel.Format))
+        {
+            ValidationMessages.Add("Format is required.");
+        }
+        
+        return !ValidationMessages.Any();
+    }
+
+    private List<string> GetValidationMessages(string propertyName)
+    {
+        return ValidationMessages.Where(m => m.Contains(propertyName, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    public class ReportGenerateModel
+    {
+        public string AssessmentId { get; set; } = string.Empty;
+        public string ReportType { get; set; } = string.Empty;
+        public string Format { get; set; } = "PDF";
+        public string ReportName { get; set; } = string.Empty;
+        public bool IncludeExecutiveSummary { get; set; } = true;
+        public bool IncludeDetailedFindings { get; set; } = true;
+        public bool IncludeCharts { get; set; } = true;
+        public bool IncludeAppendices { get; set; } = false;
+        public bool IncludeRecommendations { get; set; } = true;
+        public bool IncludeRiskAssessment { get; set; } = false;
+        public string C2M2Model { get; set; } = string.Empty;
+        public bool IncludeMaturityLevels { get; set; } = true;
+        public string HydroSector { get; set; } = string.Empty;
+        public bool IncludeWaterSecurity { get; set; } = true;
+    }
+} 

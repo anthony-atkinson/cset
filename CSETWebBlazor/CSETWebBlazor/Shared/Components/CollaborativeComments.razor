@@ -1,0 +1,285 @@
+@using CSETWebBlazor.Services
+@inject IRealTimeService RealTimeService
+@inject IAuthenticationService AuthService
+@implements IDisposable
+
+<div class="collaborative-comments">
+    <div class="comments-header">
+        <h6>
+            <i class="fas fa-comments me-2"></i>
+            Collaborative Comments (@Comments.Count)
+        </h6>
+        <Button Variant="Button.ButtonVariant.Outline" 
+                Size="Button.ButtonSize.Small"
+                OnClick="ToggleCommentForm">
+            <i class="fas fa-plus me-1"></i>
+            Add Comment
+        </Button>
+    </div>
+
+    <!-- Add Comment Form -->
+    @if (ShowCommentForm)
+    {
+        <div class="comment-form">
+            <div class="form-group">
+                <label for="commentSection">Section:</label>
+                <InputSelect id="commentSection" @bind-Value="NewComment.Section" class="form-control">
+                    <option value="">Select Section</option>
+                    <option value="General">General</option>
+                    <option value="Questions">Questions</option>
+                    <option value="Findings">Findings</option>
+                    <option value="Recommendations">Recommendations</option>
+                    <option value="Notes">Notes</option>
+                </InputSelect>
+            </div>
+            
+            <div class="form-group">
+                <label for="commentContent">Comment:</label>
+                <InputTextArea id="commentContent" 
+                              @bind-Value="NewComment.Content" 
+                              class="form-control" 
+                              rows="3"
+                              placeholder="Enter your comment..."></InputTextArea>
+            </div>
+            
+            <div class="form-group">
+                <label for="questionId">Question ID (optional):</label>
+                <InputText id="questionId" 
+                          @bind-Value="NewComment.QuestionId" 
+                          class="form-control"
+                          placeholder="e.g., AC.1.1"></InputText>
+            </div>
+            
+            <div class="form-actions">
+                <Button Variant="Button.ButtonVariant.Primary" 
+                        OnClick="AddComment"
+                        Disabled="@(!CanAddComment)">
+                    <i class="fas fa-paper-plane me-1"></i>
+                    Post Comment
+                </Button>
+                <Button Variant="Button.ButtonVariant.Secondary" 
+                        OnClick="CancelComment">
+                    Cancel
+                </Button>
+            </div>
+        </div>
+    }
+
+    <!-- Comments List -->
+    <div class="comments-list">
+        @if (Comments.Any())
+        {
+            @foreach (var comment in Comments.OrderByDescending(c => c.Timestamp))
+            {
+                <div class="comment-item">
+                    <div class="comment-header">
+                        <div class="comment-author">
+                            <i class="fas fa-user-circle"></i>
+                            <span class="author-name">@comment.UserName</span>
+                            @if (comment.UserId == CurrentUserId)
+                            {
+                                <span class="badge bg-primary">You</span>
+                            }
+                        </div>
+                        <div class="comment-meta">
+                            <span class="comment-time">@GetTimeSince(comment.Timestamp)</span>
+                            @if (comment.UserId == CurrentUserId)
+                            {
+                                <Button Variant="Button.ButtonVariant.Outline" 
+                                        Size="Button.ButtonSize.Small"
+                                        OnClick="@(() => DeleteComment(comment))">
+                                    <i class="fas fa-trash"></i>
+                                </Button>
+                            }
+                        </div>
+                    </div>
+                    
+                    <div class="comment-content">
+                        <p>@comment.Content</p>
+                    </div>
+                    
+                    <div class="comment-footer">
+                        <span class="comment-section">
+                            <i class="fas fa-tag"></i>
+                            @comment.Section
+                        </span>
+                        @if (!string.IsNullOrEmpty(comment.QuestionId))
+                        {
+                            <span class="comment-question">
+                                <i class="fas fa-question-circle"></i>
+                                @comment.QuestionId
+                            </span>
+                        }
+                    </div>
+                </div>
+            }
+        }
+        else
+        {
+            <div class="no-comments">
+                <i class="fas fa-comment-slash"></i>
+                <p>No comments yet. Be the first to add a comment!</p>
+            </div>
+        }
+    </div>
+
+    <!-- Comment Filters -->
+    @if (Comments.Any())
+    {
+        <div class="comment-filters">
+            <div class="filter-group">
+                <label>Filter by Section:</label>
+                <InputSelect @bind-Value="SelectedSection" class="form-control form-control-sm">
+                    <option value="">All Sections</option>
+                    @foreach (var section in AvailableSections)
+                    {
+                        <option value="@section">@section</option>
+                    }
+                </InputSelect>
+            </div>
+            
+            <div class="filter-group">
+                <label>Sort by:</label>
+                <InputSelect @bind-Value="SortOrder" class="form-control form-control-sm">
+                    <option value="newest">Newest First</option>
+                    <option value="oldest">Oldest First</option>
+                    <option value="author">By Author</option>
+                </InputSelect>
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public int AssessmentId { get; set; }
+    [Parameter] public string CurrentUserId { get; set; } = string.Empty;
+
+    private List<CollaborativeComment> Comments { get; set; } = new();
+    private CollaborativeComment NewComment { get; set; } = new();
+    private bool ShowCommentForm { get; set; }
+    private string SelectedSection { get; set; } = string.Empty;
+    private string SortOrder { get; set; } = "newest";
+
+    private bool CanAddComment => !string.IsNullOrEmpty(NewComment.Content?.Trim()) && 
+                                 !string.IsNullOrEmpty(NewComment.Section);
+
+    private List<string> AvailableSections => Comments
+        .Select(c => c.Section)
+        .Distinct()
+        .OrderBy(s => s)
+        .ToList();
+
+    private List<CollaborativeComment> FilteredComments
+    {
+        get
+        {
+            var filtered = Comments.AsEnumerable();
+
+            if (!string.IsNullOrEmpty(SelectedSection))
+            {
+                filtered = filtered.Where(c => c.Section == SelectedSection);
+            }
+
+            return filtered.OrderBy(c => SortOrder switch
+            {
+                "oldest" => c.Timestamp,
+                "author" => c.UserName,
+                _ => DateTime.MaxValue - c.Timestamp // newest first
+            }).ToList();
+        }
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Subscribe to real-time events
+        RealTimeService.CommentAdded += OnCommentAdded;
+
+        // Load existing comments
+        await LoadComments();
+    }
+
+    private async Task LoadComments()
+    {
+        try
+        {
+            // In a real implementation, you would load comments from the hub
+            // For now, we'll use the comments received via real-time events
+            Comments = new List<CollaborativeComment>();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading comments: {ex.Message}");
+        }
+    }
+
+    private void OnCommentAdded(CollaborativeComment comment)
+    {
+        if (comment.AssessmentId == AssessmentId)
+        {
+            Comments.Add(comment);
+            StateHasChanged();
+        }
+    }
+
+    private void ToggleCommentForm()
+    {
+        ShowCommentForm = !ShowCommentForm;
+        if (ShowCommentForm)
+        {
+            NewComment = new CollaborativeComment
+            {
+                AssessmentId = AssessmentId,
+                UserId = CurrentUserId,
+                UserName = AuthService.GetCurrentUser()?.DisplayName ?? "Unknown User"
+            };
+        }
+    }
+
+    private async Task AddComment()
+    {
+        if (!CanAddComment) return;
+
+        try
+        {
+            await RealTimeService.SendCommentAsync(NewComment);
+            
+            // Reset form
+            NewComment = new CollaborativeComment();
+            ShowCommentForm = false;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error adding comment: {ex.Message}");
+        }
+    }
+
+    private void CancelComment()
+    {
+        NewComment = new CollaborativeComment();
+        ShowCommentForm = false;
+    }
+
+    private async Task DeleteComment(CollaborativeComment comment)
+    {
+        // TODO: Implement comment deletion
+        Console.WriteLine($"Delete comment: {comment.Id}");
+    }
+
+    private string GetTimeSince(DateTime timestamp)
+    {
+        var timeSince = DateTime.UtcNow - timestamp;
+        if (timeSince.TotalMinutes < 1)
+            return "Just now";
+        else if (timeSince.TotalMinutes < 60)
+            return $"{(int)timeSince.TotalMinutes}m ago";
+        else if (timeSince.TotalHours < 24)
+            return $"{(int)timeSince.TotalHours}h ago";
+        else
+            return $"{(int)timeSince.TotalDays}d ago";
+    }
+
+    public void Dispose()
+    {
+        RealTimeService.CommentAdded -= OnCommentAdded;
+    }
+} 

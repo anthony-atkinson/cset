@@ -1,0 +1,286 @@
+@page "/"
+@page "/home"
+@page "/landing-page-tabs"
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IApiClientService ApiClient
+
+<PageTitle>CSET - Cyber Security Evaluation Tool</PageTitle>
+
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <h1 class="display-4 text-center mb-4">Welcome to CSET</h1>
+            <p class="lead text-center mb-5">Cyber Security Evaluation Tool</p>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading your dashboard...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row">
+            <!-- Quick Actions -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="oi oi-plus display-4 text-primary mb-3"></i>
+                        <h5 class="card-title">New Assessment</h5>
+                        <p class="card-text">Create a new cybersecurity assessment</p>
+                        <button class="btn btn-primary" @onclick="CreateNewAssessment">
+                            Start Assessment
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Assessments -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="oi oi-document display-4 text-success mb-3"></i>
+                        <h5 class="card-title">Recent Assessments</h5>
+                        <p class="card-text">Continue working on recent assessments</p>
+                        <button class="btn btn-success" @onclick="ViewRecentAssessments">
+                            View Recent
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="oi oi-graph display-4 text-info mb-3"></i>
+                        <h5 class="card-title">Reports</h5>
+                        <p class="card-text">Generate and view assessment reports</p>
+                        <button class="btn btn-info" @onclick="ViewReports">
+                            View Reports
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics -->
+            <div class="col-md-6 col-lg-3 mb-4">
+                <div class="card h-100">
+                    <div class="card-body text-center">
+                        <i class="oi oi-bar-chart display-4 text-warning mb-3"></i>
+                        <h5 class="card-title">Analytics</h5>
+                        <p class="card-text">Analyze assessment data and trends</p>
+                        <button class="btn btn-warning" @onclick="ViewAnalytics">
+                            View Analytics
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        @if (RecentAssessments?.Any() == true)
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Recent Assessments</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Assessment Name</th>
+                                            <th>Framework</th>
+                                            <th>Last Modified</th>
+                                            <th>Status</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var assessment in RecentAssessments.Take(5))
+                                        {
+                                            <tr>
+                                                <td>@assessment.AssessmentName</td>
+                                                <td>@assessment.Framework</td>
+                                                <td>@assessment.LastModifiedDate?.ToString("MM/dd/yyyy")</td>
+                                                <td>
+                                                    <span class="badge bg-@GetStatusColor(assessment.Status)">
+                                                        @assessment.Status
+                                                    </span>
+                                                </td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-primary" @onclick="() => OpenAssessment(assessment.AssessmentId)">
+                                                        Open
+                                                    </button>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+
+        @if (IsSuperUser)
+        {
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Administrative Tools</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <button class="btn btn-outline-primary w-100" @onclick="OpenModuleBuilder">
+                                        <i class="oi oi-wrench me-2"></i>Module Builder
+                                    </button>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <button class="btn btn-outline-secondary w-100" @onclick="OpenAggregation">
+                                        <i class="oi oi-merge me-2"></i>Aggregation
+                                    </button>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <button class="btn btn-outline-info w-100" @onclick="OpenResourceLibrary">
+                                        <i class="oi oi-book me-2"></i>Resource Library
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool IsLoading { get; set; } = true;
+    private bool IsSuperUser { get; set; }
+    private List<AssessmentSummary>? RecentAssessments { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            IsSuperUser = AuthService.IsSuperUser();
+            await LoadRecentAssessments();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show toast notification
+            Console.WriteLine($"Error loading dashboard: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadRecentAssessments()
+    {
+        try
+        {
+            // This would call the API to get recent assessments
+            // For now, we'll create mock data
+            RecentAssessments = new List<AssessmentSummary>
+            {
+                new AssessmentSummary
+                {
+                    AssessmentId = 1,
+                    AssessmentName = "Sample Assessment 1",
+                    Framework = "CMMC",
+                    LastModifiedDate = DateTime.Now.AddDays(-1),
+                    Status = "In Progress"
+                },
+                new AssessmentSummary
+                {
+                    AssessmentId = 2,
+                    AssessmentName = "Sample Assessment 2",
+                    Framework = "NIST CSF",
+                    LastModifiedDate = DateTime.Now.AddDays(-3),
+                    Status = "Completed"
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading recent assessments: {ex.Message}");
+        }
+    }
+
+    private void CreateNewAssessment()
+    {
+        Navigation.NavigateTo("/assessment/create");
+    }
+
+    private void ViewRecentAssessments()
+    {
+        Navigation.NavigateTo("/assessment");
+    }
+
+    private void ViewReports()
+    {
+        Navigation.NavigateTo("/reports");
+    }
+
+    private void ViewAnalytics()
+    {
+        Navigation.NavigateTo("/analytics");
+    }
+
+    private void OpenAssessment(int assessmentId)
+    {
+        Navigation.NavigateTo($"/assessment/{assessmentId}");
+    }
+
+    private void OpenModuleBuilder()
+    {
+        Navigation.NavigateTo("/builder");
+    }
+
+    private void OpenAggregation()
+    {
+        Navigation.NavigateTo("/aggregation");
+    }
+
+    private void OpenResourceLibrary()
+    {
+        Navigation.NavigateTo("/resource-library");
+    }
+
+    private string GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" => "success",
+            "in progress" => "warning",
+            "not started" => "secondary",
+            _ => "primary"
+        };
+    }
+
+    public class AssessmentSummary
+    {
+        public int AssessmentId { get; set; }
+        public string AssessmentName { get; set; } = string.Empty;
+        public string Framework { get; set; } = string.Empty;
+        public DateTime? LastModifiedDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+}

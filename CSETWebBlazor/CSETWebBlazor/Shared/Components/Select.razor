@@ -1,0 +1,112 @@
+@using System.ComponentModel.DataAnnotations
+
+<div class="form-group">
+    @if (!string.IsNullOrEmpty(Label))
+    {
+        <label for="@Id" class="form-label">@Label</label>
+    }
+    
+    <select id="@Id"
+            class="@GetSelectClasses()"
+            @onchange="@OnSelectionChanged"
+            @onblur="@OnBlur"
+            @onfocus="@OnFocus"
+            disabled="@Disabled"
+            required="@Required"
+            multiple="@Multiple"
+            size="@Size"
+            @attributes="@AdditionalAttributes">
+        
+        @if (!string.IsNullOrEmpty(Placeholder))
+        {
+            <option value="" disabled selected>@Placeholder</option>
+        }
+        
+        @foreach (var option in Options)
+        {
+            <option value="@option.Value" 
+                    selected="@(Multiple ? SelectedValues?.Contains(option.Value) == true : Value == option.Value)">
+                @option.Text
+            </option>
+        }
+    </select>
+    
+    @if (!string.IsNullOrEmpty(HelpText))
+    {
+        <div class="form-text">@HelpText</div>
+    }
+    
+    @if (ValidationMessages.Any())
+    {
+        <div class="invalid-feedback d-block">
+            @foreach (var message in ValidationMessages)
+            {
+                <div>@message</div>
+            }
+        </div>
+    }
+</div>
+
+@code {
+    [Parameter] public string? Id { get; set; }
+    [Parameter] public string? Label { get; set; }
+    [Parameter] public string? Placeholder { get; set; }
+    [Parameter] public string? Value { get; set; }
+    [Parameter] public EventCallback<string?> ValueChanged { get; set; }
+    [Parameter] public List<string>? SelectedValues { get; set; }
+    [Parameter] public EventCallback<List<string>?> SelectedValuesChanged { get; set; }
+    [Parameter] public List<SelectOption> Options { get; set; } = new();
+    [Parameter] public bool Multiple { get; set; }
+    [Parameter] public int? Size { get; set; }
+    [Parameter] public bool Disabled { get; set; }
+    [Parameter] public bool Required { get; set; }
+    [Parameter] public string? HelpText { get; set; }
+    [Parameter] public List<string> ValidationMessages { get; set; } = new();
+    [Parameter] public EventCallback<ChangeEventArgs> OnChange { get; set; }
+    [Parameter] public EventCallback<FocusEventArgs> OnBlur { get; set; }
+    [Parameter] public EventCallback<FocusEventArgs> OnFocus { get; set; }
+    [Parameter(CaptureUnmatchedValues = true)] public Dictionary<string, object>? AdditionalAttributes { get; set; }
+
+    private async Task OnSelectionChanged(ChangeEventArgs e)
+    {
+        if (Multiple)
+        {
+            // Handle multiple selection
+            var selectedValues = new List<string>();
+            if (e.Value is string[] stringArray)
+            {
+                selectedValues.AddRange(stringArray);
+            }
+            SelectedValues = selectedValues;
+            await SelectedValuesChanged.InvokeAsync(selectedValues);
+        }
+        else
+        {
+            // Handle single selection
+            var newValue = e.Value?.ToString();
+            Value = newValue;
+            await ValueChanged.InvokeAsync(newValue);
+        }
+        
+        await OnChange.InvokeAsync(e);
+    }
+
+    private string GetSelectClasses()
+    {
+        var classes = new List<string> { "form-select" };
+        
+        if (ValidationMessages.Any())
+        {
+            classes.Add("is-invalid");
+        }
+        
+        return string.Join(" ", classes);
+    }
+
+    public class SelectOption
+    {
+        public string Value { get; set; } = string.Empty;
+        public string Text { get; set; } = string.Empty;
+        public bool Disabled { get; set; }
+    }
+} 

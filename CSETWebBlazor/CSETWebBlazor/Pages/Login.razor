@@ -1,0 +1,301 @@
+@page "/login"
+@using CSETWebBlazor.Models
+@using CSETWebBlazor.Services
+@using CSETWebBlazor.Authorization
+@inject IAuthenticationService AuthenticationService
+@inject ICsetAuthorizationService AuthorizationService
+@inject IErrorHandlingService ErrorHandlingService
+@inject NavigationManager NavigationManager
+@inject ILogger<Login> Logger
+
+<PageTitle>CSET Login</PageTitle>
+
+<div class="login-container">
+    <div class="login-card">
+        <div class="login-header">
+            <h1>CSET Login</h1>
+            <p>Cyber Security Evaluation Tool</p>
+        </div>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <div class="alert alert-danger" role="alert">
+                @errorMessage
+            </div>
+        }
+
+        @if (isLoading)
+        {
+            <div class="text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+            </div>
+        }
+
+        <div class="login-tabs">
+            <button class="btn @(activeTab == "credentials" ? "btn-primary" : "btn-outline-primary")" 
+                    @onclick="() => activeTab = "credentials"">
+                Email & Password
+            </button>
+            <button class="btn @(activeTab == "accesskey" ? "btn-primary" : "btn-outline-primary")" 
+                    @onclick="() => activeTab = "accesskey"">
+                Access Key
+            </button>
+        </div>
+
+        @if (activeTab == "credentials")
+        {
+            <EditForm Model="loginRequest" OnValidSubmit="HandleLoginAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label for="email">Email</label>
+                    <InputText id="email" class="form-control" @bind-Value="loginRequest.Email" />
+                    <ValidationMessage For="@(() => loginRequest.Email)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <InputText type="password" id="password" class="form-control" @bind-Value="loginRequest.Password" />
+                    <ValidationMessage For="@(() => loginRequest.Password)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="scope">Application Scope</label>
+                    <InputSelect id="scope" class="form-control" @bind-Value="loginRequest.Scope">
+                        <option value="CSET">CSET</option>
+                        <option value="IOD">IOD</option>
+                    </InputSelect>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>Logging in...</span>
+                    }
+                    else
+                    {
+                        <span>Login</span>
+                    }
+                </button>
+            </EditForm>
+        }
+        else
+        {
+            <EditForm Model="anonymousLoginRequest" OnValidSubmit="HandleAnonymousLoginAsync">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="form-group">
+                    <label for="accessKey">Access Key</label>
+                    <InputText id="accessKey" class="form-control" @bind-Value="anonymousLoginRequest.AccessKey" />
+                    <ValidationMessage For="@(() => anonymousLoginRequest.AccessKey)" />
+                </div>
+
+                <div class="form-group">
+                    <label for="anonymousScope">Application Scope</label>
+                    <InputSelect id="anonymousScope" class="form-control" @bind-Value="anonymousLoginRequest.Scope">
+                        <option value="CSET">CSET</option>
+                        <option value="IOD">IOD</option>
+                    </InputSelect>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block" disabled="@isLoading">
+                    @if (isLoading)
+                    {
+                        <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        <span>Logging in...</span>
+                    }
+                    else
+                    {
+                        <span>Login with Access Key</span>
+                    }
+                </button>
+            </EditForm>
+        }
+
+        <div class="login-footer">
+            <p>Need help? Contact your system administrator.</p>
+        </div>
+    </div>
+</div>
+
+<style>
+    .login-container {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        padding: 20px;
+    }
+
+    .login-card {
+        background: white;
+        border-radius: 10px;
+        box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+        padding: 40px;
+        width: 100%;
+        max-width: 400px;
+    }
+
+    .login-header {
+        text-align: center;
+        margin-bottom: 30px;
+    }
+
+    .login-header h1 {
+        color: #333;
+        margin-bottom: 5px;
+        font-size: 2rem;
+    }
+
+    .login-header p {
+        color: #666;
+        margin: 0;
+    }
+
+    .login-tabs {
+        display: flex;
+        gap: 10px;
+        margin-bottom: 30px;
+    }
+
+    .login-tabs .btn {
+        flex: 1;
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 5px;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px;
+        border: 1px solid #ddd;
+        border-radius: 5px;
+        font-size: 16px;
+        transition: border-color 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 2px rgba(102, 126, 234, 0.2);
+    }
+
+    .btn-block {
+        width: 100%;
+        padding: 12px;
+        font-size: 16px;
+        font-weight: 500;
+    }
+
+    .login-footer {
+        text-align: center;
+        margin-top: 30px;
+        padding-top: 20px;
+        border-top: 1px solid #eee;
+    }
+
+    .login-footer p {
+        color: #666;
+        margin: 0;
+        font-size: 14px;
+    }
+
+    .alert {
+        padding: 12px;
+        border-radius: 5px;
+        margin-bottom: 20px;
+    }
+
+    .alert-danger {
+        background-color: #f8d7da;
+        border: 1px solid #f5c6cb;
+        color: #721c24;
+    }
+
+    .validation-message {
+        color: #dc3545;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+
+    .spinner-border {
+        width: 1rem;
+        height: 1rem;
+        margin-right: 8px;
+    }
+</style>
+
+@code {
+    private LoginRequest loginRequest = new();
+    private AnonymousLoginRequest anonymousLoginRequest = new();
+    private string activeTab = "credentials";
+    private bool isLoading = false;
+    private string errorMessage = string.Empty;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Check if user is already authenticated
+        if (AuthorizationService.IsAuthenticated())
+        {
+            NavigationManager.NavigateTo("/dashboard");
+            return;
+        }
+
+        // Initialize authentication service
+        await AuthenticationService.InitializeAsync();
+    }
+
+    private async Task HandleLoginAsync()
+    {
+        await PerformLogin(async () => await AuthenticationService.LoginAsync(loginRequest));
+    }
+
+    private async Task HandleAnonymousLoginAsync()
+    {
+        await PerformLogin(async () => await AuthenticationService.LoginWithAccessKeyAsync(anonymousLoginRequest));
+    }
+
+    private async Task PerformLogin(Func<Task<LoginResponse>> loginAction)
+    {
+        try
+        {
+            isLoading = true;
+            errorMessage = string.Empty;
+            StateHasChanged();
+
+            var response = await loginAction();
+
+            if (response != null)
+            {
+                Logger.LogInformation("User {Email} logged in successfully", response.Email);
+                
+                // Redirect to dashboard or home page
+                NavigationManager.NavigateTo("/dashboard");
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = ErrorHandlingService.GetUserFriendlyErrorMessage(ex);
+            Logger.LogError(ex, "Login failed for user {Email}", loginRequest.Email);
+        }
+        finally
+        {
+            isLoading = false;
+            StateHasChanged();
+        }
+    }
+} 

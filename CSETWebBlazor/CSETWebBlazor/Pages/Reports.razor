@@ -1,0 +1,395 @@
+@page "/reports"
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IApiClientService ApiClient
+@inject IPdfService PdfService
+
+<PageTitle>Reports - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>Reports</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <button class="btn btn-primary" @onclick="GenerateNewReport">
+                <i class="oi oi-plus me-2"></i>Generate Report
+            </button>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading reports...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Report Types -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Report Types</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="oi oi-document display-4 text-primary mb-3"></i>
+                                        <h6 class="card-title">Executive Summary</h6>
+                                        <p class="card-text small">High-level overview of assessment results</p>
+                                        <button class="btn btn-sm btn-outline-primary" @onclick="() => GenerateReport(ReportType.ExecutiveSummary)">
+                                            Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="oi oi-graph display-4 text-success mb-3"></i>
+                                        <h6 class="card-title">Detailed Analysis</h6>
+                                        <p class="card-text small">Comprehensive analysis with charts</p>
+                                        <button class="btn btn-sm btn-outline-success" @onclick="() => GenerateReport(ReportType.DetailedAnalysis)">
+                                            Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="oi oi-list display-4 text-info mb-3"></i>
+                                        <h6 class="card-title">Deficiency Report</h6>
+                                        <p class="card-text small">List of identified deficiencies</p>
+                                        <button class="btn btn-sm btn-outline-info" @onclick="() => GenerateReport(ReportType.DeficiencyReport)">
+                                            Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="col-md-3 mb-3">
+                                <div class="card h-100">
+                                    <div class="card-body text-center">
+                                        <i class="oi oi-bar-chart display-4 text-warning mb-3"></i>
+                                        <h6 class="card-title">Trend Analysis</h6>
+                                        <p class="card-text small">Historical trends and comparisons</p>
+                                        <button class="btn btn-sm btn-outline-warning" @onclick="() => GenerateReport(ReportType.TrendAnalysis)">
+                                            Generate
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Assessment Selection -->
+        <div class="row mb-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h5 class="mb-0">Select Assessment</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <label for="assessmentSelect" class="form-label">Assessment</label>
+                                <select id="assessmentSelect" class="form-select" @bind="SelectedAssessmentId">
+                                    <option value="">Select an assessment...</option>
+                                    @foreach (var assessment in AvailableAssessments)
+                                    {
+                                        <option value="@assessment.AssessmentId">@assessment.AssessmentName</option>
+                                    }
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="reportFormat" class="form-label">Report Format</label>
+                                <select id="reportFormat" class="form-select" @bind="SelectedFormat">
+                                    <option value="PDF">PDF</option>
+                                    <option value="Excel">Excel</option>
+                                    <option value="Word">Word</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Reports -->
+        @if (RecentReports?.Any() == true)
+        {
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5 class="mb-0">Recent Reports</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="table-responsive">
+                                <table class="table table-hover">
+                                    <thead>
+                                        <tr>
+                                            <th>Report Name</th>
+                                            <th>Assessment</th>
+                                            <th>Type</th>
+                                            <th>Format</th>
+                                            <th>Generated</th>
+                                            <th>Actions</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        @foreach (var report in RecentReports)
+                                        {
+                                            <tr>
+                                                <td>
+                                                    <strong>@report.ReportName</strong>
+                                                </td>
+                                                <td>@report.AssessmentName</td>
+                                                <td>
+                                                    <span class="badge bg-@GetReportTypeColor(report.ReportType)">
+                                                        @report.ReportType
+                                                    </span>
+                                                </td>
+                                                <td>@report.Format</td>
+                                                <td>@report.GeneratedDate.ToString("MM/dd/yyyy HH:mm")</td>
+                                                <td>
+                                                    <div class="btn-group" role="group">
+                                                        <button class="btn btn-sm btn-primary" @onclick="() => DownloadReport(report.ReportId)" title="Download">
+                                                            <i class="oi oi-download"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-secondary" @onclick="() => ViewReport(report.ReportId)" title="View">
+                                                            <i class="oi oi-eye"></i>
+                                                        </button>
+                                                        <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteReport(report.ReportId)" title="Delete">
+                                                            <i class="oi oi-trash"></i>
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-body text-center py-5">
+                            <i class="oi oi-document display-1 text-muted"></i>
+                            <h4 class="mt-3">No reports generated yet</h4>
+                            <p class="text-muted">Generate your first report to get started.</p>
+                            <button class="btn btn-primary" @onclick="GenerateNewReport">
+                                <i class="oi oi-plus me-2"></i>Generate Report
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        }
+    }
+</div>
+
+@code {
+    private bool IsLoading { get; set; } = true;
+    private List<AssessmentSummary> AvailableAssessments { get; set; } = new();
+    private List<ReportSummary>? RecentReports { get; set; }
+    private int SelectedAssessmentId { get; set; }
+    private string SelectedFormat { get; set; } = "PDF";
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading reports data: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadData()
+    {
+        try
+        {
+            // Load available assessments
+            AvailableAssessments = new List<AssessmentSummary>
+            {
+                new AssessmentSummary
+                {
+                    AssessmentId = 1,
+                    AssessmentName = "Sample Assessment 1",
+                    Framework = "CMMC",
+                    Status = "Completed"
+                },
+                new AssessmentSummary
+                {
+                    AssessmentId = 2,
+                    AssessmentName = "Sample Assessment 2",
+                    Framework = "NIST CSF",
+                    Status = "Completed"
+                }
+            };
+
+            // Load recent reports
+            RecentReports = new List<ReportSummary>
+            {
+                new ReportSummary
+                {
+                    ReportId = 1,
+                    ReportName = "Executive Summary - Sample Assessment 1",
+                    AssessmentName = "Sample Assessment 1",
+                    ReportType = ReportType.ExecutiveSummary,
+                    Format = "PDF",
+                    GeneratedDate = DateTime.Now.AddDays(-1)
+                },
+                new ReportSummary
+                {
+                    ReportId = 2,
+                    ReportName = "Detailed Analysis - Sample Assessment 2",
+                    AssessmentName = "Sample Assessment 2",
+                    ReportType = ReportType.DetailedAnalysis,
+                    Format = "PDF",
+                    GeneratedDate = DateTime.Now.AddDays(-2)
+                }
+            };
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading data: {ex.Message}");
+        }
+    }
+
+    private void GenerateNewReport()
+    {
+        // This would open a modal or navigate to report generation page
+        Console.WriteLine("Opening report generation dialog");
+    }
+
+    private async Task GenerateReport(ReportType reportType)
+    {
+        if (SelectedAssessmentId == 0)
+        {
+            // Show error - no assessment selected
+            Console.WriteLine("Please select an assessment first");
+            return;
+        }
+
+        try
+        {
+            // This would call the API to generate the report
+            Console.WriteLine($"Generating {reportType} report for assessment {SelectedAssessmentId} in {SelectedFormat} format");
+            
+            // For now, simulate report generation
+            await Task.Delay(2000);
+            
+            // Refresh the reports list
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error generating report: {ex.Message}");
+        }
+    }
+
+    private async Task DownloadReport(int reportId)
+    {
+        try
+        {
+            // This would call the API to download the report
+            Console.WriteLine($"Downloading report {reportId}");
+            await Task.CompletedTask;
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error downloading report: {ex.Message}");
+        }
+    }
+
+    private void ViewReport(int reportId)
+    {
+        // This would open the report in a new tab or modal
+        Console.WriteLine($"Viewing report {reportId}");
+    }
+
+    private async Task DeleteReport(int reportId)
+    {
+        try
+        {
+            // This would call the API to delete the report
+            Console.WriteLine($"Deleting report {reportId}");
+            await Task.CompletedTask;
+            
+            // Refresh the reports list
+            await LoadData();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error deleting report: {ex.Message}");
+        }
+    }
+
+    private string GetReportTypeColor(ReportType reportType)
+    {
+        return reportType switch
+        {
+            ReportType.ExecutiveSummary => "primary",
+            ReportType.DetailedAnalysis => "success",
+            ReportType.DeficiencyReport => "info",
+            ReportType.TrendAnalysis => "warning",
+            _ => "secondary"
+        };
+    }
+
+    public enum ReportType
+    {
+        ExecutiveSummary,
+        DetailedAnalysis,
+        DeficiencyReport,
+        TrendAnalysis
+    }
+
+    public class AssessmentSummary
+    {
+        public int AssessmentId { get; set; }
+        public string AssessmentName { get; set; } = string.Empty;
+        public string Framework { get; set; } = string.Empty;
+        public string Status { get; set; } = string.Empty;
+    }
+
+    public class ReportSummary
+    {
+        public int ReportId { get; set; }
+        public string ReportName { get; set; } = string.Empty;
+        public string AssessmentName { get; set; } = string.Empty;
+        public ReportType ReportType { get; set; }
+        public string Format { get; set; } = string.Empty;
+        public DateTime GeneratedDate { get; set; }
+    }
+} 

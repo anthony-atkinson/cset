@@ -1,0 +1,83 @@
+@page "/builder"
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IApiClientService ApiClient
+
+<PageTitle>Module Builder - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h2>Module Builder</h2>
+            <p class="text-muted">Create custom assessment modules and question sets</p>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-plus display-4 text-primary mb-3"></i>
+                    <h5 class="card-title">Create Module</h5>
+                    <p class="card-text">Build a new assessment module</p>
+                    <button class="btn btn-primary">New Module</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-pencil display-4 text-success mb-3"></i>
+                    <h5 class="card-title">Edit Module</h5>
+                    <p class="card-text">Modify existing modules</p>
+                    <button class="btn btn-success">Edit Module</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-copy display-4 text-info mb-3"></i>
+                    <h5 class="card-title">Duplicate</h5>
+                    <p class="card-text">Copy existing modules</p>
+                    <button class="btn btn-info">Duplicate</button>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-6 col-lg-3 mb-4">
+            <div class="card h-100">
+                <div class="card-body text-center">
+                    <i class="oi oi-share display-4 text-warning mb-3"></i>
+                    <h5 class="card-title">Import/Export</h5>
+                    <p class="card-text">Share modules</p>
+                    <button class="btn btn-warning">Import/Export</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">Module Builder Features Coming Soon</h5>
+                </div>
+                <div class="card-body">
+                    <p>This section will allow super users to:</p>
+                    <ul>
+                        <li>Create custom assessment modules</li>
+                        <li>Define question sets and requirements</li>
+                        <li>Set up scoring and weighting</li>
+                        <li>Configure framework mappings</li>
+                        <li>Import and export modules</li>
+                        <li>Manage module versions</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+</div> 

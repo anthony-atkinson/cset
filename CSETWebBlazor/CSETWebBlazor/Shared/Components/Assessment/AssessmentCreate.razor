@@ -1,0 +1,255 @@
+@using CSETWebBlazor.Models
+@using CSETWebBlazor.Services
+@inject IAssessmentService AssessmentService
+@inject NavigationManager Navigation
+
+<div class="assessment-create">
+    <div class="card">
+        <div class="card-header">
+            <h4>Create New Assessment</h4>
+        </div>
+        <div class="card-body">
+            <EditForm Model="@AssessmentModel" OnValidSubmit="@OnSubmit">
+                <DataAnnotationsValidator />
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <Input Label="Assessment Name" 
+                               @bind-Value="AssessmentModel.AssessmentName"
+                               Required="true"
+                               ValidationMessages="@GetValidationMessages("AssessmentName")" />
+                    </div>
+                    <div class="col-md-6">
+                        <Select Label="Assessment Type"
+                                @bind-Value="AssessmentModel.AssessmentType"
+                                Options="@AssessmentTypeOptions"
+                                Required="true"
+                                ValidationMessages="@GetValidationMessages("AssessmentType")" />
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <Input Label="Facility Name"
+                               @bind-Value="AssessmentModel.FacilityName"
+                               Required="true"
+                               ValidationMessages="@GetValidationMessages("FacilityName")" />
+                    </div>
+                    <div class="col-md-6">
+                        <Input Label="City"
+                               @bind-Value="AssessmentModel.City"
+                               ValidationMessages="@GetValidationMessages("City")" />
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <Select Label="State"
+                                @bind-Value="AssessmentModel.State"
+                                Options="@StateOptions"
+                                ValidationMessages="@GetValidationMessages("State")" />
+                    </div>
+                    <div class="col-md-6">
+                        <Input Label="Sector"
+                               @bind-Value="AssessmentModel.Sector"
+                               ValidationMessages="@GetValidationMessages("Sector")" />
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-12">
+                        <Input Label="Description"
+                               @bind-Value="AssessmentModel.Description"
+                               Type="Input.InputType.Text"
+                               ValidationMessages="@GetValidationMessages("Description")" />
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6">
+                        <Checkbox Label="Use Standard"
+                                 @bind-IsChecked="AssessmentModel.UseStandard"
+                                 HelpText="Include standard questions in this assessment" />
+                    </div>
+                    <div class="col-md-6">
+                        <Checkbox Label="Use Maturity Model"
+                                 @bind-IsChecked="AssessmentModel.UseMaturityModel"
+                                 HelpText="Include maturity model questions in this assessment" />
+                    </div>
+                </div>
+                
+                <div class="form-actions mt-4">
+                    <Button Variant="Button.ButtonVariant.Primary" 
+                            Type="submit"
+                            Disabled="@IsSubmitting">
+                        @if (IsSubmitting)
+                        {
+                            <span class="spinner-border spinner-border-sm me-2" role="status"></span>
+                        }
+                        Create Assessment
+                    </Button>
+                    
+                    <Button Variant="Button.ButtonVariant.Secondary" 
+                            OnClick="@OnCancel"
+                            Disabled="@IsSubmitting">
+                        Cancel
+                    </Button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback<AssessmentDetail> OnAssessmentCreated { get; set; }
+    [Parameter] public EventCallback OnCancelled { get; set; }
+
+    private AssessmentCreateModel AssessmentModel { get; set; } = new();
+    private bool IsSubmitting { get; set; }
+    private List<string> ValidationMessages { get; set; } = new();
+
+    private List<Select.SelectOption> AssessmentTypeOptions { get; set; } = new()
+    {
+        new() { Value = "Standard", Text = "Standard Assessment" },
+        new() { Value = "Custom", Text = "Custom Assessment" },
+        new() { Value = "Template", Text = "Assessment Template" }
+    };
+
+    private List<Select.SelectOption> StateOptions { get; set; } = new()
+    {
+        new() { Value = "AL", Text = "Alabama" },
+        new() { Value = "AK", Text = "Alaska" },
+        new() { Value = "AZ", Text = "Arizona" },
+        new() { Value = "AR", Text = "Arkansas" },
+        new() { Value = "CA", Text = "California" },
+        new() { Value = "CO", Text = "Colorado" },
+        new() { Value = "CT", Text = "Connecticut" },
+        new() { Value = "DE", Text = "Delaware" },
+        new() { Value = "FL", Text = "Florida" },
+        new() { Value = "GA", Text = "Georgia" },
+        new() { Value = "HI", Text = "Hawaii" },
+        new() { Value = "ID", Text = "Idaho" },
+        new() { Value = "IL", Text = "Illinois" },
+        new() { Value = "IN", Text = "Indiana" },
+        new() { Value = "IA", Text = "Iowa" },
+        new() { Value = "KS", Text = "Kansas" },
+        new() { Value = "KY", Text = "Kentucky" },
+        new() { Value = "LA", Text = "Louisiana" },
+        new() { Value = "ME", Text = "Maine" },
+        new() { Value = "MD", Text = "Maryland" },
+        new() { Value = "MA", Text = "Massachusetts" },
+        new() { Value = "MI", Text = "Michigan" },
+        new() { Value = "MN", Text = "Minnesota" },
+        new() { Value = "MS", Text = "Mississippi" },
+        new() { Value = "MO", Text = "Missouri" },
+        new() { Value = "MT", Text = "Montana" },
+        new() { Value = "NE", Text = "Nebraska" },
+        new() { Value = "NV", Text = "Nevada" },
+        new() { Value = "NH", Text = "New Hampshire" },
+        new() { Value = "NJ", Text = "New Jersey" },
+        new() { Value = "NM", Text = "New Mexico" },
+        new() { Value = "NY", Text = "New York" },
+        new() { Value = "NC", Text = "North Carolina" },
+        new() { Value = "ND", Text = "North Dakota" },
+        new() { Value = "OH", Text = "Ohio" },
+        new() { Value = "OK", Text = "Oklahoma" },
+        new() { Value = "OR", Text = "Oregon" },
+        new() { Value = "PA", Text = "Pennsylvania" },
+        new() { Value = "RI", Text = "Rhode Island" },
+        new() { Value = "SC", Text = "South Carolina" },
+        new() { Value = "SD", Text = "South Dakota" },
+        new() { Value = "TN", Text = "Tennessee" },
+        new() { Value = "TX", Text = "Texas" },
+        new() { Value = "UT", Text = "Utah" },
+        new() { Value = "VT", Text = "Vermont" },
+        new() { Value = "VA", Text = "Virginia" },
+        new() { Value = "WA", Text = "Washington" },
+        new() { Value = "WV", Text = "West Virginia" },
+        new() { Value = "WI", Text = "Wisconsin" },
+        new() { Value = "WY", Text = "Wyoming" }
+    };
+
+    private async Task OnSubmit()
+    {
+        if (IsSubmitting) return;
+        
+        IsSubmitting = true;
+        ValidationMessages.Clear();
+        
+        try
+        {
+            // Validate the model
+            if (!ValidateModel())
+            {
+                IsSubmitting = false;
+                return;
+            }
+            
+            // Create the assessment
+            var assessment = await AssessmentService.CreateAssessmentAsync(AssessmentModel);
+            
+            if (assessment != null)
+            {
+                await OnAssessmentCreated.InvokeAsync(assessment);
+                Navigation.NavigateTo($"/assessment/{assessment.AssessmentId}");
+            }
+            else
+            {
+                ValidationMessages.Add("Failed to create assessment. Please try again.");
+            }
+        }
+        catch (Exception ex)
+        {
+            ValidationMessages.Add($"Error creating assessment: {ex.Message}");
+        }
+        finally
+        {
+            IsSubmitting = false;
+        }
+    }
+
+    private async Task OnCancel()
+    {
+        await OnCancelled.InvokeAsync();
+    }
+
+    private bool ValidateModel()
+    {
+        ValidationMessages.Clear();
+        
+        if (string.IsNullOrWhiteSpace(AssessmentModel.AssessmentName))
+        {
+            ValidationMessages.Add("Assessment name is required.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(AssessmentModel.AssessmentType))
+        {
+            ValidationMessages.Add("Assessment type is required.");
+        }
+        
+        if (string.IsNullOrWhiteSpace(AssessmentModel.FacilityName))
+        {
+            ValidationMessages.Add("Facility name is required.");
+        }
+        
+        return !ValidationMessages.Any();
+    }
+
+    private List<string> GetValidationMessages(string propertyName)
+    {
+        return ValidationMessages.Where(m => m.Contains(propertyName, StringComparison.OrdinalIgnoreCase)).ToList();
+    }
+
+    public class AssessmentCreateModel
+    {
+        public string AssessmentName { get; set; } = string.Empty;
+        public string AssessmentType { get; set; } = string.Empty;
+        public string FacilityName { get; set; } = string.Empty;
+        public string City { get; set; } = string.Empty;
+        public string State { get; set; } = string.Empty;
+        public string Sector { get; set; } = string.Empty;
+        public string Description { get; set; } = string.Empty;
+        public bool UseStandard { get; set; } = true;
+        public bool UseMaturityModel { get; set; } = false;
+    }
+} 

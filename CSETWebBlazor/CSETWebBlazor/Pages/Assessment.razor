@@ -1,0 +1,405 @@
+@page "/assessment"
+@attribute [Authorize]
+@inject IAuthenticationService AuthService
+@inject NavigationManager Navigation
+@inject IApiClientService ApiClient
+
+<PageTitle>Assessments - CSET</PageTitle>
+
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <h2>Assessments</h2>
+        </div>
+        <div class="col-md-6 text-end">
+            <button class="btn btn-primary" @onclick="CreateNewAssessment">
+                <i class="oi oi-plus me-2"></i>New Assessment
+            </button>
+        </div>
+    </div>
+
+    @if (IsLoading)
+    {
+        <div class="row justify-content-center">
+            <div class="col-md-6 text-center">
+                <div class="spinner-border" role="status">
+                    <span class="visually-hidden">Loading...</span>
+                </div>
+                <p class="mt-2">Loading assessments...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <!-- Search and Filter -->
+        <div class="row mb-4">
+            <div class="col-md-4">
+                <div class="input-group">
+                    <span class="input-group-text">
+                        <i class="oi oi-magnifying-glass"></i>
+                    </span>
+                    <input type="text" class="form-control" placeholder="Search assessments..." 
+                           @bind="SearchTerm" @bind:event="oninput" @onkeyup="OnSearch" />
+                </div>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="SelectedFramework">
+                    <option value="">All Frameworks</option>
+                    @foreach (var framework in AvailableFrameworks)
+                    {
+                        <option value="@framework">@framework</option>
+                    }
+                </select>
+            </div>
+            <div class="col-md-3">
+                <select class="form-select" @bind="SelectedStatus">
+                    <option value="">All Statuses</option>
+                    <option value="Not Started">Not Started</option>
+                    <option value="In Progress">In Progress</option>
+                    <option value="Completed">Completed</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-outline-secondary w-100" @onclick="ClearFilters">
+                    Clear Filters
+                </button>
+            </div>
+        </div>
+
+        <!-- Assessments Table -->
+        <div class="card">
+            <div class="card-body">
+                @if (FilteredAssessments?.Any() == true)
+                {
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>
+                                        <button class="btn btn-link p-0" @onclick="() => SortBy("AssessmentName")">
+                                            Assessment Name
+                                            @if (SortColumn == "AssessmentName")
+                                            {
+                                                <i class="oi oi-@(SortDirection == "asc" ? "sort-ascending" : "sort-descending")"></i>
+                                            }
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button class="btn btn-link p-0" @onclick="() => SortBy("Framework")">
+                                            Framework
+                                            @if (SortColumn == "Framework")
+                                            {
+                                                <i class="oi oi-@(SortDirection == "asc" ? "sort-ascending" : "sort-descending")"></i>
+                                            }
+                                        </button>
+                                    </th>
+                                    <th>
+                                        <button class="btn btn-link p-0" @onclick="() => SortBy("LastModifiedDate")">
+                                            Last Modified
+                                            @if (SortColumn == "LastModifiedDate")
+                                            {
+                                                <i class="oi oi-@(SortDirection == "asc" ? "sort-ascending" : "sort-descending")"></i>
+                                            }
+                                        </button>
+                                    </th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach (var assessment in FilteredAssessments)
+                                {
+                                    <tr>
+                                        <td>
+                                            <strong>@assessment.AssessmentName</strong>
+                                            @if (!string.IsNullOrEmpty(assessment.Description))
+                                            {
+                                                <br />
+                                                <small class="text-muted">@assessment.Description</small>
+                                            }
+                                        </td>
+                                        <td>@assessment.Framework</td>
+                                        <td>@assessment.LastModifiedDate?.ToString("MM/dd/yyyy HH:mm")</td>
+                                        <td>
+                                            <span class="badge bg-@GetStatusColor(assessment.Status)">
+                                                @assessment.Status
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <div class="btn-group" role="group">
+                                                <button class="btn btn-sm btn-primary" @onclick="() => OpenAssessment(assessment.AssessmentId)" title="Open Assessment">
+                                                    <i class="oi oi-folder"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-secondary" @onclick="() => DuplicateAssessment(assessment.AssessmentId)" title="Duplicate">
+                                                    <i class="oi oi-copy"></i>
+                                                </button>
+                                                <button class="btn btn-sm btn-outline-danger" @onclick="() => DeleteAssessment(assessment.AssessmentId)" title="Delete">
+                                                    <i class="oi oi-trash"></i>
+                                                </button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Pagination -->
+                    @if (TotalPages > 1)
+                    {
+                        <nav aria-label="Assessment pagination">
+                            <ul class="pagination justify-content-center">
+                                <li class="page-item @(CurrentPage == 1 ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(CurrentPage - 1)">Previous</button>
+                                </li>
+                                
+                                @for (int i = Math.Max(1, CurrentPage - 2); i <= Math.Min(TotalPages, CurrentPage + 2); i++)
+                                {
+                                    <li class="page-item @(i == CurrentPage ? "active" : "")">
+                                        <button class="page-link" @onclick="() => ChangePage(i)">@i</button>
+                                    </li>
+                                }
+                                
+                                <li class="page-item @(CurrentPage == TotalPages ? "disabled" : "")">
+                                    <button class="page-link" @onclick="() => ChangePage(CurrentPage + 1)">Next</button>
+                                </li>
+                            </ul>
+                        </nav>
+                    }
+                }
+                else
+                {
+                    <div class="text-center py-5">
+                        <i class="oi oi-document display-1 text-muted"></i>
+                        <h4 class="mt-3">No assessments found</h4>
+                        <p class="text-muted">@(string.IsNullOrEmpty(SearchTerm) && string.IsNullOrEmpty(SelectedFramework) && string.IsNullOrEmpty(SelectedStatus) 
+                            ? "Create your first assessment to get started." 
+                            : "Try adjusting your search criteria.")</p>
+                        @if (string.IsNullOrEmpty(SearchTerm) && string.IsNullOrEmpty(SelectedFramework) && string.IsNullOrEmpty(SelectedStatus))
+                        {
+                            <button class="btn btn-primary" @onclick="CreateNewAssessment">
+                                <i class="oi oi-plus me-2"></i>Create Assessment
+                            </button>
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    }
+</div>
+
+@code {
+    private bool IsLoading { get; set; } = true;
+    private List<AssessmentSummary>? AllAssessments { get; set; }
+    private List<AssessmentSummary>? FilteredAssessments { get; set; }
+    private string SearchTerm { get; set; } = string.Empty;
+    private string SelectedFramework { get; set; } = string.Empty;
+    private string SelectedStatus { get; set; } = string.Empty;
+    private string SortColumn { get; set; } = "LastModifiedDate";
+    private string SortDirection { get; set; } = "desc";
+    private int CurrentPage { get; set; } = 1;
+    private int PageSize { get; set; } = 20;
+    private int TotalPages => (int)Math.Ceiling((double)(FilteredAssessments?.Count ?? 0) / PageSize);
+
+    private List<string> AvailableFrameworks { get; set; } = new()
+    {
+        "CMMC",
+        "NIST CSF",
+        "CIS Controls",
+        "ISO 27001",
+        "NIST 800-53",
+        "CMMC 2.0"
+    };
+
+    protected override async Task OnInitializedAsync()
+    {
+        try
+        {
+            await LoadAssessments();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading assessments: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task LoadAssessments()
+    {
+        try
+        {
+            // This would call the API to get assessments
+            // For now, we'll create mock data
+            AllAssessments = new List<AssessmentSummary>
+            {
+                new AssessmentSummary
+                {
+                    AssessmentId = 1,
+                    AssessmentName = "Sample Assessment 1",
+                    Description = "A sample cybersecurity assessment",
+                    Framework = "CMMC",
+                    LastModifiedDate = DateTime.Now.AddDays(-1),
+                    Status = "In Progress"
+                },
+                new AssessmentSummary
+                {
+                    AssessmentId = 2,
+                    AssessmentName = "Sample Assessment 2",
+                    Description = "Another sample assessment",
+                    Framework = "NIST CSF",
+                    LastModifiedDate = DateTime.Now.AddDays(-3),
+                    Status = "Completed"
+                },
+                new AssessmentSummary
+                {
+                    AssessmentId = 3,
+                    AssessmentName = "Sample Assessment 3",
+                    Description = "Third sample assessment",
+                    Framework = "CIS Controls",
+                    LastModifiedDate = DateTime.Now.AddDays(-5),
+                    Status = "Not Started"
+                }
+            };
+
+            ApplyFilters();
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"Error loading assessments: {ex.Message}");
+        }
+    }
+
+    private void ApplyFilters()
+    {
+        if (AllAssessments == null)
+        {
+            FilteredAssessments = new List<AssessmentSummary>();
+            return;
+        }
+
+        var filtered = AllAssessments.AsEnumerable();
+
+        // Apply search filter
+        if (!string.IsNullOrEmpty(SearchTerm))
+        {
+            filtered = filtered.Where(a => 
+                a.AssessmentName.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ||
+                (a.Description?.Contains(SearchTerm, StringComparison.OrdinalIgnoreCase) ?? false));
+        }
+
+        // Apply framework filter
+        if (!string.IsNullOrEmpty(SelectedFramework))
+        {
+            filtered = filtered.Where(a => a.Framework == SelectedFramework);
+        }
+
+        // Apply status filter
+        if (!string.IsNullOrEmpty(SelectedStatus))
+        {
+            filtered = filtered.Where(a => a.Status == SelectedStatus);
+        }
+
+        // Apply sorting
+        filtered = SortColumn switch
+        {
+            "AssessmentName" => SortDirection == "asc" 
+                ? filtered.OrderBy(a => a.AssessmentName)
+                : filtered.OrderByDescending(a => a.AssessmentName),
+            "Framework" => SortDirection == "asc"
+                ? filtered.OrderBy(a => a.Framework)
+                : filtered.OrderByDescending(a => a.Framework),
+            "LastModifiedDate" => SortDirection == "asc"
+                ? filtered.OrderBy(a => a.LastModifiedDate)
+                : filtered.OrderByDescending(a => a.LastModifiedDate),
+            _ => filtered.OrderByDescending(a => a.LastModifiedDate)
+        };
+
+        FilteredAssessments = filtered.ToList();
+        CurrentPage = 1; // Reset to first page when filters change
+    }
+
+    private void OnSearch()
+    {
+        ApplyFilters();
+    }
+
+    private void ClearFilters()
+    {
+        SearchTerm = string.Empty;
+        SelectedFramework = string.Empty;
+        SelectedStatus = string.Empty;
+        ApplyFilters();
+    }
+
+    private void SortBy(string column)
+    {
+        if (SortColumn == column)
+        {
+            SortDirection = SortDirection == "asc" ? "desc" : "asc";
+        }
+        else
+        {
+            SortColumn = column;
+            SortDirection = "asc";
+        }
+        ApplyFilters();
+    }
+
+    private void ChangePage(int page)
+    {
+        if (page >= 1 && page <= TotalPages)
+        {
+            CurrentPage = page;
+        }
+    }
+
+    private void CreateNewAssessment()
+    {
+        Navigation.NavigateTo("/assessment/create");
+    }
+
+    private void OpenAssessment(int assessmentId)
+    {
+        Navigation.NavigateTo($"/assessment/{assessmentId}");
+    }
+
+    private async Task DuplicateAssessment(int assessmentId)
+    {
+        // This would call the API to duplicate the assessment
+        Console.WriteLine($"Duplicating assessment {assessmentId}");
+        // For now, just show a message
+        await Task.CompletedTask;
+    }
+
+    private async Task DeleteAssessment(int assessmentId)
+    {
+        // This would call the API to delete the assessment
+        Console.WriteLine($"Deleting assessment {assessmentId}");
+        // For now, just show a message
+        await Task.CompletedTask;
+    }
+
+    private string GetStatusColor(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "completed" => "success",
+            "in progress" => "warning",
+            "not started" => "secondary",
+            _ => "primary"
+        };
+    }
+
+    public class AssessmentSummary
+    {
+        public int AssessmentId { get; set; }
+        public string AssessmentName { get; set; } = string.Empty;
+        public string? Description { get; set; }
+        public string Framework { get; set; } = string.Empty;
+        public DateTime? LastModifiedDate { get; set; }
+        public string Status { get; set; } = string.Empty;
+    }
+} 

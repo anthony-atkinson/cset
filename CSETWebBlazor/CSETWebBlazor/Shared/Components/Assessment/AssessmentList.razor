@@ -1,0 +1,264 @@
+@using CSETWebBlazor.Models
+@using CSETWebBlazor.Services
+@inject IAssessmentService AssessmentService
+@inject NavigationManager Navigation
+
+<div class="assessment-list">
+    <div class="card">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Assessments</h4>
+            <Button Variant="Button.ButtonVariant.Primary" 
+                    Icon="fas fa-plus"
+                    OnClick="@OnCreateNew">
+                New Assessment
+            </Button>
+        </div>
+        <div class="card-body">
+            @if (IsLoading)
+            {
+                <div class="text-center py-4">
+                    <div class="spinner-border" role="status">
+                        <span class="visually-hidden">Loading...</span>
+                    </div>
+                </div>
+            }
+            else if (Assessments == null || !Assessments.Any())
+            {
+                <div class="text-center py-4">
+                    <p class="text-muted">No assessments found.</p>
+                    <Button Variant="Button.ButtonVariant.Primary" 
+                            OnClick="@OnCreateNew">
+                        Create Your First Assessment
+                    </Button>
+                </div>
+            }
+            else
+            {
+                <Table TItem="AssessmentDetail"
+                       Data="@Assessments"
+                       Columns="@TableColumns"
+                       ShowSearch="true"
+                       SearchPlaceholder="Search assessments..."
+                       ShowPagination="true"
+                       PageSize="10"
+                       OnSearch="@OnSearch"
+                       OnPageChanged="@OnPageChanged"
+                       OnSort="@OnSort" />
+            }
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public EventCallback OnCreateNewRequested { get; set; }
+    [Parameter] public EventCallback<AssessmentDetail> OnAssessmentSelected { get; set; }
+
+    private List<AssessmentDetail>? Assessments { get; set; }
+    private bool IsLoading { get; set; } = true;
+    private string SearchTerm { get; set; } = string.Empty;
+    private int CurrentPage { get; set; } = 1;
+    private string? SortColumn { get; set; }
+
+    private List<Table<AssessmentDetail>.TableColumn<AssessmentDetail>> TableColumns { get; set; } = new();
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAssessments();
+        SetupTableColumns();
+    }
+
+    private void SetupTableColumns()
+    {
+        TableColumns = new List<Table<AssessmentDetail>.TableColumn<AssessmentDetail>>
+        {
+            new()
+            {
+                Title = "Assessment Name",
+                PropertyName = "AssessmentName",
+                Sortable = true,
+                Template = assessment => @<div>
+                    <div class="fw-bold">@assessment.AssessmentName</div>
+                    <small class="text-muted">@assessment.AssessmentType</small>
+                </div>
+            },
+            new()
+            {
+                Title = "Facility",
+                PropertyName = "FacilityName",
+                Sortable = true,
+                Template = assessment => @<div>
+                    <div>@assessment.FacilityName</div>
+                    @if (!string.IsNullOrEmpty(assessment.City) || !string.IsNullOrEmpty(assessment.State))
+                    {
+                        <small class="text-muted">
+                            @(string.IsNullOrEmpty(assessment.City) ? "" : assessment.City)
+                            @(string.IsNullOrEmpty(assessment.City) || string.IsNullOrEmpty(assessment.State) ? "" : ", ")
+                            @(string.IsNullOrEmpty(assessment.State) ? "" : assessment.State)
+                        </small>
+                    }
+                </div>
+            },
+            new()
+            {
+                Title = "Status",
+                PropertyName = "AssessmentState",
+                Sortable = true,
+                Template = assessment => @<div>
+                    <span class="badge @GetStatusBadgeClass(assessment.AssessmentState)">
+                        @assessment.AssessmentState
+                    </span>
+                </div>
+            },
+            new()
+            {
+                Title = "Created",
+                PropertyName = "CreatedDate",
+                Sortable = true,
+                Template = assessment => @<div>
+                    @(assessment.CreatedDate?.ToString("MMM dd, yyyy") ?? "N/A")
+                </div>
+            },
+            new()
+            {
+                Title = "Last Modified",
+                PropertyName = "LastModifiedDate",
+                Sortable = true,
+                Template = assessment => @<div>
+                    @(assessment.LastModifiedDate?.ToString("MMM dd, yyyy") ?? "N/A")
+                </div>
+            },
+            new()
+            {
+                Title = "Actions",
+                PropertyName = "",
+                Sortable = false,
+                Template = assessment => @<div class="btn-group" role="group">
+                    <Button Variant="Button.ButtonVariant.Outline" 
+                            Size="Button.ButtonSize.Small"
+                            Icon="fas fa-eye"
+                            OnClick="@(() => OnViewAssessment(assessment))"
+                            AdditionalAttributes="@(new Dictionary<string, object> { { "title", "View Assessment" } })" />
+                    
+                    <Button Variant="Button.ButtonVariant.Outline" 
+                            Size="Button.ButtonSize.Small"
+                            Icon="fas fa-edit"
+                            OnClick="@(() => OnEditAssessment(assessment))"
+                            AdditionalAttributes="@(new Dictionary<string, object> { { "title", "Edit Assessment" } })" />
+                    
+                    <Button Variant="Button.ButtonVariant.Outline" 
+                            Size="Button.ButtonSize.Small"
+                            Icon="fas fa-copy"
+                            OnClick="@(() => OnCopyAssessment(assessment))"
+                            AdditionalAttributes="@(new Dictionary<string, object> { { "title", "Copy Assessment" } })" />
+                    
+                    <Button Variant="Button.ButtonVariant.Outline" 
+                            Size="Button.ButtonSize.Small"
+                            Icon="fas fa-trash"
+                            OnClick="@(() => OnDeleteAssessment(assessment))"
+                            AdditionalAttributes="@(new Dictionary<string, object> { { "title", "Delete Assessment" } })" />
+                </div>
+            }
+        };
+    }
+
+    private async Task LoadAssessments()
+    {
+        IsLoading = true;
+        try
+        {
+            Assessments = await AssessmentService.GetAssessmentsAsync();
+        }
+        catch (Exception ex)
+        {
+            // Handle error - could show a toast notification
+            Console.WriteLine($"Error loading assessments: {ex.Message}");
+        }
+        finally
+        {
+            IsLoading = false;
+        }
+    }
+
+    private async Task OnCreateNew()
+    {
+        await OnCreateNewRequested.InvokeAsync();
+    }
+
+    private async Task OnSearch(string searchTerm)
+    {
+        SearchTerm = searchTerm;
+        CurrentPage = 1;
+        await LoadAssessments();
+    }
+
+    private async Task OnPageChanged(int page)
+    {
+        CurrentPage = page;
+        await LoadAssessments();
+    }
+
+    private async Task OnSort(string column)
+    {
+        SortColumn = column;
+        await LoadAssessments();
+    }
+
+    private async Task OnViewAssessment(AssessmentDetail assessment)
+    {
+        await OnAssessmentSelected.InvokeAsync(assessment);
+        Navigation.NavigateTo($"/assessment/{assessment.AssessmentId}");
+    }
+
+    private async Task OnEditAssessment(AssessmentDetail assessment)
+    {
+        await OnAssessmentSelected.InvokeAsync(assessment);
+        Navigation.NavigateTo($"/assessment/{assessment.AssessmentId}/edit");
+    }
+
+    private async Task OnCopyAssessment(AssessmentDetail assessment)
+    {
+        try
+        {
+            var copiedAssessment = await AssessmentService.CopyAssessmentAsync(assessment.AssessmentId);
+            if (copiedAssessment != null)
+            {
+                await LoadAssessments();
+                // Could show a success message
+            }
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error copying assessment: {ex.Message}");
+        }
+    }
+
+    private async Task OnDeleteAssessment(AssessmentDetail assessment)
+    {
+        // This would typically show a confirmation dialog
+        // For now, we'll just delete directly
+        try
+        {
+            await AssessmentService.DeleteAssessmentAsync(assessment.AssessmentId);
+            await LoadAssessments();
+            // Could show a success message
+        }
+        catch (Exception ex)
+        {
+            // Handle error
+            Console.WriteLine($"Error deleting assessment: {ex.Message}");
+        }
+    }
+
+    private string GetStatusBadgeClass(string status)
+    {
+        return status?.ToLower() switch
+        {
+            "active" => "bg-success",
+            "completed" => "bg-primary",
+            "draft" => "bg-warning",
+            "archived" => "bg-secondary",
+            _ => "bg-light text-dark"
+        };
+    }
+} 
