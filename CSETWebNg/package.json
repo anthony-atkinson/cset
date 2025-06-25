@@ -13,7 +13,14 @@
         "start:electron": "ng build --configuration production --source-map=false --base-href ./ && electron .",
         "build:electron": "npm run setup:electron-build-files && npx @electron/packager temp-electron \"CSET\" --out=electron-builds --arch=x64 --prune --asar --overwrite --icon=src/favicon_cset.ico --win32metadata.CompanyName=\"CISA\" && shx rm -rf temp-electron",
         "version:electron": "npx @electron/packager --version",
-        "setup:electron-build-files": "shx rm -rf temp-electron && shx mkdir -p temp-electron/node_modules && shx cp -r {package.json,main-electron.js,License.txt,NOTICE.txt,dist} temp-electron && shx cp -r node_modules/{electron-log,electron-find-on-page,lodash} temp-electron/node_modules"
+        "setup:electron-build-files": "shx rm -rf temp-electron && shx mkdir -p temp-electron/node_modules && shx cp -r {package.json,main-electron.js,License.txt,NOTICE.txt,dist} temp-electron && shx cp -r node_modules/{electron-log,electron-find-on-page,lodash} temp-electron/node_modules",
+        "security:audit": "npm audit --audit-level=high",
+        "security:audit:fix": "npm audit fix",
+        "security:snyk": "snyk test --severity-threshold=high",
+        "security:snyk:monitor": "snyk monitor",
+        "security:snyk:fix": "snyk wizard",
+        "security:check": "npm run security:audit && npm run security:snyk",
+        "security:fix": "npm run security:audit:fix && npm run security:snyk:fix"
     },
     "dependencies": {
         "@angular-devkit/build-webpack": "^0.1902.10",

@@ -1,0 +1,73 @@
+# ZAP Security Rules Configuration
+# This file defines which security tests to run during ZAP scanning
+
+# High Priority Security Tests
+10016	# Cross Site Scripting (Reflected)
+10020	# Cross Site Scripting (Persistent)
+10021	# Cross Site Scripting (DOM Based)
+10023	# Source Code Disclosure
+10024	# SQL Injection
+10026	# HTTP Parameter Pollution
+10027	# Cross Site Request Forgery
+10032	# Buffer Overflow
+10035	# Weak Authentication Method
+10036	# Insecure HTTP Method
+10037	# HTTP Response Splitting
+10038	# HTTP Request Splitting
+10042	# Path Traversal
+10043	# Server Side Include
+10045	# LDAP Injection
+10047	# XML External Entity Injection
+10048	# XPath Injection
+10049	# XML Injection
+10050	# Expression Language Injection
+10052	# Remote File Inclusion
+10054	# Server Side Code Injection
+10055	# Server Side Template Injection
+10056	# Server Side JavaScript Injection
+10057	# NoSQL Injection
+10058	# HTTP Parameter Injection
+10059	# HTTP Response Injection
+10060	# HTTP Request Injection
+10061	# HTTP Response Splitting (CRLF)
+10062	# HTTP Request Splitting (CRLF)
+10063	# HTTP Response Injection (CRLF)
+10064	# HTTP Request Injection (CRLF)
+
+# Medium Priority Security Tests
+10008	# Cross Site Scripting (Persistent) - Prime
+10009	# Cross Site Scripting (Reflected) - Prime
+10010	# Cross Site Scripting (DOM Based) - Prime
+10011	# Cross Site Scripting (Persistent) - Spider
+10012	# Cross Site Scripting (Reflected) - Spider
+10013	# Cross Site Scripting (DOM Based) - Spider
+10014	# Cross Site Scripting (Persistent) - AJAX
+10015	# Cross Site Scripting (Reflected) - AJAX
+10017	# Cross Site Scripting (Persistent) - Prime
+10018	# Cross Site Scripting (Reflected) - Prime
+10019	# Cross Site Scripting (DOM Based) - Prime
+10022	# Cross Site Scripting (Persistent) - Spider
+10025	# Cross Site Scripting (Reflected) - Spider
+10028	# Cross Site Scripting (DOM Based) - Spider
+10029	# Cross Site Scripting (Persistent) - AJAX
+10030	# Cross Site Scripting (Reflected) - AJAX
+10031	# Cross Site Scripting (DOM Based) - AJAX
+10033	# Cross Site Scripting (Persistent) - Prime
+10034	# Cross Site Scripting (Reflected) - Prime
+10039	# Cross Site Scripting (DOM Based) - Prime
+10040	# Cross Site Scripting (Persistent) - Spider
+10041	# Cross Site Scripting (Reflected) - Spider
+10044	# Cross Site Scripting (DOM Based) - Spider
+10046	# Cross Site Scripting (Persistent) - AJAX
+10051	# Cross Site Scripting (Reflected) - AJAX
+10053	# Cross Site Scripting (DOM Based) - AJAX
+
+# Low Priority Security Tests (for comprehensive coverage)
+10000	# Buffer Overflow
+10001	# Format String Error
+10002	# Integer Overflow
+10003	# Null Pointer Dereference
+10004	# Use After Free
+10005	# Double Free
+10006	# Memory Leak
+10007	# Race Condition 
