@@ -22,7 +22,14 @@ using Microsoft.AspNetCore.Authorization;
 using CSETWebCore.Business.Demographic;
 
 namespace CSETWebCore.Api.Controllers
-{   [CsetAuthorize]
+{   
+    /// <summary>
+    /// Provides endpoints for extended demographic functionality in CSET.
+    /// This controller handles comprehensive demographic data collection, geographic information,
+    /// sector and subsector management, and extended demographic options for cybersecurity assessments.
+    /// Supports geographic selections, employee ranges, customer ranges, and organizational structure data.
+    /// </summary>
+    [CsetAuthorize]
     [ApiController]
     public class DemographicsExtendedController : ControllerBase
     {
@@ -32,6 +39,14 @@ namespace CSETWebCore.Api.Controllers
         private readonly IDemographicBusiness _demographic;
         private CSETContext _context;
 
+        /// <summary>
+        /// Initializes a new instance of the DemographicsExtendedController.
+        /// </summary>
+        /// <param name="token">The token manager for user authentication and assessment context</param>
+        /// <param name="assessment">The assessment business service for assessment operations</param>
+        /// <param name="assessmentUtil">The assessment utility service for assessment operations</param>
+        /// <param name="demographic">The demographic business service for demographic operations</param>
+        /// <param name="context">The database context for data access operations</param>
         public DemographicsExtendedController(ITokenManager token, IAssessmentBusiness assessment, IAssessmentUtil assessmentUtil,
             IDemographicBusiness demographic, CSETContext context)
         {
@@ -42,13 +57,49 @@ namespace CSETWebCore.Api.Controllers
             _context = context;
         }
 
-
         /// <summary>
         /// Gets the extended demographic answers for the assessment.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with ExtendedDemographic containing extended demographic data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves comprehensive extended demographic information:
+        /// - Customer support information
+        /// - Cyber risk service details
+        /// - CIO and CISO existence and status
+        /// - Employee counts and geographic scope
+        /// - Cyber training program information
+        /// - Sector and subsector classifications
+        /// 
+        /// The response includes:
+        /// - Complete extended demographic structure
+        /// - Organizational leadership information
+        /// - Employee and customer data
+        /// - Geographic scope and training details
+        /// - Sector and industry classifications
+        /// 
+        /// Extended demographic features:
+        /// - Comprehensive organizational profiling
+        /// - Leadership structure identification
+        /// - Employee and customer metrics
+        /// - Geographic scope analysis
+        /// - Training program assessment
+        /// 
+        /// The demographic data supports:
+        /// - Assessment customization and tailoring
+        /// - Organizational structure analysis
+        /// - Geographic and demographic benchmarking
+        /// - Training and leadership assessment
+        /// - Sector-specific analysis and reporting
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext")]
+        [ProducesResponseType(typeof(ExtendedDemographic), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetExtendedDemographics()
         {
             int assessmentId = _token.AssessmentForUser();
@@ -59,13 +110,45 @@ namespace CSETWebCore.Api.Controllers
             return Ok(resp);
         }
 
-
         /// <summary>
         /// Gets the persisted Region / County / Metro selections.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with GeographicSelections containing geographic data
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint retrieves geographic selections for the assessment:
+        /// - Region selections with state information
+        /// - County FIPS codes and selections
+        /// - Metro area FIPS codes and selections
+        /// - Geographic scope and coverage data
+        /// 
+        /// The response includes:
+        /// - Region codes and state information
+        /// - County FIPS codes for selected counties
+        /// - Metro FIPS codes for selected metro areas
+        /// - Geographic scope and coverage details
+        /// 
+        /// Geographic features:
+        /// - Multi-level geographic selection
+        /// - Region, county, and metro coverage
+        /// - FIPS code standardization
+        /// - Geographic scope identification
+        /// 
+        /// The geographic data supports:
+        /// - Geographic scope analysis
+        /// - Regional benchmarking and comparison
+        /// - Geographic risk assessment
+        /// - Regional compliance tracking
+        /// - Geographic reporting and analytics
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext/geographics")]
+        [ProducesResponseType(typeof(GeographicSelections), 200)]
+        [ProducesResponseType(401)]
         public IActionResult GetGeographics()
         {
             int assessmentId = _token.AssessmentForUser();
@@ -90,32 +173,133 @@ namespace CSETWebCore.Api.Controllers
             return Ok(resp);
         }
 
-
         /// <summary>
-        /// Returns Cyber Florida sector list
+        /// Returns Cyber Florida sector list.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with list of sectors
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides Cyber Florida sector options:
+        /// - Complete sector list for Cyber Florida
+        /// - Sorted sector names and identifiers
+        /// - Sector selection options
+        /// - Cyber Florida specific sectors
+        /// 
+        /// The response includes:
+        /// - List of available sectors
+        /// - Sector IDs and names
+        /// - Sorted sector organization
+        /// - Cyber Florida specific data
+        /// 
+        /// Sector features:
+        /// - Cyber Florida specific sectors
+        /// - Sorted sector organization
+        /// - Sector selection support
+        /// - Assessment customization
+        /// 
+        /// The sector data supports:
+        /// - Cyber Florida assessment customization
+        /// - Sector-specific analysis and reporting
+        /// - Assessment tailoring and configuration
+        /// - Sector-based benchmarking
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext/sectors")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetSectors()
         {
             var list = _context.EXT_SECTOR.OrderBy(x => x.SectorName).ToList();
             return Ok(list);
         }
 
-
+        /// <summary>
+        /// Retrieves subsectors for a specific sector ID.
+        /// </summary>
+        /// <param name="sectorId">The sector ID to get subsectors for</param>
+        /// <returns>
+        /// 200 OK with list of subsectors for the specified sector
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides subsector options for sector selection:
+        /// - Subsector list based on parent sector
+        /// - Hierarchical sector organization
+        /// - Dynamic subsector filtering
+        /// - Sector-specific subsector options
+        /// 
+        /// The response includes:
+        /// - List of available subsectors
+        /// - Subsector IDs and names
+        /// - Sector-specific organization
+        /// - Hierarchical relationship data
+        /// 
+        /// Subsector features:
+        /// - Dynamic sector-based filtering
+        /// - Hierarchical sector organization
+        /// - Sector-specific subsector options
+        /// - Assessment customization support
+        /// 
+        /// The subsector data supports:
+        /// - Sector-specific assessment tailoring
+        /// - Industry classification and analysis
+        /// - Assessment customization
+        /// - Sector-based reporting and analytics
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext/subsector/{sectorId}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetSubsector(int sectorId)
         {
             var list = _context.EXT_SUB_SECTOR.Where(x => x.SectorId == sectorId).OrderBy(x => x.SubSectorName).ToList();
             return Ok(list);
         }
 
-
+        /// <summary>
+        /// Returns region list for a specific state.
+        /// </summary>
+        /// <param name="state">The state code to get regions for</param>
+        /// <returns>
+        /// 200 OK with list of regions and counties for the specified state
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides region and county data for state selection:
+        /// - Region list for specified state
+        /// - County data within each region
+        /// - FIPS codes and geographic information
+        /// - State-specific geographic organization
+        /// 
+        /// The response includes:
+        /// - List of regions for the state
+        /// - County data within each region
+        /// - FIPS codes and geographic identifiers
+        /// - State-specific organization
+        /// 
+        /// Geographic features:
+        /// - State-specific region organization
+        /// - County-region relationships
+        /// - FIPS code standardization
+        /// - Geographic hierarchy support
+        /// 
+        /// The geographic data supports:
+        /// - State-specific assessment customization
+        /// - Regional analysis and reporting
+        /// - Geographic scope identification
+        /// - Regional benchmarking
+        /// 
+        /// This endpoint is marked as AllowAnonymous for public access.
+        /// </remarks>
         [AllowAnonymous]
         [HttpGet]
         [Route("api/demographics/ext/regions/{state}")]
+        [ProducesResponseType(200)]
         public IActionResult GetRegionList(string state)
         {
             var list = new List<Model.Demographic.StateRegion>();
@@ -144,25 +328,94 @@ namespace CSETWebCore.Api.Controllers
             return Ok(list);
         }
 
-
+        /// <summary>
+        /// Returns county list for a specific state.
+        /// </summary>
+        /// <param name="state">The state code to get counties for</param>
+        /// <returns>
+        /// 200 OK with list of counties for the specified state
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides county data for state selection:
+        /// - County list for specified state
+        /// - County names and FIPS codes
+        /// - State-specific county organization
+        /// - Geographic county data
+        /// 
+        /// The response includes:
+        /// - List of counties for the state
+        /// - County names and identifiers
+        /// - FIPS codes and geographic data
+        /// - State-specific organization
+        /// 
+        /// County features:
+        /// - State-specific county organization
+        /// - FIPS code standardization
+        /// - Geographic county data
+        /// - County selection support
+        /// 
+        /// The county data supports:
+        /// - State-specific assessment customization
+        /// - County-level analysis and reporting
+        /// - Geographic scope identification
+        /// - County-based benchmarking
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext/counties/{state}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetCountyList(string state)
         {
             var list = _context.COUNTIES.Where(x => x.State == state).ToList();
             return Ok(list);
         }
 
-
         /// <summary>
-        /// Returns all known metro areas for Florida "12-*".  
-        /// TODO:  Make this smarter to know the Florida FIPS (12) so that
+        /// Returns all known metro areas for Florida "12-*".
+        /// TODO: Make this smarter to know the Florida FIPS (12) so that
         /// the query can be run for any state.
         /// </summary>
-        /// <param name="state"></param>
-        /// <returns></returns>
+        /// <param name="state">The state code to get metro areas for</param>
+        /// <returns>
+        /// 200 OK with list of metro areas for the specified state
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides metro area data for state selection:
+        /// - Metro area list for specified state
+        /// - Metro FIPS codes and geographic information
+        /// - County-metro area relationships
+        /// - State-specific metro organization
+        /// 
+        /// The response includes:
+        /// - List of metro areas for the state
+        /// - Metro FIPS codes and identifiers
+        /// - County-metro area relationships
+        /// - State-specific organization
+        /// 
+        /// Metro features:
+        /// - State-specific metro organization
+        /// - FIPS code standardization
+        /// - County-metro relationships
+        /// - Metro area selection support
+        /// 
+        /// The metro data supports:
+        /// - State-specific assessment customization
+        /// - Metro-level analysis and reporting
+        /// - Geographic scope identification
+        /// - Metro-based benchmarking
+        /// 
+        /// Note: Currently optimized for Florida (FIPS 12) but designed for expansion.
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext/metros/{state}")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetMetroList(string state)
         {
             var list = _context.METRO_AREA
@@ -173,9 +426,44 @@ namespace CSETWebCore.Api.Controllers
             return Ok(list);
         }
 
-
+        /// <summary>
+        /// Returns employee range options for demographic selection.
+        /// </summary>
+        /// <returns>
+        /// 200 OK with list of employee range options
+        /// 401 Unauthorized if user is not authenticated
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides employee range options:
+        /// - Predefined employee count ranges
+        /// - Standardized employee size categories
+        /// - Employee range selection options
+        /// - Demographic size classification
+        /// 
+        /// The response includes:
+        /// - List of employee range options
+        /// - Range IDs and descriptive values
+        /// - Standardized size categories
+        /// - Employee count classifications
+        /// 
+        /// Employee range features:
+        /// - Standardized size categories
+        /// - Employee count classifications
+        /// - Range selection support
+        /// - Demographic size analysis
+        /// 
+        /// The employee range data supports:
+        /// - Organization size classification
+        /// - Employee-based assessment customization
+        /// - Size-based benchmarking
+        /// - Demographic analysis and reporting
+        /// 
+        /// Requires valid JWT token in Authorization header.
+        /// </remarks>
         [HttpGet]
         [Route("api/demographics/ext/employees")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(401)]
         public IActionResult GetEmployeeRanges()
         {
             var list = new List<ListItem>();
@@ -191,7 +479,6 @@ namespace CSETWebCore.Api.Controllers
 
             return Ok(list);
         }
-
 
         [HttpGet]
         [Route("api/demographics/ext/customers")]

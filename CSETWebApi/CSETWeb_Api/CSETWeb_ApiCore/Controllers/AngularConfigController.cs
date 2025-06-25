@@ -13,35 +13,74 @@ using Microsoft.AspNetCore.Http;
 using System.Text.Json;
 using Newtonsoft.Json.Linq;
 
-
 namespace CSETWebCore.Api.Controllers
 {
+    /// <summary>
+    /// Provides endpoints for Angular configuration management in CSET.
+    /// This controller handles dynamic configuration generation for the Angular frontend,
+    /// supporting URL rewriting, connection string management, and runtime configuration
+    /// updates. Enables dynamic configuration based on deployment environment.
+    /// </summary>
     [ApiController]
     public class AngularConfigController : ControllerBase
     {
         private readonly IWebHostEnvironment _webHost;
 
+        /// <summary>
+        /// Initializes a new instance of the AngularConfigController.
+        /// </summary>
+        /// <param name="webHost">The web hosting environment for file system access</param>
         public AngularConfigController(IWebHostEnvironment webHost)
         {
             _webHost = webHost;
         }
-
 
         // SECURITY NOTE:  The following two endpoints should not be included in a Release build
 
 #if !EXCLUDE_FROM_PUBLISH
 
         /// <summary>
-        /// This method is only used by an internal test harness.  It exposes
-        /// secrets and should not be published in the production API.  
+        /// Changes the database connection string in appsettings.json.
         /// 
-        /// SECURITY NOTE:
-        /// If we ever remove the EXCLUDE_FROM_PUBLISH preprocessor directive,
-        /// some kind of private/internal authentication will need to be added to this method
-        /// to prevent it from being open to the public. 
+        /// SECURITY WARNING: This endpoint exposes sensitive configuration data and should
+        /// only be used in development/testing environments. It is excluded from production
+        /// builds via the EXCLUDE_FROM_PUBLISH preprocessor directive.
         /// </summary>
+        /// <param name="connString">The new connection string to set</param>
+        /// <returns>
+        /// 200 OK with the previous connection string if successful
+        /// Error message if the operation fails
+        /// </returns>
+        /// <remarks>
+        /// This endpoint modifies the database connection string in appsettings.json:
+        /// - Reads the current appsettings.json file
+        /// - Updates the CSET_DB connection string
+        /// - Writes the modified configuration back to disk
+        /// - Returns the previous connection string value
+        /// 
+        /// Security considerations:
+        /// - Only available in development builds
+        /// - Exposes sensitive database credentials
+        /// - Should not be used in production environments
+        /// - Requires proper authentication in production
+        /// 
+        /// Usage scenarios:
+        /// - Development environment configuration
+        /// - Testing environment setup
+        /// - Database connection troubleshooting
+        /// - Configuration management automation
+        /// 
+        /// File operations:
+        /// - Reads from appsettings.json in current directory
+        /// - Updates ConnectionStrings:CSET_DB value
+        /// - Preserves other configuration settings
+        /// - Handles file I/O errors gracefully
+        /// 
+        /// This endpoint is excluded from production builds for security reasons.
+        /// </remarks>
         [HttpPost]
         [Route("api/assets/changeconnectionstring")]
+        [ProducesResponseType(200)]
         public string ChangeConnectionString([FromBody] string connString)
         {
             try
@@ -73,18 +112,47 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
         /// <summary>
-        /// This method is only used by an internal test harness.  It exposes
-        /// secrets and should not be published in the production API.  
+        /// Retrieves the current database connection string from appsettings.json.
         /// 
-        /// SECURITY NOTE:
-        /// If we ever remove the EXCLUDE_FROM_PUBLISH preprocessor directive,
-        /// some kind of private/internal authentication will need to be added to this method
-        /// to prevent it from being open to the public. 
+        /// SECURITY WARNING: This endpoint exposes sensitive configuration data and should
+        /// only be used in development/testing environments. It is excluded from production
+        /// builds via the EXCLUDE_FROM_PUBLISH preprocessor directive.
         /// </summary>
+        /// <returns>
+        /// 200 OK with the current connection string if successful
+        /// Error message if the operation fails
+        /// </returns>
+        /// <remarks>
+        /// This endpoint reads the database connection string from appsettings.json:
+        /// - Reads the current appsettings.json file
+        /// - Extracts the CSET_DB connection string value
+        /// - Returns the connection string for inspection
+        /// - Handles file I/O errors gracefully
+        /// 
+        /// Security considerations:
+        /// - Only available in development builds
+        /// - Exposes sensitive database credentials
+        /// - Should not be used in production environments
+        /// - Requires proper authentication in production
+        /// 
+        /// Usage scenarios:
+        /// - Development environment debugging
+        /// - Configuration verification
+        /// - Database connection troubleshooting
+        /// - Configuration management automation
+        /// 
+        /// File operations:
+        /// - Reads from appsettings.json in current directory
+        /// - Extracts ConnectionStrings:CSET_DB value
+        /// - Handles missing file scenarios
+        /// - Provides detailed error messages
+        /// 
+        /// This endpoint is excluded from production builds for security reasons.
+        /// </remarks>
         [HttpGet]
         [Route("api/assets/getconnectionstring")]
+        [ProducesResponseType(200)]
         public string GetConnectionString()
         {
             try
@@ -112,17 +180,60 @@ namespace CSETWebCore.Api.Controllers
 
 #endif
 
-
         /// <summary>
-        /// NOTE THIS APOLOGY
-        /// this call returns the config.json file
-        /// but modifies the port to be the current port 
-        /// the application is running on.
-        /// (IE the file may be different from what is returned)
+        /// Retrieves the Angular configuration with dynamic URL rewriting.
         /// </summary>
-        /// <returns></returns>
+        /// <returns>
+        /// 200 OK with modified config.json containing updated URLs
+        /// 400 Bad Request if config.json file is not found
+        /// </returns>
+        /// <remarks>
+        /// This endpoint provides dynamic Angular configuration with URL rewriting:
+        /// - Reads the base config.json file
+        /// - Updates URLs to match the current deployment environment
+        /// - Handles both integrated and separate deployments
+        /// - Supports proxy and load balancer scenarios
+        /// 
+        /// The configuration process includes:
+        /// - Detection of deployment mode (integrated vs separate)
+        /// - Dynamic URL rewriting based on current host/port
+        /// - Protocol detection (HTTP/HTTPS)
+        /// - Port handling for standard and custom ports
+        /// 
+        /// Configuration features:
+        /// - Dynamic host and port detection
+        /// - Protocol-aware URL generation
+        /// - Proxy header support (X-Forwarded-Proto, X-Forwarded-Port)
+        /// - Fallback configuration handling
+        /// - Integrated deployment support
+        /// 
+        /// URL rewriting includes:
+        /// - App URL (frontend application)
+        /// - API URL (backend services)
+        /// - Library URL (documentation and resources)
+        /// - Document URL (static assets)
+        /// 
+        /// Deployment scenarios:
+        /// - Integrated deployment (API and frontend together)
+        /// - Separate deployment (API and frontend apart)
+        /// - Proxy/load balancer deployment
+        /// - Development environment
+        /// 
+        /// The response includes:
+        /// - Updated configuration with current URLs
+        /// - Protocol and port information
+        /// - Host information
+        /// - Rewrite indicator flag
+        /// 
+        /// This endpoint is used by the Angular frontend to obtain
+        /// runtime configuration for API endpoints and resources.
+        /// 
+        /// No authentication required - this is a public configuration endpoint.
+        /// </remarks>
         [HttpGet]
         [Route("api/assets/config")]
+        [ProducesResponseType(200)]
+        [ProducesResponseType(400)]
         public IActionResult GetConfigURLRewrite()
         {
             try
@@ -147,13 +258,12 @@ namespace CSETWebCore.Api.Controllers
             }
         }
 
-
         /// <summary>
-        /// 
+        /// Processes the configuration JSON for integrated deployment scenarios.
         /// </summary>
-        /// <param name="context"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <param name="context">The HTTP request context for URL information</param>
+        /// <returns>Modified JObject with updated configuration</returns>
+        /// <exception cref="Exception">Thrown when config file cannot be found</exception>
         private JObject ProcessUpdatedJson(HttpRequest context)
         {
             string webpath = _webHost.ContentRootPath;
@@ -232,14 +342,13 @@ namespace CSETWebCore.Api.Controllers
             throw new Exception("Cannot Find config file" + path);
         }
 
-
         /// <summary>
-        /// 
+        /// Processes the configuration JSON for separate deployment scenarios.
         /// </summary>
-        /// <param name="newBase"></param>
-        /// <param name="scheme"></param>
-        /// <returns></returns>
-        /// <exception cref="Exception"></exception>
+        /// <param name="newBase">The host information for URL generation</param>
+        /// <param name="scheme">The protocol scheme (HTTP/HTTPS)</param>
+        /// <returns>Modified JsonElement with updated configuration</returns>
+        /// <exception cref="Exception">Thrown when config file cannot be found</exception>
         private JsonElement ProcessConfig(HostString newBase, string scheme)
         {
             _webHost.WebRootPath = Path.Combine(_webHost.ContentRootPath, "../../../CSETWebNg/src");
@@ -306,14 +415,13 @@ namespace CSETWebCore.Api.Controllers
             throw new Exception("assets/config.json file not found");
         }
 
-
         /// <summary>
-        /// 
+        /// Creates a new URI with updated host, port, and scheme information.
         /// </summary>
-        /// <param name="newBase"></param>
-        /// <param name="scheme"></param>
-        /// <param name="oldUri"></param>
-        /// <returns></returns>
+        /// <param name="newBase">The host information for the new URI</param>
+        /// <param name="scheme">The protocol scheme (HTTP/HTTPS)</param>
+        /// <param name="oldUri">The original URI to modify</param>
+        /// <returns>New URI with updated host, port, and scheme</returns>
         private Uri NewUri(HostString newBase, string scheme, string oldUri)
         {
             //set the hostname and port to the same as the new base return the new uri
