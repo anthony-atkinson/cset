@@ -82,6 +82,8 @@ using Microsoft.AspNetCore.SignalR;
 using CSETWeb_ApiCore.Models.Caching;
 using CSETWeb_ApiCore.Interfaces;
 using CSETWeb_ApiCore.Services;
+using CSETWeb_ApiCore.Middleware;
+using AspNetCoreRateLimit;
 
 namespace CSETWeb_ApiCore
 {
@@ -277,6 +279,52 @@ namespace CSETWeb_ApiCore
             services.AddScoped<AssessmentCacheService>();
             services.AddScoped<CacheMonitoringService>();
 
+            // Rate Limiting Configuration
+            services.Configure<Models.RateLimiting.RateLimitConfiguration>(Configuration.GetSection("RateLimiting"));
+
+            // Rate Limiting Services
+            services.AddScoped<Interfaces.IRateLimitService, Services.RateLimitService>();
+
+            // AspNetCoreRateLimit Configuration
+            services.AddMemoryCache();
+            services.Configure<IpRateLimitOptions>(options =>
+            {
+                options.EnableEndpointRateLimiting = true;
+                options.StackBlockedRequests = false;
+                options.GeneralRules = new List<RateLimitRule>
+                {
+                    new RateLimitRule
+                    {
+                        Endpoint = "*",
+                        Period = "1h",
+                        Limit = 1000
+                    }
+                };
+            });
+
+            services.Configure<ClientRateLimitOptions>(options =>
+            {
+                options.EnableEndpointRateLimiting = true;
+                options.StackBlockedRequests = false;
+                options.ClientIdHeader = "X-ClientId";
+                options.GeneralRules = new List<RateLimitRule>
+                {
+                    new RateLimitRule
+                    {
+                        Endpoint = "*",
+                        Period = "1h",
+                        Limit = 1000
+                    }
+                };
+            });
+
+            services.AddSingleton<IIpPolicyStore, MemoryCacheIpPolicyStore>();
+            services.AddSingleton<IClientPolicyStore, MemoryCacheClientPolicyStore>();
+            services.AddSingleton<IRateLimitConfiguration, RateLimitConfiguration>();
+            services.AddSingleton<IIpRateLimitProcessor, IpRateLimitProcessor>();
+            services.AddSingleton<IClientRateLimitProcessor, ClientRateLimitProcessor>();
+            services.AddSingleton<IRateLimitCounterStore, MemoryCacheRateLimitCounterStore>();
+
             services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo 
@@ -369,6 +417,9 @@ namespace CSETWeb_ApiCore
 
             // Performance Monitoring Middleware
             app.UsePerformanceMonitoring();
+
+            // Rate Limiting Middleware
+            app.UseRateLimiting();
 
             // Enable Swagger in all environments for API documentation
             app.UseSwagger();

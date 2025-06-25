@@ -51,6 +51,8 @@
     <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.14" />
     <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.14" />
     <PackageReference Include="Microsoft.Extensions.Caching.Distributed" Version="8.0.14" />
+    <!-- Rate Limiting -->
+    <PackageReference Include="AspNetCoreRateLimit" Version="5.0.0" />
   </ItemGroup>
 
   <ItemGroup>
