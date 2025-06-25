@@ -1,12 +1,11 @@
-
 # What is CSET?
-The Cybersecurity Infrastructure Security Agency (CISA) and the Idaho National Laboratory (INL) develop the Cyber Security Evaluation Tool (CSET®) for asset owners with the primary objective of reducing the risk to the nation’s critical infrastructure. Control systems are defined as electronic devices that control physical processes and as such, are a crucial element in the protection of our nation’s infrastructure.
+The Cybersecurity Infrastructure Security Agency (CISA) and the Idaho National Laboratory (INL) develop the Cyber Security Evaluation Tool (CSET®) for asset owners with the primary objective of reducing the risk to the nation's critical infrastructure. Control systems are defined as electronic devices that control physical processes and as such, are a crucial element in the protection of our nation's infrastructure.
  
 CSET is a free software tool that guides users through a step-by-step process to collect facility-specific information addressing topics such as hardware, software, administrative policies, and user obligations. It then compares that information to relevant security standards and regulations, assesses overall compliance, and provides appropriate recommendations for improving cybersecurity posture. The tool pulls its recommendations from a collection of the best available cybersecurity standards, guidelines, and practices. Where appropriate, recommendations are linked to a set of actions that can be applied to enhance cybersecurity controls.
  
 CSET provides the following:
  
-•	A framework for analyzing cybersecurity vulnerabilities associated with an organization’s overall industrial control system (ICS) and information technology (IT) architecture.
+•	A framework for analyzing cybersecurity vulnerabilities associated with an organization's overall industrial control system (ICS) and information technology (IT) architecture.
 
 •	A consistent and technically sound methodology to identify, analyze, and communicate to security professionals the various vulnerabilities and consequences that may be exploited by cyber means.
 
@@ -52,6 +51,52 @@ Includes software licensed under LGPL
 
 LGPL dependencies are required to build CSET. You will be required to acquire them via nuGet 
 in order to build this software. They are not distributed with this source.
+
+## Test Coverage
+
+CSET maintains comprehensive test coverage across both backend (.NET) and frontend (Angular) components. Coverage reports are generated automatically on every pull request and push to main branches.
+
+### Coverage Badges
+
+Coverage badges are generated automatically by our GitHub Actions workflow and are available as build artifacts. To use them in your README:
+
+1. Download the badges from the latest successful workflow run
+2. Place them in a `badges/` directory in your repository
+3. Add them to your README using the following format:
+
+```markdown
+![Backend Coverage](badges/backend-coverage.svg)
+![Frontend Coverage](badges/frontend-coverage.svg)
+![Overall Coverage](badges/overall-coverage.svg)
+```
+
+### Coverage Thresholds
+
+- **Minimum Threshold**: 70% overall coverage
+- **Target Goal**: 80% overall coverage
+- **Excellence Goal**: 90%+ overall coverage
+
+### Running Coverage Locally
+
+#### Backend Coverage (.NET)
+```bash
+cd CSETWebApi/CSETWeb_Api
+dotnet test --collect:"XPlat Code Coverage" --results-directory ./coverage --configuration Release
+```
+
+#### Frontend Coverage (Angular)
+```bash
+cd CSETWebNg
+npm run test:coverage
+```
+
+### Coverage Reports
+
+- **HTML Reports**: Interactive coverage reports available in `coverage/` directories
+- **CI/CD Integration**: Coverage reports uploaded as build artifacts
+- **Trend Tracking**: Coverage history tracked in GitHub Actions
+
+For detailed coverage information, see [TEST_COVERAGE_GUIDE.md](TEST_COVERAGE_GUIDE.md).
 
 ## System Requirements
 

@@ -279,7 +279,7 @@ namespace CSETWebCore.PlaywrightTests.Tests.Performance
             });
 
             // Assert
-            Assert.That(textRenderTime.TotalMilliseconds, Is.LessThan(500, 
+            Assert.That(textRenderTime.TotalMilliseconds, Is.LessThan(500), 
                 $"Text rendering should complete within 500ms. Actual: {textRenderTime.TotalMilliseconds:F2}ms");
 
             // Assert performance metrics

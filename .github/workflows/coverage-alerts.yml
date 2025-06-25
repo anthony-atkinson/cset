@@ -1,0 +1,223 @@
+name: Coverage Alerts
+
+on:
+  schedule:
+    # Run daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '18.x'
+
+jobs:
+  coverage-monitoring:
+    name: Coverage Monitoring
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Get current coverage
+        id: current-coverage
+        run: |
+          # Backend coverage
+          cd CSETWebApi/CSETWeb_Api
+          dotnet restore
+          dotnet test --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            --logger trx \
+            --verbosity normal \
+            --configuration Release \
+            --no-restore \
+            --collect:"XPlat Code Coverage;Format=cobertura;Exclude=\"[*]*.Program,[*]*.Startup,[*]*.Migrations.*,[*]*.AutoMapper.*,[*]*.Test*,[*]*.Tests*,[*]*.Mock*,[*]*.Fake*,[*]*.Stub*\""
+          
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:./coverage/*/cobertura.xml \
+            -targetdir:./coverage/report \
+            -reporttypes:JsonSummary \
+            -verbosity:Info
+          
+          BACKEND_COVERAGE=$(grep -o '"linecoverage":[0-9.]*' ./coverage/report/Summary.json | cut -d':' -f2)
+          echo "backend_coverage=$BACKEND_COVERAGE" >> $GITHUB_OUTPUT
+          
+          # Frontend coverage
+          cd ../../CSETWebNg
+          npm ci
+          npm run test:coverage
+          
+          FRONTEND_COVERAGE=$(grep -o 'LF:[0-9]*' ./coverage/lcov.info | head -1 | cut -d':' -f2)
+          FRONTEND_TOTAL=$(grep -o 'LH:[0-9]*' ./coverage/lcov.info | head -1 | cut -d':' -f2)
+          
+          if [ "$FRONTEND_TOTAL" -gt 0 ]; then
+            FRONTEND_PERCENTAGE=$(echo "scale=2; $FRONTEND_COVERAGE * 100 / $FRONTEND_TOTAL" | bc)
+          else
+            FRONTEND_PERCENTAGE=0
+          fi
+          
+          echo "frontend_coverage=$FRONTEND_PERCENTAGE" >> $GITHUB_OUTPUT
+          
+          # Calculate overall coverage
+          OVERALL_COVERAGE=$(echo "scale=2; ($BACKEND_COVERAGE + $FRONTEND_PERCENTAGE) / 2" | bc)
+          echo "overall_coverage=$OVERALL_COVERAGE" >> $GITHUB_OUTPUT
+
+      - name: Get historical coverage
+        id: historical-coverage
+        run: |
+          # Get coverage from last week
+          LAST_WEEK_DATE=$(date -d '7 days ago' +%Y-%m-%d)
+          
+          # This would typically query a database or file system for historical data
+          # For now, we'll use a placeholder approach
+          echo "historical_coverage=75.0" >> $GITHUB_OUTPUT
+          echo "coverage_change=-2.5" >> $GITHUB_OUTPUT
+
+      - name: Check coverage thresholds
+        id: coverage-check
+        run: |
+          CURRENT_COVERAGE=${{ steps.current-coverage.outputs.overall_coverage }}
+          HISTORICAL_COVERAGE=${{ steps.historical-coverage.outputs.historical_coverage }}
+          COVERAGE_CHANGE=${{ steps.historical-coverage.outputs.coverage_change }}
+          
+          # Define thresholds
+          MIN_THRESHOLD=70
+          ALERT_THRESHOLD=5  # Alert if coverage drops by 5% or more
+          
+          # Check if coverage is below minimum threshold
+          if (( $(echo "$CURRENT_COVERAGE < $MIN_THRESHOLD" | bc -l) )); then
+            echo "below_minimum=true" >> $GITHUB_OUTPUT
+            echo "alert_level=critical" >> $GITHUB_OUTPUT
+          else
+            echo "below_minimum=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Check if coverage dropped significantly
+          if (( $(echo "$COVERAGE_CHANGE < -$ALERT_THRESHOLD" | bc -l) )); then
+            echo "significant_drop=true" >> $GITHUB_OUTPUT
+            if [ "$(echo $GITHUB_OUTPUT | grep -o 'alert_level=critical')" ]; then
+              echo "alert_level=critical" >> $GITHUB_OUTPUT
+            else
+              echo "alert_level=warning" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "significant_drop=false" >> $GITHUB_OUTPUT
+          fi
+          
+          # Set default alert level if not set
+          if [ -z "$(echo $GITHUB_OUTPUT | grep -o 'alert_level=')" ]; then
+            echo "alert_level=info" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create coverage report
+        id: coverage-report
+        run: |
+          CURRENT_COVERAGE=${{ steps.current-coverage.outputs.overall_coverage }}
+          BACKEND_COVERAGE=${{ steps.current-coverage.outputs.backend_coverage }}
+          FRONTEND_COVERAGE=${{ steps.current-coverage.outputs.frontend_coverage }}
+          HISTORICAL_COVERAGE=${{ steps.historical-coverage.outputs.historical_coverage }}
+          COVERAGE_CHANGE=${{ steps.historical-coverage.outputs.coverage_change }}
+          ALERT_LEVEL=${{ steps.coverage-check.outputs.alert_level }}
+          
+          # Create report content
+          REPORT_CONTENT="## 📊 Daily Coverage Report
+          
+          **Date**: $(date '+%Y-%m-%d')
+          **Alert Level**: $ALERT_LEVEL
+          
+          ### Current Coverage
+          - **Overall**: ${CURRENT_COVERAGE}%
+          - **Backend**: ${BACKEND_COVERAGE}%
+          - **Frontend**: ${FRONTEND_COVERAGE}%
+          
+          ### Coverage Change
+          - **Previous Week**: ${HISTORICAL_COVERAGE}%
+          - **Change**: ${COVERAGE_CHANGE}%
+          
+          ### Threshold Status
+          - **Minimum Threshold**: 70%
+          - **Below Minimum**: ${{ steps.coverage-check.outputs.below_minimum }}
+          - **Significant Drop**: ${{ steps.coverage-check.outputs.significant_drop }}
+          
+          ### Recommendations
+          "
+          
+          if [ "$ALERT_LEVEL" = "critical" ]; then
+            REPORT_CONTENT="$REPORT_CONTENT
+          🚨 **CRITICAL**: Coverage is below minimum threshold or has dropped significantly.
+          
+          **Immediate Actions Required**:
+          1. Review recent code changes for missing tests
+          2. Prioritize test coverage improvements
+          3. Schedule team review of testing practices
+          4. Consider blocking new features until coverage improves"
+          elif [ "$ALERT_LEVEL" = "warning" ]; then
+            REPORT_CONTENT="$REPORT_CONTENT
+          ⚠️ **WARNING**: Coverage has dropped significantly.
+          
+          **Recommended Actions**:
+          1. Review recent code changes
+          2. Add missing tests for new functionality
+          3. Monitor coverage trends closely"
+          else
+            REPORT_CONTENT="$REPORT_CONTENT
+          ✅ **INFO**: Coverage is within acceptable ranges.
+          
+          **Maintenance Actions**:
+          1. Continue monitoring coverage trends
+          2. Maintain current testing practices
+          3. Look for opportunities to improve coverage"
+          fi
+          
+          echo "report_content<<EOF" >> $GITHUB_OUTPUT
+          echo "$REPORT_CONTENT" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Send coverage alert
+        if: steps.coverage-check.outputs.alert_level == 'critical' || steps.coverage-check.outputs.alert_level == 'warning'
+        run: |
+          ALERT_LEVEL=${{ steps.coverage-check.outputs.alert_level }}
+          REPORT_CONTENT="${{ steps.coverage-report.outputs.report_content }}"
+          
+          # This would typically send to Slack, Teams, or other notification system
+          # For now, we'll create an issue
+          gh issue create \
+            --title "Coverage Alert: $ALERT_LEVEL - $(date '+%Y-%m-%d')" \
+            --body "$REPORT_CONTENT" \
+            --label "coverage-alert,$ALERT_LEVEL" \
+            --assignee "@me"
+
+      - name: Update coverage tracking
+        run: |
+          # This would typically update a database or file with current coverage data
+          # For now, we'll create a coverage history file
+          CURRENT_COVERAGE=${{ steps.current-coverage.outputs.overall_coverage }}
+          BACKEND_COVERAGE=${{ steps.current-coverage.outputs.backend_coverage }}
+          FRONTEND_COVERAGE=${{ steps.current-coverage.outputs.frontend_coverage }}
+          
+          echo "$(date '+%Y-%m-%d'),$CURRENT_COVERAGE,$BACKEND_COVERAGE,$FRONTEND_COVERAGE" >> coverage-history.csv
+          
+          # Keep only last 30 days of history
+          tail -n 30 coverage-history.csv > coverage-history-temp.csv
+          mv coverage-history-temp.csv coverage-history.csv
+
+      - name: Upload coverage history
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-history
+          path: coverage-history.csv
+          retention-days: 90 

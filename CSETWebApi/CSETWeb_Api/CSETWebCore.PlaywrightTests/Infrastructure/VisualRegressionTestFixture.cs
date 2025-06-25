@@ -315,7 +315,7 @@ namespace CSETWebCore.PlaywrightTests.Infrastructure
             }
 
             return $"Visual comparison for {TestName}: {(IsMatch ? "PASS" : "FAIL")} " +
-                   $"(Difference: {DifferencePercentage:F2}%, Threshold: {DifferencePercentage <= 2.0 ? "OK" : "EXCEEDED"})";
+                   $"(Difference: {DifferencePercentage:F2}%, Threshold: {(DifferencePercentage <= 2.0 ? "OK" : "EXCEEDED")})";
         }
     }
 } 

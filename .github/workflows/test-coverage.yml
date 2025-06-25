@@ -1,0 +1,368 @@
+name: Test Coverage
+
+on:
+  pull_request:
+    branches:
+      - develop
+      - release/*
+  push:
+    branches:
+      - develop
+      - release/*
+  workflow_dispatch:
+
+env:
+  DOTNET_VERSION: '8.0.x'
+  NODE_VERSION: '18.x'
+
+jobs:
+  backend-coverage:
+    name: Backend Test Coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./CSETWebApi/CSETWeb_Api
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: ${{ env.DOTNET_VERSION }}
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Run tests with coverage
+        run: |
+          dotnet test --collect:"XPlat Code Coverage" \
+            --results-directory ./coverage \
+            --logger trx \
+            --verbosity normal \
+            --configuration Release \
+            --no-restore \
+            --collect:"XPlat Code Coverage;Format=cobertura;Exclude=\"[*]*.Program,[*]*.Startup,[*]*.Migrations.*,[*]*.AutoMapper.*,[*]*.Test*,[*]*.Tests*,[*]*.Mock*,[*]*.Fake*,[*]*.Stub*\""
+
+      - name: Generate coverage report
+        run: |
+          dotnet tool install --global dotnet-reportgenerator-globaltool
+          reportgenerator \
+            -reports:./coverage/*/cobertura.xml \
+            -targetdir:./coverage/report \
+            -reporttypes:Html;Cobertura;JsonSummary \
+            -verbosity:Info
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-report
+          path: ./CSETWebApi/CSETWeb_Api/coverage/report/
+          retention-days: 30
+
+      - name: Upload coverage data
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-coverage-data
+          path: ./CSETWebApi/CSETWeb_Api/coverage/
+          retention-days: 30
+
+      - name: Check coverage threshold
+        id: backend-threshold
+        run: |
+          # Extract coverage percentage from JSON summary
+          COVERAGE=$(grep -o '"linecoverage":[0-9.]*' ./coverage/report/Summary.json | cut -d':' -f2)
+          THRESHOLD=70
+          
+          echo "Current coverage: ${COVERAGE}%"
+          echo "Threshold: ${THRESHOLD}%"
+          
+          # Set output for other steps
+          echo "coverage=$COVERAGE" >> $GITHUB_OUTPUT
+          echo "threshold=$THRESHOLD" >> $GITHUB_OUTPUT
+          
+          if (( $(echo "$COVERAGE < $THRESHOLD" | bc -l) )); then
+            echo "❌ Coverage is below threshold of ${THRESHOLD}%"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Coverage meets threshold of ${THRESHOLD}%"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+  frontend-coverage:
+    name: Frontend Test Coverage
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: ./CSETWebNg
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: ./CSETWebNg/coverage/
+          retention-days: 30
+
+      - name: Check coverage threshold
+        id: frontend-threshold
+        run: |
+          # Extract coverage percentage from LCOV report
+          COVERAGE=$(grep -o 'LF:[0-9]*' ./coverage/lcov.info | head -1 | cut -d':' -f2)
+          TOTAL=$(grep -o 'LH:[0-9]*' ./coverage/lcov.info | head -1 | cut -d':' -f2)
+          
+          if [ "$TOTAL" -gt 0 ]; then
+            PERCENTAGE=$(echo "scale=2; $COVERAGE * 100 / $TOTAL" | bc)
+          else
+            PERCENTAGE=0
+          fi
+          
+          THRESHOLD=70
+          
+          echo "Current coverage: ${PERCENTAGE}%"
+          echo "Threshold: ${THRESHOLD}%"
+          
+          # Set output for other steps
+          echo "coverage=$PERCENTAGE" >> $GITHUB_OUTPUT
+          echo "threshold=$THRESHOLD" >> $GITHUB_OUTPUT
+          
+          if (( $(echo "$PERCENTAGE < $THRESHOLD" | bc -l) )); then
+            echo "❌ Coverage is below threshold of ${THRESHOLD}%"
+            echo "status=failed" >> $GITHUB_OUTPUT
+            exit 1
+          else
+            echo "✅ Coverage meets threshold of ${THRESHOLD}%"
+            echo "status=passed" >> $GITHUB_OUTPUT
+          fi
+
+  coverage-summary:
+    name: Coverage Summary & Badges
+    runs-on: ubuntu-latest
+    needs: [backend-coverage, frontend-coverage]
+    if: always()
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Download backend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-coverage-data
+          path: ./backend-coverage
+
+      - name: Download frontend coverage
+        uses: actions/download-artifact@v4
+        with:
+          name: frontend-coverage-report
+          path: ./frontend-coverage
+
+      - name: Generate coverage summary and badges
+        id: coverage-summary
+        run: |
+          echo "## 📊 Test Coverage Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          # Backend coverage
+          if [ -f "./backend-coverage/report/Summary.json" ]; then
+            BACKEND_COVERAGE=$(grep -o '"linecoverage":[0-9.]*' ./backend-coverage/report/Summary.json | cut -d':' -f2)
+            echo "### Backend Coverage: ${BACKEND_COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+            echo "backend_coverage=$BACKEND_COVERAGE" >> $GITHUB_OUTPUT
+          else
+            echo "### Backend Coverage: ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            echo "backend_coverage=0" >> $GITHUB_OUTPUT
+          fi
+          
+          # Frontend coverage
+          if [ -f "./frontend-coverage/lcov.info" ]; then
+            FRONTEND_COVERAGE=$(grep -o 'LF:[0-9]*' ./frontend-coverage/lcov.info | head -1 | cut -d':' -f2)
+            FRONTEND_TOTAL=$(grep -o 'LH:[0-9]*' ./frontend-coverage/lcov.info | head -1 | cut -d':' -f2)
+            
+            if [ "$FRONTEND_TOTAL" -gt 0 ]; then
+              FRONTEND_PERCENTAGE=$(echo "scale=2; $FRONTEND_COVERAGE * 100 / $FRONTEND_TOTAL" | bc)
+              echo "### Frontend Coverage: ${FRONTEND_PERCENTAGE}%" >> $GITHUB_STEP_SUMMARY
+              echo "frontend_coverage=$FRONTEND_PERCENTAGE" >> $GITHUB_OUTPUT
+            else
+              echo "### Frontend Coverage: 0%" >> $GITHUB_STEP_SUMMARY
+              echo "frontend_coverage=0" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "### Frontend Coverage: ❌ Failed" >> $GITHUB_STEP_SUMMARY
+            echo "frontend_coverage=0" >> $GITHUB_OUTPUT
+          fi
+          
+          # Calculate overall coverage
+          BACKEND_COV=${{ steps.coverage-summary.outputs.backend_coverage }}
+          FRONTEND_COV=${{ steps.coverage-summary.outputs.frontend_coverage }}
+          OVERALL_COVERAGE=$(echo "scale=2; ($BACKEND_COV + $FRONTEND_COV) / 2" | bc)
+          
+          echo "### Overall Coverage: ${OVERALL_COVERAGE}%" >> $GITHUB_STEP_SUMMARY
+          echo "overall_coverage=$OVERALL_COVERAGE" >> $GITHUB_OUTPUT
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📁 Coverage reports are available as build artifacts." >> $GITHUB_STEP_SUMMARY
+
+      - name: Generate coverage badges
+        run: |
+          BACKEND_COV=${{ steps.coverage-summary.outputs.backend_coverage }}
+          FRONTEND_COV=${{ steps.coverage-summary.outputs.frontend_coverage }}
+          OVERALL_COV=${{ steps.coverage-summary.outputs.overall_coverage }}
+          
+          # Create badges directory
+          mkdir -p badges
+          
+          # Generate SVG badges using shields.io format
+          # Backend badge
+          if (( $(echo "$BACKEND_COV >= 80" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$BACKEND_COV >= 70" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$BACKEND_COV >= 60" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$BACKEND_COV >= 50" | bc -l) )); then
+            COLOR="orange"
+          else
+            COLOR="red"
+          fi
+          
+          cat > badges/backend-coverage.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="20">
+            <linearGradient id="b" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <mask id="a">
+              <rect width="200" height="20" rx="3" fill="#fff"/>
+            </mask>
+            <g mask="url(#a)">
+              <path fill="#555" d="M0 0h80v20H0z"/>
+              <path fill="#$COLOR" d="M80 0h120v20H80z"/>
+              <path fill="url(#b)" d="M0 0h200v20H0z"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+              <text x="40" y="15" fill="#010101" fill-opacity=".3">Backend</text>
+              <text x="40" y="14">Backend</text>
+              <text x="140" y="15" fill="#010101" fill-opacity=".3">$BACKEND_COV%</text>
+              <text x="140" y="14">$BACKEND_COV%</text>
+            </g>
+          </svg>
+          EOF
+          
+          # Frontend badge
+          if (( $(echo "$FRONTEND_COV >= 80" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$FRONTEND_COV >= 70" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$FRONTEND_COV >= 60" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$FRONTEND_COV >= 50" | bc -l) )); then
+            COLOR="orange"
+          else
+            COLOR="red"
+          fi
+          
+          cat > badges/frontend-coverage.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="20">
+            <linearGradient id="b" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <mask id="a">
+              <rect width="200" height="20" rx="3" fill="#fff"/>
+            </mask>
+            <g mask="url(#a)">
+              <path fill="#555" d="M0 0h80v20H0z"/>
+              <path fill="#$COLOR" d="M80 0h120v20H80z"/>
+              <path fill="url(#b)" d="M0 0h200v20H0z"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+              <text x="40" y="15" fill="#010101" fill-opacity=".3">Frontend</text>
+              <text x="40" y="14">Frontend</text>
+              <text x="140" y="15" fill="#010101" fill-opacity=".3">$FRONTEND_COV%</text>
+              <text x="140" y="14">$FRONTEND_COV%</text>
+            </g>
+          </svg>
+          EOF
+          
+          # Overall badge
+          if (( $(echo "$OVERALL_COV >= 80" | bc -l) )); then
+            COLOR="brightgreen"
+          elif (( $(echo "$OVERALL_COV >= 70" | bc -l) )); then
+            COLOR="green"
+          elif (( $(echo "$OVERALL_COV >= 60" | bc -l) )); then
+            COLOR="yellow"
+          elif (( $(echo "$OVERALL_COV >= 50" | bc -l) )); then
+            COLOR="orange"
+          else
+            COLOR="red"
+          fi
+          
+          cat > badges/overall-coverage.svg << EOF
+          <svg xmlns="http://www.w3.org/2000/svg" width="200" height="20">
+            <linearGradient id="b" x2="0" y2="100%">
+              <stop offset="0" stop-color="#bbb" stop-opacity=".1"/>
+              <stop offset="1" stop-opacity=".1"/>
+            </linearGradient>
+            <mask id="a">
+              <rect width="200" height="20" rx="3" fill="#fff"/>
+            </mask>
+            <g mask="url(#a)">
+              <path fill="#555" d="M0 0h80v20H0z"/>
+              <path fill="#$COLOR" d="M80 0h120v20H80z"/>
+              <path fill="url(#b)" d="M0 0h200v20H0z"/>
+            </g>
+            <g fill="#fff" text-anchor="middle" font-family="DejaVu Sans,Verdana,Geneva,sans-serif" font-size="11">
+              <text x="40" y="15" fill="#010101" fill-opacity=".3">Coverage</text>
+              <text x="40" y="14">Coverage</text>
+              <text x="140" y="15" fill="#010101" fill-opacity=".3">$OVERALL_COV%</text>
+              <text x="140" y="14">$OVERALL_COV%</text>
+            </g>
+          </svg>
+          EOF
+          
+          echo "Generated coverage badges:"
+          echo "- Backend: $BACKEND_COV%"
+          echo "- Frontend: $FRONTEND_COV%"
+          echo "- Overall: $OVERALL_COV%"
+
+      - name: Upload coverage badges
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-badges
+          path: badges/
+          retention-days: 30
+
+      - name: Display badges in summary
+        run: |
+          echo "## 🏷️ Coverage Badges" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Coverage badges have been generated and are available as build artifacts." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### How to use these badges:" >> $GITHUB_STEP_SUMMARY
+          echo "1. Download the badges from the build artifacts" >> $GITHUB_STEP_SUMMARY
+          echo "2. Add them to your README.md file" >> $GITHUB_STEP_SUMMARY
+          echo "3. Update them after each coverage run" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Example README usage:" >> $GITHUB_STEP_SUMMARY
+          echo '```markdown' >> $GITHUB_STEP_SUMMARY
+          echo '![Backend Coverage](badges/backend-coverage.svg)' >> $GITHUB_STEP_SUMMARY
+          echo '![Frontend Coverage](badges/frontend-coverage.svg)' >> $GITHUB_STEP_SUMMARY
+          echo '![Overall Coverage](badges/overall-coverage.svg)' >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY 

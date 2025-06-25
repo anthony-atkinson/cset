@@ -1,0 +1,36 @@
+{
+  "coverage": {
+    "threshold": {
+      "statements": 70,
+      "branches": 60,
+      "functions": 70,
+      "lines": 70
+    },
+    "exclude": [
+      "src/test.ts",
+      "src/main.ts",
+      "src/polyfills.ts",
+      "src/environments/*.ts",
+      "**/*.spec.ts",
+      "**/*.test.ts",
+      "**/*.mock.ts",
+      "**/*.module.ts",
+      "**/index.ts",
+      "**/public-api.ts",
+      "**/*.d.ts",
+      "**/node_modules/**",
+      "**/dist/**",
+      "**/coverage/**"
+    ],
+    "include": [
+      "src/**/*.ts",
+      "src/**/*.js"
+    ],
+    "reportTypes": [
+      "html",
+      "lcovonly",
+      "text-summary"
+    ],
+    "outputDirectory": "./coverage"
+  }
+} 

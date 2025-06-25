@@ -16,13 +16,31 @@ module.exports = function (config) {
       clearContext: false // leave Jasmine Spec Runner output visible in browser
     },
     coverageIstanbulReporter: {
-      dir: require('path').join(__dirname, 'coverage'), reports: [ 'html', 'lcovonly' ],
-      fixWebpackSourcePaths: true
+      dir: require('path').join(__dirname, 'coverage'), 
+      reports: [ 'html', 'lcovonly', 'text-summary' ],
+      fixWebpackSourcePaths: true,
+      thresholds: {
+        statements: 70,
+        lines: 70,
+        branches: 60,
+        functions: 70
+      },
+      exclude: [
+        'src/test.ts',
+        'src/main.ts',
+        'src/polyfills.ts',
+        'src/environments/*.ts',
+        '**/*.spec.ts',
+        '**/*.test.ts',
+        '**/*.mock.ts',
+        '**/*.module.ts',
+        '**/index.ts'
+      ]
     },
     angularCli: {
       environment: 'dev'
     },
-    reporters: ['progress', 'kjhtml'],
+    reporters: ['progress', 'kjhtml', 'coverage-istanbul'],
     port: 9876,
     colors: true,
     logLevel: config.LOG_INFO,

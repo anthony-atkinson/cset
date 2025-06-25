@@ -1,0 +1,38 @@
+{
+  "coverage": {
+    "threshold": {
+      "statements": 70,
+      "branches": 60,
+      "functions": 70,
+      "lines": 70
+    },
+    "exclude": [
+      "**/*.Program.cs",
+      "**/*.Startup.cs",
+      "**/Migrations/**",
+      "**/AutoMapper/**",
+      "**/*.Test*.cs",
+      "**/*.Tests*.cs",
+      "**/*.Mock*.cs",
+      "**/*.Fake*.cs",
+      "**/*.Stub*.cs",
+      "**/obj/**",
+      "**/bin/**",
+      "**/Properties/**",
+      "**/wwwroot/**",
+      "**/Views/**",
+      "**/Areas/**",
+      "**/Controllers/HealthController.cs",
+      "**/Controllers/ErrorController.cs"
+    ],
+    "include": [
+      "**/*.cs"
+    ],
+    "reportTypes": [
+      "Html",
+      "Cobertura",
+      "JsonSummary"
+    ],
+    "outputDirectory": "./coverage/report"
+  }
+} 
