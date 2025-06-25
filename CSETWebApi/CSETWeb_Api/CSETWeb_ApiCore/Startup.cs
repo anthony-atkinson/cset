@@ -79,6 +79,9 @@ using CSETWeb_ApiCore.Swagger;
 using Microsoft.ApplicationInsights.Extensibility;
 using CSETWebCore.Business.Collaboration;
 using Microsoft.AspNetCore.SignalR;
+using CSETWeb_ApiCore.Models.Caching;
+using CSETWeb_ApiCore.Interfaces;
+using CSETWeb_ApiCore.Services;
 
 namespace CSETWeb_ApiCore
 {
@@ -232,6 +235,47 @@ namespace CSETWeb_ApiCore
             // Telemetry Services
             services.AddScoped<ITelemetryService, TelemetryService>();
             services.AddScoped<DatabasePerformanceInterceptor>();
+
+            // Error Handling Services
+            services.AddScoped<Services.IErrorAnalyticsService, Services.ErrorAnalyticsService>();
+            services.AddScoped<Services.IErrorRecoveryService, Services.ErrorRecoveryService>();
+
+            // Caching Configuration
+            services.Configure<CachingConfiguration>(Configuration.GetSection("Caching"));
+
+            // Memory Cache Configuration
+            services.AddMemoryCache(options =>
+            {
+                var memoryConfig = Configuration.GetSection("Caching:Memory").Get<MemoryCacheConfiguration>();
+                if (memoryConfig != null && memoryConfig.Enabled)
+                {
+                    options.SizeLimit = memoryConfig.SizeLimit;
+                }
+            });
+
+            // Redis Cache Configuration
+            var redisConnectionString = Configuration.GetConnectionString("Redis");
+            var redisConfig = Configuration.GetSection("Caching:Redis").Get<RedisCacheConfiguration>();
+            
+            if (redisConfig != null && redisConfig.Enabled && !string.IsNullOrEmpty(redisConnectionString))
+            {
+                services.AddStackExchangeRedisCache(options =>
+                {
+                    options.Configuration = redisConnectionString;
+                    options.InstanceName = redisConfig.InstanceName;
+                });
+            }
+            else
+            {
+                // Fallback to in-memory distributed cache if Redis is not available
+                services.AddDistributedMemoryCache();
+            }
+
+            // Caching Services
+            services.AddScoped<ICacheService, CacheService>();
+            services.AddScoped<StandardsCacheService>();
+            services.AddScoped<AssessmentCacheService>();
+            services.AddScoped<CacheMonitoringService>();
 
             services.AddSwaggerGen(c =>
             {

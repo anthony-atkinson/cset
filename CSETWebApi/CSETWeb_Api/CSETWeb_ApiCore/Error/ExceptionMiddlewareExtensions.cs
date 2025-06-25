@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.DependencyInjection;
 using System.Net;
 using NLog;
 
@@ -37,8 +38,25 @@ namespace CSETWebCore.Api.Error
                         var exception = contextFeature.Error;
                         var errorDetails = CreateErrorDetails(context, exception, correlationId);
                         
+                        // Get services for enhanced error handling
+                        var errorAnalyticsService = context.RequestServices.GetService<Services.IErrorAnalyticsService>();
+                        var errorRecoveryService = context.RequestServices.GetService<Services.IErrorRecoveryService>();
+                        
                         // Log the error with structured information
                         LogStructuredError(exception, errorDetails, context);
+                        
+                        // Track error analytics
+                        if (errorAnalyticsService != null)
+                        {
+                            await errorAnalyticsService.TrackErrorAsync(errorDetails, exception);
+                        }
+                        
+                        // Get recovery suggestions
+                        if (errorRecoveryService != null)
+                        {
+                            var suggestions = await errorRecoveryService.GetRecoverySuggestionsAsync(errorDetails);
+                            errorDetails.RecoverySuggestions = suggestions;
+                        }
                         
                         // Set response
                         context.Response.StatusCode = errorDetails.StatusCode;
@@ -69,44 +87,77 @@ namespace CSETWebCore.Api.Error
                 UserId = GetUserId(context)
             };
 
-            // Determine error type and status code
-            switch (exception)
+            // Handle custom CSET exceptions
+            if (exception is CSETException csetException)
             {
-                case ArgumentException argEx:
-                    errorDetails.StatusCode = (int)HttpStatusCode.BadRequest;
-                    errorDetails.Message = "Invalid request parameters provided.";
-                    errorDetails.ErrorType = "ValidationError";
-                    errorDetails.RecoverySuggestions = new[]
-                    {
-                        "Check the request parameters for validity",
-                        "Ensure all required fields are provided",
-                        "Verify data formats match expected types"
-                    };
-                    break;
+                errorDetails.StatusCode = csetException.StatusCode;
+                errorDetails.Message = csetException.Message;
+                errorDetails.ErrorType = csetException.ErrorCode;
+                
+                // Add specific handling for different exception types
+                switch (csetException)
+                {
+                    case ValidationException validationEx:
+                        errorDetails.ErrorType = "ValidationError";
+                        break;
+                    case AuthenticationException authEx:
+                        errorDetails.ErrorType = "AuthenticationError";
+                        break;
+                    case BusinessLogicException businessEx:
+                        errorDetails.ErrorType = "BusinessLogicError";
+                        break;
+                    case FileOperationException fileEx:
+                        errorDetails.ErrorType = "FileOperationError";
+                        break;
+                    case ImportExportException importEx:
+                        errorDetails.ErrorType = "ImportExportError";
+                        break;
+                    case AssessmentException assessmentEx:
+                        errorDetails.ErrorType = "AssessmentError";
+                        break;
+                }
+            }
+            else
+            {
+                // Determine error type and status code for standard exceptions
+                switch (exception)
+                {
+                    case ArgumentException argEx:
+                        errorDetails.StatusCode = (int)HttpStatusCode.BadRequest;
+                        errorDetails.Message = "Invalid request parameters provided.";
+                        errorDetails.ErrorType = "ValidationError";
+                        break;
 
-                case UnauthorizedAccessException:
-                    errorDetails.StatusCode = (int)HttpStatusCode.Unauthorized;
-                    errorDetails.Message = "Access denied. Please authenticate to continue.";
-                    errorDetails.ErrorType = "AuthenticationError";
-                    errorDetails.RecoverySuggestions = new[]
-                    {
-                        "Log in with valid credentials",
-                        "Check if your session has expired",
-                        "Verify you have the required permissions"
-                    };
-                    break;
+                    case UnauthorizedAccessException:
+                        errorDetails.StatusCode = (int)HttpStatusCode.Unauthorized;
+                        errorDetails.Message = "Access denied. Please authenticate to continue.";
+                        errorDetails.ErrorType = "AuthenticationError";
+                        break;
 
-                default:
-                    errorDetails.StatusCode = (int)HttpStatusCode.InternalServerError;
-                    errorDetails.Message = "An unexpected error occurred while processing your request.";
-                    errorDetails.ErrorType = "InternalServerError";
-                    errorDetails.RecoverySuggestions = new[]
-                    {
-                        "Try again in a few moments",
-                        "Contact support if the issue persists",
-                        "Check the correlation ID for tracking"
-                    };
-                    break;
+                    case InvalidOperationException:
+                        errorDetails.StatusCode = (int)HttpStatusCode.BadRequest;
+                        errorDetails.Message = "The requested operation cannot be performed.";
+                        errorDetails.ErrorType = "BusinessLogicError";
+                        break;
+
+                    case System.Data.SqlClient.SqlException:
+                        errorDetails.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        errorDetails.Message = "A database error occurred while processing your request.";
+                        errorDetails.ErrorType = "DatabaseError";
+                        break;
+
+                    case System.IO.IOException:
+                        errorDetails.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        errorDetails.Message = "A file system error occurred while processing your request.";
+                        errorDetails.ErrorType = "FileOperationError";
+                        break;
+
+                    default:
+                        errorDetails.StatusCode = (int)HttpStatusCode.InternalServerError;
+                        errorDetails.Message = "An unexpected error occurred while processing your request.";
+                        errorDetails.ErrorType = "InternalServerError";
+                        break;
+                }
             }
 
             // Add detailed information for development

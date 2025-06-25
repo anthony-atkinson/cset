@@ -47,6 +47,10 @@
     <!-- Real-time Collaboration -->
     <PackageReference Include="Microsoft.AspNetCore.SignalR" Version="1.1.0" />
     <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" Version="8.0.14" />
+    <!-- Redis Caching -->
+    <PackageReference Include="Microsoft.Extensions.Caching.StackExchangeRedis" Version="8.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Memory" Version="8.0.14" />
+    <PackageReference Include="Microsoft.Extensions.Caching.Distributed" Version="8.0.14" />
   </ItemGroup>
 
   <ItemGroup>
