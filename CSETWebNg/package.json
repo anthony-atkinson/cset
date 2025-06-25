@@ -80,7 +80,8 @@
         "style-loader": "^4.0.0",
         "swiper": "^11.2.5",
         "typescript": "^5.8.3",
-        "zone.js": "^0.15.1"
+        "zone.js": "^0.15.1",
+        "@microsoft/signalr": "^8.0.0"
     },
     "devDependencies": {
         "@angular-builders/custom-webpack": "^19.0.1",

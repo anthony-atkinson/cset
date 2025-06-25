@@ -1,0 +1,331 @@
+.user-presence-container {
+  background: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  max-width: 350px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+
+  .connection-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    font-size: 14px;
+    font-weight: 500;
+
+    &.connected {
+      background-color: #e8f5e8;
+      color: #2e7d32;
+      border: 1px solid #c8e6c9;
+
+      i {
+        color: #4caf50;
+      }
+    }
+
+    &.disconnected {
+      background-color: #ffebee;
+      color: #c62828;
+      border: 1px solid #ffcdd2;
+
+      i {
+        color: #f44336;
+      }
+    }
+
+    i {
+      font-size: 12px;
+    }
+  }
+
+  .active-users {
+    margin-bottom: 20px;
+
+    .users-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      border-bottom: 1px solid #f0f0f0;
+      padding-bottom: 8px;
+
+      i {
+        color: #666;
+      }
+    }
+
+    .users-list {
+      max-height: 300px;
+      overflow-y: auto;
+
+      .user-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 12px;
+        border-radius: 6px;
+        margin-bottom: 8px;
+        background-color: #fafafa;
+        border: 1px solid #f0f0f0;
+        transition: all 0.2s ease;
+
+        &:hover {
+          background-color: #f5f5f5;
+          border-color: #e0e0e0;
+        }
+
+        &:last-child {
+          margin-bottom: 0;
+        }
+
+        .user-avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background-color: #e3f2fd;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          flex-shrink: 0;
+
+          i {
+            color: #1976d2;
+            font-size: 18px;
+          }
+        }
+
+        .user-info {
+          flex: 1;
+          min-width: 0;
+
+          .user-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 14px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+          }
+
+          .user-status {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 4px;
+
+            .status-indicator {
+              width: 8px;
+              height: 8px;
+              border-radius: 50%;
+              flex-shrink: 0;
+            }
+
+            .status-text {
+              font-size: 12px;
+              color: #666;
+            }
+          }
+
+          .user-details {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+
+            small {
+              font-size: 11px;
+              color: #999;
+            }
+          }
+        }
+      }
+    }
+
+    .no-users {
+      text-align: center;
+      padding: 24px 16px;
+      color: #999;
+
+      i {
+        font-size: 24px;
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      p {
+        margin: 0;
+        font-size: 14px;
+      }
+    }
+  }
+
+  .collaboration-features {
+    border-top: 1px solid #f0f0f0;
+    padding-top: 16px;
+
+    .features-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 12px 0;
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+
+      i {
+        color: #666;
+      }
+    }
+
+    .features-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+
+      .feature-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 12px;
+        border: 1px solid #e0e0e0;
+        border-radius: 6px;
+        background-color: #ffffff;
+        color: #666;
+        font-size: 12px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-decoration: none;
+
+        &:hover {
+          background-color: #f5f5f5;
+          border-color: #d0d0d0;
+          color: #333;
+        }
+
+        &:active {
+          background-color: #e0e0e0;
+        }
+
+        i {
+          font-size: 14px;
+        }
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .user-presence-container {
+    max-width: 100%;
+    margin: 0 8px;
+
+    .active-users .users-list {
+      max-height: 200px;
+    }
+
+    .collaboration-features .features-list {
+      justify-content: center;
+
+      .feature-btn {
+        flex: 1;
+        min-width: 80px;
+        justify-content: center;
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .user-presence-container {
+    background: #2d2d2d;
+    border-color: #444;
+    color: #e0e0e0;
+
+    .connection-status {
+      &.connected {
+        background-color: #1b5e20;
+        color: #a5d6a7;
+        border-color: #388e3c;
+      }
+
+      &.disconnected {
+        background-color: #b71c1c;
+        color: #ef9a9a;
+        border-color: #d32f2f;
+      }
+    }
+
+    .active-users {
+      .users-header {
+        color: #e0e0e0;
+        border-bottom-color: #444;
+      }
+
+      .users-list .user-item {
+        background-color: #3d3d3d;
+        border-color: #555;
+
+        &:hover {
+          background-color: #4d4d4d;
+          border-color: #666;
+        }
+
+        .user-avatar {
+          background-color: #1e3a5f;
+        }
+
+        .user-info {
+          .user-name {
+            color: #e0e0e0;
+          }
+
+          .user-status .status-text {
+            color: #bbb;
+          }
+
+          .user-details small {
+            color: #888;
+          }
+        }
+      }
+
+      .no-users {
+        color: #888;
+      }
+    }
+
+    .collaboration-features {
+      border-top-color: #444;
+
+      .features-header {
+        color: #e0e0e0;
+      }
+
+      .features-list .feature-btn {
+        background-color: #3d3d3d;
+        border-color: #555;
+        color: #bbb;
+
+        &:hover {
+          background-color: #4d4d4d;
+          border-color: #666;
+          color: #e0e0e0;
+        }
+
+        &:active {
+          background-color: #5d5d5d;
+        }
+      }
+    }
+  }
+} 

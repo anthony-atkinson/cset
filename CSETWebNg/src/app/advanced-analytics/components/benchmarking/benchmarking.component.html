@@ -1,0 +1,9 @@
+<div class="benchmarking">
+  <h3>Benchmarking</h3>
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="error">{{ error }}</div>
+  <div *ngIf="!loading && !error && benchmarkingData">
+    <p>Current Score: {{ benchmarkingData.currentScore | number:'1.1-1' }}%</p>
+    <p>Industry Average: {{ benchmarkingData.industryAverage | number:'1.1-1' }}%</p>
+  </div>
+</div> 

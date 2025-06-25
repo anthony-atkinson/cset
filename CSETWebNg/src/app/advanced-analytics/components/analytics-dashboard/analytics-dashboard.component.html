@@ -1,0 +1,47 @@
+<div class="analytics-dashboard">
+  <div class="dashboard-header">
+    <h2>Advanced Analytics Dashboard</h2>
+    <button mat-raised-button color="primary" (click)="refreshData()" [disabled]="loading">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading analytics data...</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error }}</p>
+        <button mat-button color="primary" (click)="refreshData()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="!loading && !error" class="dashboard-content">
+    <!-- Executive Summary Section -->
+    <div class="dashboard-section">
+      <h3>Executive Summary</h3>
+      <div class="summary-cards" *ngIf="executiveSummary">
+        <mat-card class="summary-card">
+          <mat-card-content>
+            <div class="metric">
+              <span class="metric-label">Overall Compliance</span>
+              <span class="metric-value" [ngClass]="getComplianceColor(executiveSummary.overallComplianceScore)">
+                {{ executiveSummary.overallComplianceScore | number:'1.1-1' }}%
+              </span>
+            </div>
+            <mat-progress-bar 
+              [value]="executiveSummary.overallComplianceScore" 
+              [color]="getComplianceColor(executiveSummary.overallComplianceScore)">
+            </mat-progress-bar>
+          </mat-card-content>
+        </mat-card>
+      </div>
+    </div>
+  </div>
+</div> 

@@ -1,0 +1,17 @@
+.advanced-analytics-container {
+  padding: 20px;
+  height: 100%;
+  
+  ::ng-deep .mat-tab-group {
+    height: 100%;
+    
+    .mat-tab-body-wrapper {
+      height: calc(100% - 48px);
+    }
+    
+    .mat-tab-body {
+      height: 100%;
+      padding: 20px 0;
+    }
+  }
+} 

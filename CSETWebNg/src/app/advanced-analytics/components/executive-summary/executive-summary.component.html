@@ -1,0 +1,36 @@
+<div class="executive-summary">
+  <div *ngIf="loading" class="loading">
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    <p>Loading executive summary...</p>
+  </div>
+
+  <div *ngIf="error" class="error">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error }}</p>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="!loading && !error && executiveSummary" class="summary-content">
+    <mat-card class="summary-card">
+      <mat-card-header>
+        <mat-card-title>Executive Summary</mat-card-title>
+        <mat-card-subtitle>{{ executiveSummary.assessmentName }}</mat-card-subtitle>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="compliance-score">
+          <h3>Overall Compliance Score</h3>
+          <div class="score-display" [ngClass]="getComplianceColor(executiveSummary.overallComplianceScore)">
+            {{ executiveSummary.overallComplianceScore | number:'1.1-1' }}%
+          </div>
+          <mat-progress-bar 
+            [value]="executiveSummary.overallComplianceScore" 
+            [color]="getComplianceColor(executiveSummary.overallComplianceScore)">
+          </mat-progress-bar>
+        </div>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div> 

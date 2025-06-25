@@ -193,6 +193,7 @@ import { Cmmc2ScorecardReportComponent } from './reports/cmmc2/cmmc2-scorecard-r
 import { CisaVadrReportComponent } from './reports/cisa-vadr/cisa-vadr-report/cisa-vadr-report.component';
 import { RoleGuard } from './guards/role.guard';
 import { RoleType } from './models/enums/role.model';
+import { AdvancedAnalyticsComponent } from './advanced-analytics/advanced-analytics.component';
 
 const appRoutes: Routes = [
   // reports routing
@@ -411,6 +412,7 @@ const appRoutes: Routes = [
               { path: 'reports', component: ReportsComponent },
               { path: 'analytics-compare', component: AnalyticsCompareComponent },
               { path: 'analytics', component: AnalyticsComponent },
+              { path: 'advanced-analytics', component: AdvancedAnalyticsComponent },
               { path: 'tsa-assessment-complete', component: TsaAssessmentCompleteComponent },
               { path: 'ranked-deficiency', component: RankedDeficiencyComponent },
               { path: 'section-scoring', component: SectionScoringComponent },

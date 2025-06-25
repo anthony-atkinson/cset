@@ -299,6 +299,8 @@ import { TutorialEdmComponent } from './assessment/prepare/maturity/tutorial-edm
 import { LoginCsetComponent } from './initial/login-cset/login-cset.component';
 import { AboutCsetComponent } from './dialogs/about-cset/about-cset.component';
 import { NgxChartsModule } from '@swimlane/ngx-charts';
+import { AdvancedAnalyticsModule } from './advanced-analytics/advanced-analytics.module';
+import { TooltipModule } from './modules/tooltip/tooltip.module';
 import { GroupingBlockComponent } from './assessment/questions/grouping-block/grouping-block.component';
 import { QuestionBlockMaturityComponent } from './assessment/questions/question-block-maturity/question-block-maturity.component';
 import { EdmDeficiencyComponent } from './reports/edm-deficiency/edm-deficiency.component';
@@ -306,13 +308,8 @@ import { GeneralDeficiencyComponent } from './reports/general-deficiency/general
 import { EdmCommentsmarkedComponent } from './reports/edm-commentsmarked/edm-commentsmarked.component';
 import { CisCommentsmarkedComponent } from './reports/cis-commentsmarked/cis-commentsmarked.component';
 import { EdmComponent } from './reports/edm/edm.component';
-import { TooltipModule } from './modules/tooltip/tooltip.module';
 import { QuestionTextComponent } from './assessment/questions/question-text/question-text.component';
 import { QuestionTextCpgComponent } from './assessment/questions/question-text/question-text-cpg/question-text-cpg.component';
-import { CmmcFilteringService } from './services/filtering/maturity-filtering/cmmc-filtering.service';
-import { EdmFilteringService } from './services/filtering/maturity-filtering/edm-filtering.service';
-import { CrrFilteringService } from './services/filtering/maturity-filtering/crr-filtering.service';
-import { RraFilteringService } from './services/filtering/maturity-filtering/rra-filtering.service';
 import { GlossaryTermComponent } from './assessment/questions/question-text/glossary-term/glossary-term.component';
 import { PlaceholderQuestionsComponent } from './assessment/questions/placeholder-questions/placeholder-questions.component';
 import { EdmHeatmapComponent } from './assessment/results/edm/edm-heatmap/edm-heatmap.component';
@@ -326,8 +323,8 @@ import { RelationshipFormationComponent } from './assessment/results/edm/relatio
 import { RelationshipManagementComponent } from './assessment/results/edm/relationship-management/relationship-management.component';
 import { ServiceProtectionComponent } from './assessment/results/edm/service-protection/service-protection.component';
 import { MaturityIndicatorLevelsComponent } from './assessment/results/edm/maturity-indicator-levels/maturity-indicator-levels.component';
-import { EDMHorizontalBarChart } from './reports/edm/horizontal-bar-chart/horizontal-bar-chart.component';
 import { EDMTripleBarChart } from './reports/edm/triple-bar-chart/triple-bar-chart.component';
+import { EDMHorizontalBarChart } from './reports/edm/horizontal-bar-chart/horizontal-bar-chart.component';
 import { EDMBarChartLegend } from './reports/edm/edm-bar-chart-legend/edm-bar-chart-legend.component';
 import { EDMFrameworkSummary } from './reports/edm/edm-framework-summ/edm-framework-summ.component';
 import { ModuleAddCloneComponent } from './builder/module-add-clone/module-add-clone.component';
@@ -374,9 +371,6 @@ import { CrrSummaryResultsComponent } from './assessment/results/crr/crr-summary
 import { CrrResultsPage } from './assessment/results/crr/crr-results-page/crr-results-page.component';
 import { CrrResultsDetailComponent } from './assessment/results/crr/crr-results-detail/crr-results-detail.component';
 import { CrrHeatmapComponent } from './assessment/results/crr/crr-heatmap/crr-heatmap.component';
-import { CmuService } from './services/cmu.service';
-import { Utilities } from './services/utilities.service';
-import { RunScriptsDirective } from './helpers/run-scripts.directive';
 import { MatCommentsComponent } from './reports/edm/mat-comments/mat-comments.component';
 import { TsaAssessmentCompleteComponent } from './assessment/results/tsa-assessment-complete/tsa-assessment-complete.component';
 import { SprsScoreComponent } from './assessment/results/mat-cmmc2/scorecard/sprs-score/sprs-score.component';
@@ -395,8 +389,8 @@ import { MaturityQuestionsNestedComponent } from './assessment/questions/maturit
 import { QuestionBlockNestedComponent } from './assessment/questions/maturity-questions/nested/question-block-nested/question-block-nested.component';
 import { GroupingBlockNestedComponent } from './assessment/questions/maturity-questions/nested/grouping-block-nested/grouping-block-nested.component';
 import { OptionBlockNestedComponent } from './assessment/questions/maturity-questions/nested/option-block-nested/option-block-nested.component';
-import { ModuleContentLaunchComponent } from './reports/module-content/module-content-launch/module-content-launch.component';
 import { ModuleContentComponent } from './reports/module-content/module-content/module-content.component';
+import { ModuleContentLaunchComponent } from './reports/module-content/module-content-launch/module-content-launch.component';
 import { TutorialCisComponent } from './assessment/prepare/maturity/tutorial-cis/tutorial-cis.component';
 import { QuestionExtrasDialogComponent } from './assessment/questions/question-extras-dialog/question-extras-dialog.component';
 import { VadrReportComponent } from './reports/vadr/vadr-report/vadr-report.component';
@@ -546,8 +540,8 @@ import { HydroActionsComponent } from './assessment/results/hydro/hydro-actions/
 import { HydroActionItemComponent } from './assessment/results/hydro/hydro-actions/hydro-action-item/hydro-action-item.component';
 import { HydroProgressTotalsComponent } from './assessment/results/hydro/hydro-actions/hydro-progress-totals/hydro-progress-totals.component';
 import { HydroActionItemsReportComponent } from './reports/hydro/hydro-action-items-report/hydro-action-items-report.component';
-import { SdAnswerSummaryComponent } from './assessment/results/sd/sd-answer-summary/sd-answer-summary.component';
 import { SdAnswerSummaryReportComponent } from './reports/sd/sd-answer-summary-report/sd-answer-summary-report.component';
+import { SdAnswerSummaryComponent } from './assessment/results/sd/sd-answer-summary/sd-answer-summary.component';
 import { KeyReportComponent } from './assessment/results/reports/key-report/key-report.component';
 import { ImrReportComponent } from './reports/imr/imr-report/imr-report.component';
 import { CmuPerformanceComponent } from './reports/cmu/cmu-performance/cmu-performance.component';
@@ -608,7 +602,14 @@ import { UserService } from './services/user.service';
 import { CisaVadrReportComponent } from './reports/cisa-vadr/cisa-vadr-report/cisa-vadr-report.component';
 import { VadrGroupingBlockComponent } from './reports/cisa-vadr/vadr-grouping-block/vadr-grouping-block.component';
 import { ServiceWorkerModule } from '@angular/service-worker';
-import { OfflineStatusComponent } from './initial/offline-status/offline-status.component';
+import { OfflineStatusComponent } from './components/offline-status/offline-status.component';
+import { CmuService } from './services/cmu.service';
+import { Utilities } from './services/utilities.service';
+import { RunScriptsDirective } from './helpers/run-scripts.directive';
+import { CmmcFilteringService } from './services/filtering/maturity-filtering/cmmc-filtering.service';
+import { EdmFilteringService } from './services/filtering/maturity-filtering/edm-filtering.service';
+import { CrrFilteringService } from './services/filtering/maturity-filtering/crr-filtering.service';
+import { RraFilteringService } from './services/filtering/maturity-filtering/rra-filtering.service';
 
 registerSwiper();
 
@@ -929,6 +930,7 @@ registerSwiper();
         CrrAppendixACoverComponent,
         CrrPerformanceAppendixAComponent,
         CrrNistCsfCatSummaryComponent,
+        CmuNistCsfCatSummaryComponent,
         CrrNistCsfCatPerformanceComponent,
         CmuNistCsfCatPerformanceComponent,
         CrrSideTocComponent,
@@ -1137,6 +1139,7 @@ registerSwiper();
         TooltipModule,
         EllipsisModule,
         CodeEditorModule,
+        AdvancedAnalyticsModule,
         HotkeyModule.forRoot(),
         ServiceWorkerModule.register('ngsw-worker.js', {
           enabled: !isDevMode(),
@@ -1213,7 +1216,6 @@ registerSwiper();
         EdmFilteringService,
         CrrFilteringService,
         RraFilteringService,
-        CmuService,
         CmuService,
         Utilities,
         GalleryService,

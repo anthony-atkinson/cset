@@ -1,0 +1,9 @@
+<div class="trend-analysis">
+  <h3>Trend Analysis</h3>
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="error">{{ error }}</div>
+  <div *ngIf="!loading && !error && trendData">
+    <p>Trend Direction: {{ trendData.trendDirection }}</p>
+    <p>Trend Percentage: {{ trendData.trendPercentage | number:'1.1-1' }}%</p>
+  </div>
+</div> 

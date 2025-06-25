@@ -1,0 +1,8 @@
+<div class="risk-areas">
+  <div *ngFor="let risk of riskAreas" class="risk-item">
+    <span class="risk-category">{{ risk.category }}</span>
+    <span class="risk-score" [ngClass]="getRiskColor(risk.riskScore)">
+      {{ risk.riskScore | number:'1.0-0' }}
+    </span>
+  </div>
+</div> 

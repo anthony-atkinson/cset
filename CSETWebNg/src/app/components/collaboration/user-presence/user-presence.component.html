@@ -1,0 +1,67 @@
+<div class="user-presence-container">
+  <!-- Connection Status -->
+  <div class="connection-status" [class.connected]="isConnected" [class.disconnected]="!isConnected">
+    <i class="fas" [class.fa-circle]="isConnected" [class.fa-times-circle]="!isConnected"></i>
+    <span>{{ isConnected ? 'Connected' : 'Disconnected' }}</span>
+  </div>
+
+  <!-- Active Users -->
+  <div class="active-users">
+    <h6 class="users-header">
+      <i class="fas fa-users"></i>
+      Active Users ({{ activeUsers.length }})
+    </h6>
+    
+    <div class="users-list" *ngIf="activeUsers.length > 0; else noUsers">
+      <div class="user-item" *ngFor="let user of activeUsers">
+        <div class="user-avatar">
+          <i class="fas fa-user"></i>
+        </div>
+        
+        <div class="user-info">
+          <div class="user-name">{{ user.displayName }}</div>
+          <div class="user-status">
+            <span class="status-indicator" [style.background-color]="getUserStatusColor(user)"></span>
+            <span class="status-text">{{ getUserStatusText(user) }}</span>
+          </div>
+          <div class="user-details">
+            <small>Connected: {{ getTimeSinceConnected(user) }}</small>
+            <small *ngIf="user.isOnline">Last activity: {{ getTimeSinceActivity(user) }}</small>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <ng-template #noUsers>
+      <div class="no-users">
+        <i class="fas fa-user-slash"></i>
+        <p>No active users</p>
+      </div>
+    </ng-template>
+  </div>
+
+  <!-- Collaboration Features -->
+  <div class="collaboration-features" *ngIf="isConnected">
+    <h6 class="features-header">
+      <i class="fas fa-tools"></i>
+      Collaboration Tools
+    </h6>
+    
+    <div class="features-list">
+      <button class="feature-btn" title="View collaboration history">
+        <i class="fas fa-history"></i>
+        History
+      </button>
+      
+      <button class="feature-btn" title="View collaboration statistics">
+        <i class="fas fa-chart-bar"></i>
+        Statistics
+      </button>
+      
+      <button class="feature-btn" title="Manage collaboration settings">
+        <i class="fas fa-cog"></i>
+        Settings
+      </button>
+    </div>
+  </div>
+</div> 

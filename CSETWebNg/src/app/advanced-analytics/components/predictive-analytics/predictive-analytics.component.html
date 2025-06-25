@@ -1,0 +1,10 @@
+<div class="predictive-analytics">
+  <h3>Predictive Analytics</h3>
+  <div *ngIf="loading">Loading...</div>
+  <div *ngIf="error">{{ error }}</div>
+  <div *ngIf="!loading && !error && predictiveData">
+    <p>3 Months: {{ predictiveData.predictedScore3Months | number:'1.1-1' }}%</p>
+    <p>6 Months: {{ predictiveData.predictedScore6Months | number:'1.1-1' }}%</p>
+    <p>12 Months: {{ predictiveData.predictedScore12Months | number:'1.1-1' }}%</p>
+  </div>
+</div> 

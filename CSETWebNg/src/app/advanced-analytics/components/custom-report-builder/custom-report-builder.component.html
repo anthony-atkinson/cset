@@ -1,0 +1,18 @@
+<div class="custom-report-builder">
+  <h3>Custom Report Builder</h3>
+  <form [formGroup]="reportForm" (ngSubmit)="generateReport()">
+    <mat-form-field>
+      <mat-label>Report Type</mat-label>
+      <mat-select formControlName="reportType">
+        <mat-option *ngFor="let type of reportTypes" [value]="type.value">
+          {{ type.label }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <button mat-raised-button color="primary" type="submit" [disabled]="loading">
+      Generate Report
+    </button>
+  </form>
+  <div *ngIf="loading">Generating report...</div>
+  <div *ngIf="error">{{ error }}</div>
+</div> 

@@ -76,6 +76,9 @@ using CSETWebCore.Business.Demographic.Import;
 using System.Reflection;
 using Microsoft.AspNetCore.Mvc.Controllers;
 using CSETWeb_ApiCore.Swagger;
+using Microsoft.ApplicationInsights.Extensibility;
+using CSETWebCore.Business.Collaboration;
+using Microsoft.AspNetCore.SignalR;
 
 namespace CSETWeb_ApiCore
 {
@@ -127,12 +130,49 @@ namespace CSETWeb_ApiCore
 
                 }).AddXmlDataContractSerializerFormatters();
             services.AddHttpContextAccessor();
-            services.AddDbContext<CSETContext>(
-                options => options.UseSqlServer(Configuration.GetConnectionString("CSET_DB")));
+            
+            // Configure database with performance monitoring
+            services.AddDbContext<CSETContext>((serviceProvider, options) =>
+            {
+                options.UseSqlServer(Configuration.GetConnectionString("CSET_DB"));
+                
+                // Add performance interceptor
+                var interceptor = serviceProvider.GetService<DatabasePerformanceInterceptor>();
+                if (interceptor != null)
+                {
+                    options.AddInterceptors(interceptor);
+                }
+            });
+
+            // Application Insights Configuration
+            services.AddApplicationInsightsTelemetry(options =>
+            {
+                options.InstrumentationKey = Configuration["ApplicationInsights:InstrumentationKey"];
+                options.EnableAdaptiveSampling = Configuration.GetValue<bool>("ApplicationInsights:EnableAdaptiveSampling", true);
+                options.EnablePerformanceCounterCollectionModule = Configuration.GetValue<bool>("ApplicationInsights:EnablePerformanceCounterCollectionModule", true);
+                options.EnableDependencyTrackingTelemetryModule = Configuration.GetValue<bool>("ApplicationInsights:EnableDependencyTrackingTelemetryModule", true);
+                options.EnableQuickPulseMetricStream = Configuration.GetValue<bool>("ApplicationInsights:EnableQuickPulseMetricStream", true);
+                options.EnableHeartbeat = Configuration.GetValue<bool>("ApplicationInsights:EnableHeartbeat", true);
+                options.EnableAzureInstanceMetadataTelemetryModule = Configuration.GetValue<bool>("ApplicationInsights:EnableAzureInstanceMetadataTelemetryModule", true);
+                options.EnableEventCounterCollectionModule = Configuration.GetValue<bool>("ApplicationInsights:EnableEventCounterCollectionModule", true);
+                options.EnableDiagnosticsTelemetryModule = Configuration.GetValue<bool>("ApplicationInsights:EnableDiagnosticsTelemetryModule", true);
+            });
+
+            // Configure Application Insights sampling
+            services.Configure<ApplicationInsightsServiceOptions>(options =>
+            {
+                var samplingSettings = Configuration.GetSection("ApplicationInsights:SamplingSettings");
+                if (samplingSettings.Exists())
+                {
+                    options.EnableAdaptiveSampling = true;
+                    options.EnableFixedRateSampling = false;
+                }
+            });
 
             //Services
             services.AddTransient<IAdminTabBusiness, AdminTabBusiness>();
             services.AddTransient<IAnalyticsBusiness, AnalyticsBusiness>();
+            services.AddTransient<IAdvancedAnalyticsBusiness, AdvancedAnalyticsBusiness>();
             services.AddTransient<IAssessmentBusiness, AssessmentBusiness>();
             services.AddTransient<IAssessmentModeData, AssessmentModeData>();
             services.AddTransient<IAssessmentUtil, AssessmentUtil>();
@@ -175,6 +215,23 @@ namespace CSETWeb_ApiCore
             services.AddTransient<IGalleryEditor, GalleryEditor>();
             services.AddTransient<IMalcolmBusiness, MalcolmBusiness>();
             services.AddScoped<IVersionBusiness, VersionBusiness>();
+
+            // Collaboration Services
+            services.AddTransient<CollaborationManager>();
+
+            // SignalR Configuration
+            services.AddSignalR(options =>
+            {
+                options.EnableDetailedErrors = env.IsDevelopment();
+                options.ClientTimeoutInterval = TimeSpan.FromSeconds(30);
+                options.HandshakeTimeout = TimeSpan.FromSeconds(15);
+                options.KeepAliveInterval = TimeSpan.FromSeconds(10);
+                options.MaximumReceiveMessageSize = 1024 * 1024; // 1MB
+            });
+
+            // Telemetry Services
+            services.AddScoped<ITelemetryService, TelemetryService>();
+            services.AddScoped<DatabasePerformanceInterceptor>();
 
             services.AddSwaggerGen(c =>
             {
@@ -263,6 +320,12 @@ namespace CSETWeb_ApiCore
                 app.UseDeveloperExceptionPage();
             }
 
+            // Application Insights Request Tracking
+            app.UseApplicationInsightsRequestTelemetry();
+
+            // Performance Monitoring Middleware
+            app.UsePerformanceMonitoring();
+
             // Enable Swagger in all environments for API documentation
             app.UseSwagger();
             app.UseSwaggerUI(c =>
@@ -318,6 +381,9 @@ namespace CSETWeb_ApiCore
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllers();
+                
+                // SignalR Hub Mapping
+                endpoints.MapHub<Hubs.CollaborationHub>("/collaborationHub");
             });
         }
     }

@@ -1,0 +1,9 @@
+<div class="improvement-recommendations">
+  <div *ngFor="let rec of recommendations" class="recommendation-item">
+    <span class="question-number">{{ rec.questionNumber }}</span>
+    <span class="priority" [ngClass]="getPriorityColor(rec.priority)">
+      {{ rec.priority }}
+    </span>
+    <span class="description">{{ rec.description }}</span>
+  </div>
+</div> 
