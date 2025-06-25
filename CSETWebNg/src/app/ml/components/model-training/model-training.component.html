@@ -1,0 +1,201 @@
+<div class="model-training">
+  <div class="training-header">
+    <h1>Model Training</h1>
+    <p>Configure and start machine learning model training jobs</p>
+  </div>
+
+  <div class="training-content">
+    <mat-card class="training-form-card">
+      <mat-card-header>
+        <mat-card-title>Training Configuration</mat-card-title>
+        <mat-card-subtitle>Configure your ML model training parameters</mat-card-subtitle>
+      </mat-card-header>
+
+      <mat-card-content>
+        <form [formGroup]="trainingForm" (ngSubmit)="startTraining()">
+          <div class="form-section">
+            <h3>Basic Configuration</h3>
+            
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="full-width">
+                <mat-label>Model Name</mat-label>
+                <input matInput formControlName="modelName" placeholder="Enter model name">
+                <mat-error *ngIf="trainingForm.get('modelName')?.hasError('required')">
+                  Model name is required
+                </mat-error>
+                <mat-error *ngIf="trainingForm.get('modelName')?.hasError('minlength')">
+                  Model name must be at least 3 characters
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Model Type</mat-label>
+                <mat-select formControlName="modelType" (selectionChange)="onModelTypeChange()">
+                  <mat-option *ngFor="let type of modelTypes" [value]="type">
+                    {{ type }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="trainingForm.get('modelType')?.hasError('required')">
+                  Model type is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Algorithm</mat-label>
+                <mat-select formControlName="algorithm" (selectionChange)="onAlgorithmChange()">
+                  <mat-option *ngFor="let algorithm of availableAlgorithms" [value]="algorithm">
+                    {{ algorithm }}
+                  </mat-option>
+                </mat-select>
+                <mat-error *ngIf="trainingForm.get('algorithm')?.hasError('required')">
+                  Algorithm is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+
+            <div class="form-row">
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>Start Date</mat-label>
+                <input matInput [matDatepicker]="startPicker" formControlName="startDate">
+                <mat-datepicker-toggle matSuffix [for]="startPicker"></mat-datepicker-toggle>
+                <mat-datepicker #startPicker></mat-datepicker>
+                <mat-error *ngIf="trainingForm.get('startDate')?.hasError('required')">
+                  Start date is required
+                </mat-error>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline" class="half-width">
+                <mat-label>End Date</mat-label>
+                <input matInput [matDatepicker]="endPicker" formControlName="endDate">
+                <mat-datepicker-toggle matSuffix [for]="endPicker"></mat-datepicker-toggle>
+                <mat-datepicker #endPicker></mat-datepicker>
+                <mat-error *ngIf="trainingForm.get('endDate')?.hasError('required')">
+                  End date is required
+                </mat-error>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Model Parameters</h3>
+            <div formGroupName="parameters">
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="third-width">
+                  <mat-label>Max Depth</mat-label>
+                  <input matInput type="number" formControlName="maxDepth" min="1" max="50">
+                  <mat-error *ngIf="trainingForm.get('parameters.maxDepth')?.hasError('min')">
+                    Must be at least 1
+                  </mat-error>
+                  <mat-error *ngIf="trainingForm.get('parameters.maxDepth')?.hasError('max')">
+                    Must be at most 50
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="third-width">
+                  <mat-label>Number of Estimators</mat-label>
+                  <input matInput type="number" formControlName="nEstimators" min="10" max="1000">
+                  <mat-error *ngIf="trainingForm.get('parameters.nEstimators')?.hasError('min')">
+                    Must be at least 10
+                  </mat-error>
+                  <mat-error *ngIf="trainingForm.get('parameters.nEstimators')?.hasError('max')">
+                    Must be at most 1000
+                  </mat-error>
+                </mat-form-field>
+
+                <mat-form-field appearance="outline" class="third-width">
+                  <mat-label>Learning Rate</mat-label>
+                  <input matInput type="number" formControlName="learningRate" min="0.01" max="1.0" step="0.01">
+                  <mat-error *ngIf="trainingForm.get('parameters.learningRate')?.hasError('min')">
+                    Must be at least 0.01
+                  </mat-error>
+                  <mat-error *ngIf="trainingForm.get('parameters.learningRate')?.hasError('max')">
+                    Must be at most 1.0
+                  </mat-error>
+                </mat-form-field>
+              </div>
+
+              <div class="form-row">
+                <mat-form-field appearance="outline" class="third-width">
+                  <mat-label>Random State</mat-label>
+                  <input matInput type="number" formControlName="randomState">
+                </mat-form-field>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h3>Training Options</h3>
+            
+            <div class="form-row">
+              <mat-slide-toggle formControlName="validateModel" color="primary">
+                Validate model after training
+              </mat-slide-toggle>
+            </div>
+
+            <div class="form-row">
+              <mat-slide-toggle formControlName="deployAfterTraining" color="primary">
+                Deploy model after successful training
+              </mat-slide-toggle>
+            </div>
+          </div>
+
+          <!-- Validation Results -->
+          <div *ngIf="validationResult" class="validation-section">
+            <mat-card [ngClass]="validationResult.isValid ? 'valid-card' : 'invalid-card'">
+              <mat-card-header>
+                <mat-card-title>
+                  <mat-icon [color]="validationResult.isValid ? 'accent' : 'warn'">
+                    {{ validationResult.isValid ? 'check_circle' : 'error' }}
+                  </mat-icon>
+                  Validation Results
+                </mat-card-title>
+              </mat-card-header>
+              <mat-card-content>
+                <div *ngIf="validationResult.isValid" class="valid-message">
+                  <p>Training request is valid and ready to proceed.</p>
+                </div>
+                <div *ngIf="!validationResult.isValid" class="invalid-message">
+                  <p>The following issues were found:</p>
+                  <ul>
+                    <li *ngFor="let issue of validationResult.issues">{{ issue }}</li>
+                  </ul>
+                </div>
+                <div *ngIf="validationResult.statistics" class="validation-stats">
+                  <h4>Data Statistics:</h4>
+                  <div class="stats-grid">
+                    <div *ngFor="let stat of validationResult.statistics | keyvalue" class="stat-item">
+                      <span class="stat-label">{{ stat.key }}:</span>
+                      <span class="stat-value">{{ stat.value }}</span>
+                    </div>
+                  </div>
+                </div>
+              </mat-card-content>
+            </mat-card>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              type="button" 
+              mat-stroked-button 
+              (click)="validateRequest()" 
+              [disabled]="trainingForm.invalid || validating || loading">
+              <mat-icon>check</mat-icon>
+              {{ validating ? 'Validating...' : 'Validate Request' }}
+            </button>
+
+            <button 
+              type="submit" 
+              mat-raised-button 
+              color="primary" 
+              [disabled]="trainingForm.invalid || loading || (validationResult && !validationResult.isValid)">
+              <mat-icon>play_arrow</mat-icon>
+              {{ loading ? 'Starting Training...' : 'Start Training' }}
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+  </div>
+</div> 
