@@ -228,6 +228,20 @@ namespace CSETWeb_ApiCore
             services.AddScoped<IMLPredictionService, MLPredictionService>();
             services.AddScoped<IMLModelTrainingService, MLModelTrainingService>();
 
+            // Zero Trust Architecture Services
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.IZeroTrustService, CSETWebCore.ApiCore.Security.ZeroTrust.ZeroTrustService>();
+            
+            // Zero Trust Configuration
+            services.Configure<Models.ZeroTrustConfiguration>(Configuration.GetSection("ZeroTrust"));
+            
+            // Zero Trust Providers
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.Providers.IRiskAssessmentProvider, CSETWebCore.ApiCore.Security.ZeroTrust.Providers.RiskAssessmentProvider>();
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.Providers.ISecurityPostureProvider, CSETWebCore.ApiCore.Security.ZeroTrust.Providers.SecurityPostureProvider>();
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.Providers.IMicroSegmentationProvider, CSETWebCore.ApiCore.Security.ZeroTrust.Providers.MicroSegmentationProvider>();
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.Providers.IJustInTimeAccessProvider, CSETWebCore.ApiCore.Security.ZeroTrust.Providers.JustInTimeAccessProvider>();
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.Providers.IZeroTrustEventLogger, CSETWebCore.ApiCore.Security.ZeroTrust.Providers.ZeroTrustEventLogger>();
+            services.AddScoped<CSETWebCore.ApiCore.Security.ZeroTrust.Providers.IZeroTrustAnalyticsProvider, CSETWebCore.ApiCore.Security.ZeroTrust.Providers.ZeroTrustAnalyticsProvider>();
+
             // Enhanced Notification Services
             services.AddHttpClient(); // Required for notification providers
             services.AddScoped<IEnhancedNotificationService, EnhancedNotificationService>();
@@ -489,6 +503,10 @@ namespace CSETWeb_ApiCore
             app.UseRouting();
             app.UseCors("AllowAll");
             app.UseAuthentication();
+            
+            // Zero Trust Architecture Middleware
+            app.UseZeroTrust();
+            
             app.UseAuthorization();
 
             app.UseEndpoints(endpoints =>
