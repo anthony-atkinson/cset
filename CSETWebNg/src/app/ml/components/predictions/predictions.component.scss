@@ -1,0 +1,453 @@
+.predictions-container {
+  padding: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
+
+  .predictions-header {
+    text-align: center;
+    margin-bottom: 32px;
+
+    h2 {
+      margin: 0 0 8px 0;
+      color: var(--primary-color, #1976d2);
+      font-size: 2rem;
+      font-weight: 500;
+    }
+
+    p {
+      margin: 0;
+      color: var(--text-secondary, #666);
+      font-size: 1.1rem;
+    }
+  }
+
+  .loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 48px;
+    text-align: center;
+
+    p {
+      margin-top: 16px;
+      color: var(--text-secondary, #666);
+    }
+  }
+
+  .error-container {
+    margin-bottom: 24px;
+
+    .error-card {
+      background-color: var(--error-bg, #ffebee);
+      border-left: 4px solid var(--error-color, #f44336);
+
+      mat-card-content {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+
+        mat-icon {
+          font-size: 24px;
+          width: 24px;
+          height: 24px;
+        }
+
+        p {
+          margin: 0;
+          flex: 1;
+        }
+      }
+    }
+  }
+
+  .predictions-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .prediction-form-card {
+    .form-row {
+      margin-bottom: 16px;
+
+      .full-width {
+        width: 100%;
+      }
+    }
+
+    h4 {
+      margin: 24px 0 16px 0;
+      color: var(--primary-color, #1976d2);
+      font-weight: 500;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-start;
+      align-items: center;
+      margin-top: 24px;
+      padding-top: 16px;
+      border-top: 1px solid var(--divider-color, #e0e0e0);
+    }
+  }
+
+  .results-section {
+    .results-card {
+      .prediction-summary {
+        margin-bottom: 32px;
+        text-align: center;
+
+        .prediction-main {
+          h3 {
+            margin: 0 0 16px 0;
+            color: var(--text-primary, #333);
+            font-weight: 500;
+          }
+
+          .prediction-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding: 16px 32px;
+            border-radius: 8px;
+            display: inline-block;
+
+            &.accent {
+              background-color: var(--accent-bg, #e8f5e8);
+              color: var(--accent-color, #4caf50);
+            }
+
+            &.primary {
+              background-color: var(--primary-bg, #e3f2fd);
+              color: var(--primary-color, #1976d2);
+            }
+
+            &.warn {
+              background-color: var(--warn-bg, #fff3e0);
+              color: var(--warn-color, #ff9800);
+            }
+          }
+
+          .confidence-indicator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+
+            .confidence-label {
+              color: var(--text-secondary, #666);
+            }
+
+            .confidence-value {
+              font-weight: 600;
+
+              &.accent {
+                color: var(--accent-color, #4caf50);
+              }
+
+              &.primary {
+                color: var(--primary-color, #1976d2);
+              }
+
+              &.warn {
+                color: var(--warn-color, #ff9800);
+              }
+            }
+          }
+        }
+      }
+
+      .probabilities-section,
+      .feature-importance-section,
+      .input-features-section,
+      .metadata-section {
+        margin-bottom: 32px;
+
+        h4 {
+          margin: 0 0 16px 0;
+          color: var(--text-primary, #333);
+          font-weight: 500;
+          border-bottom: 2px solid var(--primary-color, #1976d2);
+          padding-bottom: 8px;
+        }
+      }
+
+      .probabilities-grid,
+      .feature-importance-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+
+        .probability-item,
+        .feature-item {
+          display: grid;
+          grid-template-columns: 1fr auto;
+          gap: 12px;
+          align-items: center;
+
+          .probability-label,
+          .feature-name {
+            font-weight: 500;
+            color: var(--text-primary, #333);
+          }
+
+          .probability-value,
+          .feature-value {
+            text-align: right;
+            font-weight: 600;
+            color: var(--primary-color, #1976d2);
+            min-width: 60px;
+          }
+
+          mat-progress-bar {
+            grid-column: 1 / -1;
+          }
+        }
+      }
+
+      .input-features-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 12px;
+
+        .input-feature-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background-color: var(--background-light, #f5f5f5);
+          border-radius: 4px;
+
+          .feature-name {
+            font-weight: 500;
+            color: var(--text-primary, #333);
+          }
+
+          .feature-value {
+            font-weight: 600;
+            color: var(--primary-color, #1976d2);
+          }
+        }
+      }
+
+      .metadata-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 12px;
+
+        .metadata-item {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          padding: 8px 12px;
+          background-color: var(--background-light, #f5f5f5);
+          border-radius: 4px;
+
+          .metadata-key {
+            font-weight: 500;
+            color: var(--text-primary, #333);
+          }
+
+          .metadata-value {
+            color: var(--text-secondary, #666);
+          }
+        }
+      }
+    }
+  }
+
+  .no-models {
+    .no-models-card {
+      text-align: center;
+      padding: 48px 24px;
+
+      mat-card-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 16px;
+
+        mat-icon {
+          font-size: 48px;
+          width: 48px;
+          height: 48px;
+          color: var(--text-secondary, #666);
+        }
+
+        h3 {
+          margin: 0;
+          color: var(--text-primary, #333);
+          font-weight: 500;
+        }
+
+        p {
+          margin: 0;
+          color: var(--text-secondary, #666);
+          max-width: 400px;
+        }
+      }
+    }
+  }
+}
+
+// Dark theme support
+@media (prefers-color-scheme: dark) {
+  .predictions-container {
+    .predictions-header {
+      h2 {
+        color: var(--primary-color-light, #64b5f6);
+      }
+
+      p {
+        color: var(--text-secondary-dark, #b0b0b0);
+      }
+    }
+
+    .loading-container p {
+      color: var(--text-secondary-dark, #b0b0b0);
+    }
+
+    .error-container .error-card {
+      background-color: var(--error-bg-dark, #3e2723);
+      border-left-color: var(--error-color-light, #ff8a80);
+    }
+
+    .prediction-form-card h4 {
+      color: var(--primary-color-light, #64b5f6);
+    }
+
+    .results-section .results-card {
+      .prediction-summary .prediction-main {
+        h3 {
+          color: var(--text-primary-dark, #ffffff);
+        }
+
+        .prediction-value {
+          &.accent {
+            background-color: var(--accent-bg-dark, #1b5e20);
+            color: var(--accent-color-light, #81c784);
+          }
+
+          &.primary {
+            background-color: var(--primary-bg-dark, #0d47a1);
+            color: var(--primary-color-light, #64b5f6);
+          }
+
+          &.warn {
+            background-color: var(--warn-bg-dark, #e65100);
+            color: var(--warn-color-light, #ffb74d);
+          }
+        }
+
+        .confidence-indicator .confidence-label {
+          color: var(--text-secondary-dark, #b0b0b0);
+        }
+      }
+
+      .probabilities-section h4,
+      .feature-importance-section h4,
+      .input-features-section h4,
+      .metadata-section h4 {
+        color: var(--text-primary-dark, #ffffff);
+        border-bottom-color: var(--primary-color-light, #64b5f6);
+      }
+
+      .probabilities-grid .probability-item .probability-label,
+      .feature-importance-grid .feature-item .feature-name {
+        color: var(--text-primary-dark, #ffffff);
+      }
+
+      .input-features-grid .input-feature-item {
+        background-color: var(--background-light-dark, #424242);
+
+        .feature-name {
+          color: var(--text-primary-dark, #ffffff);
+        }
+      }
+
+      .metadata-grid .metadata-item {
+        background-color: var(--background-light-dark, #424242);
+
+        .metadata-key {
+          color: var(--text-primary-dark, #ffffff);
+        }
+
+        .metadata-value {
+          color: var(--text-secondary-dark, #b0b0b0);
+        }
+      }
+    }
+
+    .no-models .no-models-card mat-card-content {
+      mat-icon {
+        color: var(--text-secondary-dark, #b0b0b0);
+      }
+
+      h3 {
+        color: var(--text-primary-dark, #ffffff);
+      }
+
+      p {
+        color: var(--text-secondary-dark, #b0b0b0);
+      }
+    }
+  }
+}
+
+// Responsive design
+@media (max-width: 768px) {
+  .predictions-container {
+    padding: 16px;
+
+    .predictions-header {
+      h2 {
+        font-size: 1.5rem;
+      }
+
+      p {
+        font-size: 1rem;
+      }
+    }
+
+    .prediction-form-card {
+      .features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .form-actions {
+        flex-direction: column;
+        align-items: stretch;
+
+        button {
+          width: 100%;
+        }
+      }
+    }
+
+    .results-section .results-card {
+      .prediction-summary .prediction-main {
+        .prediction-value {
+          font-size: 2rem;
+          padding: 12px 24px;
+        }
+      }
+
+      .input-features-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .metadata-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  }
+} 

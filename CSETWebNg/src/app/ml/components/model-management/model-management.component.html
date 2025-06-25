@@ -1,0 +1,70 @@
+<div *ngIf="loading" class="loading-container">
+  <mat-spinner></mat-spinner>
+</div>
+
+<div *ngIf="error" class="error-message">
+  <mat-icon color="warn">error</mat-icon>
+  {{ error }}
+</div>
+
+<div *ngIf="!loading && !error">
+  <table mat-table [dataSource]="models" class="mat-elevation-z2 full-width-table">
+    <!-- Name Column -->
+    <ng-container matColumnDef="modelName">
+      <th mat-header-cell *matHeaderCellDef> Name </th>
+      <td mat-cell *matCellDef="let model"> {{ model.modelName }} </td>
+    </ng-container>
+
+    <!-- Type Column -->
+    <ng-container matColumnDef="modelType">
+      <th mat-header-cell *matHeaderCellDef> Type </th>
+      <td mat-cell *matCellDef="let model"> {{ model.modelType }} </td>
+    </ng-container>
+
+    <!-- Algorithm Column -->
+    <ng-container matColumnDef="algorithm">
+      <th mat-header-cell *matHeaderCellDef> Algorithm </th>
+      <td mat-cell *matCellDef="let model"> {{ model.algorithm }} </td>
+    </ng-container>
+
+    <!-- Version Column -->
+    <ng-container matColumnDef="version">
+      <th mat-header-cell *matHeaderCellDef> Version </th>
+      <td mat-cell *matCellDef="let model"> {{ model.version }} </td>
+    </ng-container>
+
+    <!-- Status Column -->
+    <ng-container matColumnDef="isActive">
+      <th mat-header-cell *matHeaderCellDef> Status </th>
+      <td mat-cell *matCellDef="let model">
+        <mat-chip [color]="model.isActive ? 'accent' : 'warn'" selected>
+          {{ model.isActive ? 'Active' : 'Inactive' }}
+        </mat-chip>
+      </td>
+    </ng-container>
+
+    <!-- Actions Column -->
+    <ng-container matColumnDef="actions">
+      <th mat-header-cell *matHeaderCellDef> Actions </th>
+      <td mat-cell *matCellDef="let model">
+        <button mat-icon-button color="primary" (click)="toggleModelStatus(model)" [matTooltip]="model.isActive ? 'Deactivate' : 'Activate'">
+          <mat-icon>{{ model.isActive ? 'toggle_off' : 'toggle_on' }}</mat-icon>
+        </button>
+        <button mat-icon-button color="accent" (click)="viewModelDetails(model)" matTooltip="View Details">
+          <mat-icon>info</mat-icon>
+        </button>
+        <button mat-icon-button color="warn" (click)="deleteModel(model)" matTooltip="Delete">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </td>
+    </ng-container>
+
+    <tr mat-header-row *matHeaderRowDef="['modelName', 'modelType', 'algorithm', 'version', 'isActive', 'actions']"></tr>
+    <tr mat-row *matRowDef="let row; columns: ['modelName', 'modelType', 'algorithm', 'version', 'isActive', 'actions'];"></tr>
+  </table>
+
+  <div *ngIf="models.length === 0" class="no-models">
+    <mat-icon>info</mat-icon>
+    <span>No models found.</span>
+  </div>
+</div> 

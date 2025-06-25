@@ -1,0 +1,240 @@
+<div class="predictions-container">
+  <div class="predictions-header">
+    <h2>Make Predictions</h2>
+    <p>Use trained ML models to make predictions about cybersecurity risk and compliance</p>
+  </div>
+
+  <div *ngIf="loading" class="loading-container">
+    <mat-spinner></mat-spinner>
+    <p>Loading available models...</p>
+  </div>
+
+  <div *ngIf="error" class="error-container">
+    <mat-card class="error-card">
+      <mat-card-content>
+        <mat-icon color="warn">error</mat-icon>
+        <p>{{ error }}</p>
+        <button mat-button color="primary" (click)="refreshModels()">Retry</button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div *ngIf="!loading && !error" class="predictions-content">
+    <!-- Prediction Form -->
+    <mat-card class="prediction-form-card">
+      <mat-card-header>
+        <mat-card-title>Prediction Configuration</mat-card-title>
+        <mat-card-subtitle>Configure your prediction request</mat-card-subtitle>
+      </mat-card-header>
+      
+      <mat-card-content>
+        <form [formGroup]="predictionForm" (ngSubmit)="makePrediction()">
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Select Model</mat-label>
+              <mat-select formControlName="modelId" required>
+                <mat-option *ngFor="let model of availableModels" [value]="model.modelId">
+                  {{ model.modelName }} ({{ model.algorithm }} - {{ model.accuracy | percent:'1.1-1' }} accuracy)
+                </mat-option>
+              </mat-select>
+              <mat-error *ngIf="predictionForm.get('modelId')?.hasError('required')">
+                Model selection is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-row">
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Input Mode</mat-label>
+              <mat-select formControlName="inputMode" required>
+                <mat-option *ngFor="let mode of featureInputModes" [value]="mode.value">
+                  {{ mode.label }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+
+          <!-- Manual Feature Input -->
+          <div *ngIf="predictionForm.get('inputMode')?.value === 'manual'" formGroupName="customFeatures">
+            <h4>Manual Feature Input</h4>
+            <div class="features-grid">
+              <mat-form-field appearance="outline">
+                <mat-label>Compliance Score (0-100)</mat-label>
+                <input matInput type="number" formControlName="complianceScore" min="0" max="100">
+                <mat-hint>Overall compliance percentage</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Security Controls (0-20)</mat-label>
+                <input matInput type="number" formControlName="securityControls" min="0" max="20">
+                <mat-hint>Number of implemented controls</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Incident Response Time (hours)</mat-label>
+                <input matInput type="number" formControlName="incidentResponseTime" min="1" max="168">
+                <mat-hint>Average response time in hours</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Vulnerability Count (0-1000)</mat-label>
+                <input matInput type="number" formControlName="vulnerabilityCount" min="0" max="1000">
+                <mat-hint>Number of known vulnerabilities</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Patch Level (0-100)</mat-label>
+                <input matInput type="number" formControlName="patchLevel" min="0" max="100">
+                <mat-hint>Percentage of systems patched</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Access Controls (0-10)</mat-label>
+                <input matInput type="number" formControlName="accessControls" min="0" max="10">
+                <mat-hint>Access control effectiveness</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Network Segmentation (0-10)</mat-label>
+                <input matInput type="number" formControlName="networkSegmentation" min="0" max="10">
+                <mat-hint>Network segmentation quality</mat-hint>
+              </mat-form-field>
+
+              <mat-form-field appearance="outline">
+                <mat-label>Data Encryption (0-10)</mat-label>
+                <input matInput type="number" formControlName="dataEncryption" min="0" max="10">
+                <mat-hint>Data encryption implementation</mat-hint>
+              </mat-form-field>
+            </div>
+          </div>
+
+          <!-- Assessment Input -->
+          <div *ngIf="predictionForm.get('inputMode')?.value === 'assessment'">
+            <h4>Assessment-Based Prediction</h4>
+            <mat-form-field appearance="outline" class="full-width">
+              <mat-label>Assessment ID</mat-label>
+              <input matInput formControlName="assessmentId" placeholder="Enter assessment ID">
+              <mat-hint>Enter the ID of an existing assessment</mat-hint>
+              <mat-error *ngIf="predictionForm.get('assessmentId')?.hasError('required')">
+                Assessment ID is required
+              </mat-error>
+            </mat-form-field>
+          </div>
+
+          <div class="form-actions">
+            <button 
+              mat-raised-button 
+              color="primary" 
+              type="submit" 
+              [disabled]="predictionForm.invalid || makingPrediction || availableModels.length === 0">
+              <mat-icon>psychology</mat-icon>
+              {{ makingPrediction ? 'Making Prediction...' : 'Make Prediction' }}
+            </button>
+            <button 
+              mat-button 
+              type="button" 
+              (click)="clearResults()" 
+              [disabled]="!predictionResult">
+              Clear Results
+            </button>
+          </div>
+        </form>
+      </mat-card-content>
+    </mat-card>
+
+    <!-- Prediction Results -->
+    <div *ngIf="predictionResult" class="results-section">
+      <mat-card class="results-card">
+        <mat-card-header>
+          <mat-card-title>Prediction Results</mat-card-title>
+          <mat-card-subtitle>Generated on {{ predictionResult.predictedAt | date:'medium' }}</mat-card-subtitle>
+        </mat-card-header>
+        
+        <mat-card-content>
+          <!-- Main Prediction -->
+          <div class="prediction-summary">
+            <div class="prediction-main">
+              <h3>Predicted Risk Level</h3>
+              <div class="prediction-value" [ngClass]="getRiskColor(predictionResult.predictedLabel)">
+                {{ getRiskLabel(predictionResult.predictedLabel) }}
+              </div>
+              <div class="confidence-indicator">
+                <span class="confidence-label">Confidence:</span>
+                <span class="confidence-value" [ngClass]="getConfidenceColor(predictionResult.confidence)">
+                  {{ (predictionResult.confidence * 100) | number:'1.1-1' }}%
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Class Probabilities -->
+          <div class="probabilities-section">
+            <h4>Class Probabilities</h4>
+            <div class="probabilities-grid">
+              <div *ngFor="let prob of predictionResult.classProbabilities | keyvalue" class="probability-item">
+                <span class="probability-label">{{ getRiskLabel(prob.key) }}</span>
+                <mat-progress-bar 
+                  [value]="prob.value * 100" 
+                  [color]="getRiskColor(prob.key)">
+                </mat-progress-bar>
+                <span class="probability-value">{{ (prob.value * 100) | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Feature Importance -->
+          <div class="feature-importance-section">
+            <h4>Feature Importance</h4>
+            <div class="feature-importance-grid">
+              <div *ngFor="let feature of predictionResult.featureImportance | keyvalue" class="feature-item">
+                <span class="feature-name">{{ feature.key }}</span>
+                <mat-progress-bar 
+                  [value]="feature.value * 100" 
+                  color="primary">
+                </mat-progress-bar>
+                <span class="feature-value">{{ (feature.value * 100) | number:'1.1-1' }}%</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Input Features -->
+          <div class="input-features-section">
+            <h4>Input Features</h4>
+            <div class="input-features-grid">
+              <div *ngFor="let feature of predictionResult.inputFeatures; let i = index" class="input-feature-item">
+                <span class="feature-name">{{ sampleFeatureNames[i] || 'Feature ' + (i + 1) }}</span>
+                <span class="feature-value">{{ feature | number:'1.2-2' }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Metadata -->
+          <div *ngIf="predictionResult.metadata && Object.keys(predictionResult.metadata).length > 0" class="metadata-section">
+            <h4>Additional Information</h4>
+            <div class="metadata-grid">
+              <div *ngFor="let meta of predictionResult.metadata | keyvalue" class="metadata-item">
+                <span class="metadata-key">{{ meta.key }}:</span>
+                <span class="metadata-value">{{ meta.value }}</span>
+              </div>
+            </div>
+          </div>
+        </mat-card-content>
+      </mat-card>
+    </div>
+
+    <!-- No Models Available -->
+    <div *ngIf="availableModels.length === 0" class="no-models">
+      <mat-card class="no-models-card">
+        <mat-card-content>
+          <mat-icon>info</mat-icon>
+          <h3>No Active Models Available</h3>
+          <p>You need to train and activate at least one model before making predictions.</p>
+          <button mat-raised-button color="primary" routerLink="/ml/training">
+            <mat-icon>play_arrow</mat-icon>
+            Start Training
+          </button>
+        </mat-card-content>
+      </mat-card>
+    </div>
+  </div>
+</div> 

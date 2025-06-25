@@ -33,6 +33,9 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 // Components
 import { MLDashboardComponent } from './ml-dashboard.component';
 import { ModelTrainingComponent } from './components/model-training/model-training.component';
+import { ModelManagementComponent } from './components/model-management/model-management.component';
+import { PredictionsComponent } from './components/predictions/predictions.component';
+import { RecommendationsComponent } from './components/recommendations/recommendations.component';
 
 // Services
 import { MLService } from '../services/ml.service';
@@ -47,7 +50,10 @@ const routes = [
 @NgModule({
   declarations: [
     MLDashboardComponent,
-    ModelTrainingComponent
+    ModelTrainingComponent,
+    ModelManagementComponent,
+    PredictionsComponent,
+    RecommendationsComponent
   ],
   imports: [
     CommonModule,

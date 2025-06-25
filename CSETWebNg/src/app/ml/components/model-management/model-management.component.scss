@@ -1,0 +1,35 @@
+.full-width-table {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 200px;
+}
+
+.error-message {
+  color: #b71c1c;
+  display: flex;
+  align-items: center;
+  margin: 16px 0;
+  font-weight: 500;
+}
+
+.error-message mat-icon {
+  margin-right: 8px;
+}
+
+.no-models {
+  display: flex;
+  align-items: center;
+  color: #757575;
+  margin-top: 24px;
+  font-size: 1.1em;
+}
+
+.no-models mat-icon {
+  margin-right: 8px;
+} 
