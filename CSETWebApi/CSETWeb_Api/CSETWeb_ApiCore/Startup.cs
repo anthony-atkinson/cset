@@ -84,6 +84,8 @@ using CSETWeb_ApiCore.Interfaces;
 using CSETWeb_ApiCore.Services;
 using CSETWeb_ApiCore.Middleware;
 using AspNetCoreRateLimit;
+using CSETWebCore.Interfaces.ML;
+using CSETWebCore.Business.ML;
 
 namespace CSETWeb_ApiCore
 {
@@ -220,6 +222,22 @@ namespace CSETWeb_ApiCore
             services.AddTransient<IGalleryEditor, GalleryEditor>();
             services.AddTransient<IMalcolmBusiness, MalcolmBusiness>();
             services.AddScoped<IVersionBusiness, VersionBusiness>();
+
+            // Machine Learning Services
+            services.AddScoped<IMLDataPipeline, MLDataPipeline>();
+            services.AddScoped<IMLPredictionService, MLPredictionService>();
+            services.AddScoped<IMLModelTrainingService, MLModelTrainingService>();
+
+            // Enhanced Notification Services
+            services.AddHttpClient(); // Required for notification providers
+            services.AddScoped<IEnhancedNotificationService, EnhancedNotificationService>();
+            
+            // Notification Providers
+            services.AddScoped<IEmailNotificationProvider, CSETWebCore.Business.Notification.Providers.EmailNotificationProvider>();
+            services.AddScoped<ISmsNotificationProvider, CSETWebCore.Business.Notification.Providers.SmsNotificationProvider>();
+            services.AddScoped<IPushNotificationProvider, CSETWebCore.Business.Notification.Providers.PushNotificationProvider>();
+            services.AddScoped<IWebhookNotificationProvider, CSETWebCore.Business.Notification.Providers.WebhookNotificationProvider>();
+            services.AddScoped<IInAppNotificationProvider, CSETWebCore.Business.Notification.Providers.InAppNotificationProvider>();
 
             // Collaboration Services
             services.AddTransient<CollaborationManager>();
